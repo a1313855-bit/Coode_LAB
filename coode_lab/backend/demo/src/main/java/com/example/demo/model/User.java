@@ -12,6 +12,7 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.Setter;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 @Getter
@@ -84,7 +85,7 @@ public class User{
 			fetch = FetchType.LAZY,
 			targetEntity = Order.class
 	)
-	@JsonManagedReference("user-orders")
+	//@JsonManagedReference("user-orders")
 	private List<Order> order = new ArrayList<>();
 
 	/*

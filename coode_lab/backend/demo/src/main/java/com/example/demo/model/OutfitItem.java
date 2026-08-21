@@ -31,8 +31,12 @@ public class OutfitItem {
     @EqualsAndHashCode.Exclude
     private Outfit outfit;
 
-    @Column(name = "product_id", nullable = false)
-    private Integer productId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "product_id", nullable = false)
+    @JsonIgnoreProperties("outfitItems")
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private Product product;
 
     @Column(name = "slot_type", length = 45)
     private String slotType;
