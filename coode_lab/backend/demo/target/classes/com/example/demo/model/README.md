@@ -1,0 +1,138 @@
+# Entity 統一格式
+
+## lombok
+
+### ⭕ 新增
+
+1. `@Getter`  
+   自動產生 Getter
+2. `@Setter`  
+   自動產生 Setter
+3. `@NoArgsConstructor`  
+   產生無參數建構子
+4. `@AllArgsConstructor`  
+   產生包含全部欄位的建構子
+
+### ❌ 刪除
+
+1. `@Data`  
+   自動產生 Getter、Setter、toString、equals/hashCode 等
+
+   **🔍 原因：** 之後 toString、equals/hashCode 可能會希望是我們自己寫
+
+2. `@ToString.Exclude`  
+   Lombok 自動產生 `toString()` 時，不要把這個欄位放進去
+
+   **🔍 原因：** 有需要toString()的話我們自己寫不讓 Lombok 自動產生
+
+3. `@EqualsAndHashCode.Exclude`  
+   Lombok 自動產生 `equals()` 和 `hashCode()` 時，不要把這個欄位納入比較與計算
+
+   **🔍 原因：** 有需要 equals/hashCode 的話我們自己寫不讓 Lombok 自動產生
+
+## Jakarta Persistence（JPA）
+
+### ⭕ 新增
+
+1. 資料類型 String 的 `@Column` 屬性 length 長度(255)(100)(50)
+
+   **📝 範例：**
+
+   ```java
+   @Column(name="description",length=255)
+   @Column(name="name",length=100)
+   @Column(name="status", length = 50)
+   ```
+
+2. 資料類型 BigDecimal 的 `@Column` 屬性 precision,scale  
+   precision 長度(10)、scale長度(2)
+
+   ```java
+   @Column(name="price",precision=10,scale=2)
+   ```
+
+## Jackson
+
+### ⭕ 新增
+
+1. `@JsonIgnore`  
+   這欄不要轉 JSON(簡單、快速)
+2. `@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")`  
+   Java 物件轉成 JSON 時，日期時間格式呈現
+
+### ❌ 刪除
+
+1. `@JsonBackReference/@JsonManagedReference`  
+   指定父子 JSON 方向(明確的雙向關聯)
+
+   **🔍 原因：** 業界沒有 `@JsonIgnore` 或 `@JsonBackReference/@JsonManagedReference` 哪個比較常用。使用DTO可以直接解決循環問題(正式專案、長期維護)，目前只是為了讓表格生成`@JsonIgnore`會更適合單純簡單的結構。
+
+## hibernate
+
+### ⭕ 新增
+
+1. `@CreationTimestamp`  
+   當這筆 Entity 第一次建立／INSERT 時，自動設定建立時間
+2. `@UpdateTimestamp`  
+   當這筆 Entity 被更新時，由 Hibernate 自動更新「最後修改時間」。
+
+## 關聯欄位
+
+### ⭕ 新增
+
+1. 屬性 `orphanRemoval = true`
+
+   `orphanRemoval = true`  
+   當子 Entity 不再屬於父 Entity 的關聯集合，自動把這個「孤兒」從資料庫刪除
+
+   **🔍 原因：** 讓資料管理更完整，前提是資料本身具有父子生命週期關係
+
+### ManyToOne
+
+#### ⭕ 新增
+
+多對一：Many:"自己" To One:"目標"
+
+```java
+@ManyToOne(fetch = FetchType.LAZY) // 需要的時候再載入關聯資料
+@JoinColumn(name = "SQL外鍵名稱") // 資料庫中的外鍵欄位名稱
+@JsonIgnoreProperties("目標物件中的欄位名稱") // 忽略"目標"物件中的欄位名稱
+```
+
+### OneToMany
+
+#### ⭕ 新增
+
+一對多：One:"自己" To Many:"目標"
+
+```java
+@OneToMany(
+	mappedBy = "目標Entity", // 指向"目標".class中 @ManyToOne 欄位的「屬性名稱」
+	cascade = CascadeType.ALL, // 當"自己"PERSIST(儲存)、MERGE(合併)、REMOVE(刪除)、REFRESH(從資料庫重新整理目前狀態)、DETACH(不再讓JPA/Hibernate追蹤)，也一起對它底下的"目標"做一樣的動作
+	targetEntity = "目標".class, // 關聯的對象是"目標".class。
+	fetch = FetchType.LAZY) // 需要的時候再載入關聯資料
+```
+
+## 註解
+
+### ⭕ 新增
+
+1. 區分 SQL欄位(Field)、關聯欄位(Foreign key)
+2. 關聯欄位 區分 多對一(ManyToOne)、一對多(OneToMany)
+
+## 討論
+
+1. `@GeneratedValue(strategy = GenerationType.IDENTITY)`
+
+   **📖 概念：** 系統自動新增值(AI)
+
+   **🔍 原因：** 老師說不要使用AI避免商品新增到超過Integer上限出現問題
+
+   **❄ GPT解釋：** 遇到這個狀況應該是把 Integer 改成 Long 增加上限，不是選擇不寫AI
+
+2. `@Column`屬性欄位
+
+   1. name (寫/不寫)
+   2. nullable (寫/不寫)
+
+   其餘的只有SQL有才寫
