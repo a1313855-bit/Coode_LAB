@@ -1,109 +1,108 @@
 package com.example.demo.model;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
+// ========== lombok ==========
+import lombok.Getter;
+import lombok.Setter;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+
+// ========== Jakarta Persistence（JPA） ==========
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+import jakarta.persistence.Id;
+import jakarta.persistence.Column;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.FetchType;
+
+// ========== hibernate ==========
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
+// ========== Jackson ==========
+import com.fasterxml.jackson.annotation.JsonFormat;
 
-import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.Setter;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+// ========== Java ==========
+import java.util.List;
+import java.util.ArrayList;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
 @Getter
 @Setter
-@Entity
-@Table(name="users")
 @NoArgsConstructor
 @AllArgsConstructor
-public class User{
-	
-	@Id
-	@Column(name="user_id")
-	@GeneratedValue(strategy=GenerationType.IDENTITY)
-	private Integer userId;
+@Entity
+@Table(name = "users")
+public class User {
 
-	@Column(nullable=true , length = 100)
+	// ╔═══════╗
+	// ║ Field ║
+	// ╚═══════╝
+	@Id
+	@Column(name = "user_id")
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long userId;
+
+	@Column(name = "email", length = 100, nullable = false)
 	private String email;
 
-	@Column(nullable=true , length = 200)
+	@Column(name = "password", length = 200, nullable = false)
 	private String password;
 
-	@Column(nullable = true , length = 45)
+	@Column(name = "name", length = 50)
 	private String name;
 
-	@Column(nullable = true , length = 45)
+	@Column(name = "phone", length = 50)
 	private String phone;
 
-	@Column(name="creditcard" ,nullable = true , length = 45)
+	@Column(name = "creditcard", length = 50)
 	private String creditCard;
 
-	@Column(nullable = true , length = 45)
+	@Column(name = "status", length = 50)
 	private String status;
 
-	@Column(nullable = true , length = 45)
+	@Column(name = "gender", length = 50)
 	private String gender;
 
-	@Column(nullable = true , length = 45)
+	@Column(name = "picture", length = 255)
 	private String picture;
 
-	@Column
+	@JsonFormat(pattern = "yyyy-MM-dd")
+	@Column(name = "birthday")
 	private LocalDate birthday;
 
 	@CreationTimestamp
-	@Column(updatable=false,name="created_at")
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	@Column(name = "created_at", updatable = false)
 	private LocalDateTime createdAt;
 
-	@Column(name="updated_at")
+	@UpdateTimestamp
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	@Column(name = "update_at")
 	private LocalDateTime updatedAt;
 
-	/*
-	*=================================
-	*User 1 : 1 Cart
-	*=================================
-	*/
+	// ╔═════════════╗
+	// ║ Foreign key ║
+	// ╚═════════════╝
 
-	@OneToOne(
-		mappedBy = "user",
-		cascade = CascadeType.ALL,
-		orphanRemoval = true,
-		targetEntity = Cart.class)
-	@JsonManagedReference("user-cart")
+	// 一對一 : One:"User" To One:"Cart"
+	@OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, targetEntity = Cart.class, fetch = FetchType.LAZY)
 	private Cart cart;
 
-	/*
-	*=================================
-	*User 1 : N Order
-	*=================================
-	*/
-	@OneToMany(mappedBy = "user",
-			fetch = FetchType.LAZY,
-			targetEntity = Order.class
-	)
-	//@JsonManagedReference("user-orders")
+	// 一對多 : One:"User" To Many:"Order"
+	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, targetEntity = Order.class, fetch = FetchType.LAZY)
 	private List<Order> order = new ArrayList<>();
 
-	/*
-	*=================================
-	*User 1 : N Outfit
-	*=================================
-	*/
-	@OneToMany(mappedBy = "user")
+	// 一對多 : One:"User" To Many:"Outfit"
+	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, targetEntity = Outfit.class, fetch = FetchType.LAZY)
 	private List<Outfit> outfit = new ArrayList<>();
 
-	/*
-	*=================================
-	*User 1 : N ReturnRequest
-	*=================================
-	*/
-	@OneToMany(mappedBy = "user")
+	// 一對多 : One:"User" To Many:"ReturnRequest"
+	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, targetEntity = ReturnRequest.class, fetch = FetchType.LAZY)
 	private List<ReturnRequest> returnRequests = new ArrayList<>();
-
-
 
 }
