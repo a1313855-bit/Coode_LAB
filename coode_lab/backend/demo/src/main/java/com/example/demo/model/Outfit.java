@@ -51,7 +51,7 @@ public class Outfit {
 
     // 一對多 : One:"Outfit" To Many:"OutfitItem"
     @OneToMany(mappedBy = "outfit", cascade = CascadeType.ALL, targetEntity = OutfitItem.class, fetch = FetchType.LAZY)
-    private List<OutfitItem> outfitItems = new ArrayList<>();
+    private List<OutfitItem> outfitItem = new ArrayList<>();
 
     // 多對一 : Many="Outfit" To One="User"
     @ManyToOne(fetch = FetchType.LAZY)

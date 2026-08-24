@@ -82,15 +82,15 @@ public class Product {
 
     // 一對多 : One:"Product" To Many:"CartItem"
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, targetEntity = CartItem.class, fetch = FetchType.LAZY)
-    private List<CartItem> cartItems = new ArrayList<>();
+    private List<CartItem> cartItem = new ArrayList<>();
 
     // 一對多 : One:"Product" To Many:"OutfitItem"
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, targetEntity = OutfitItem.class, fetch = FetchType.LAZY)
-    private List<OutfitItem> outfitItems = new ArrayList<>();
+    private List<OutfitItem> outfitItem = new ArrayList<>();
 
     // 一對多 : One:"Product" To Many:"OrderItem"
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, targetEntity = OrderItem.class, fetch = FetchType.LAZY)
-    private List<OrderItem> orderItems = new ArrayList<>();
+    private List<OrderItem> orderItem = new ArrayList<>();
 
     // 多對一 : Many="Product" To One="Vendor"
     @ManyToOne(fetch = FetchType.LAZY)

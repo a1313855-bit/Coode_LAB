@@ -1,7 +1,5 @@
 # 電商系統資料模型文件
 
-本文件依據 `model.zip` 中的 Java／JPA Entity 原始碼整理，涵蓋 12 個資料模型、資料表欄位與實體關聯。
-
 ## 1. 技術概覽
 
 - Java Persistence：Jakarta Persistence（JPA）

@@ -71,15 +71,15 @@ public class Order {
 
     @UpdateTimestamp
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    @Column(name = "update_at")
-    private LocalDateTime updateAt;
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 
     // ╔═════════════╗
     // ║ Foreign key ║
     // ╚═════════════╝
 
     // 一對多 : One:"Order" To Many:"OrderItem"
-    @OneToMany(mappedBy = "order", targetEntity = OrderItem.class, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, targetEntity = OrderItem.class, fetch = FetchType.LAZY)
     private List<OrderItem> orderItem = new ArrayList<OrderItem>();
 
     // 一對多 : One:"Order" To Many:"ReturnRequest"

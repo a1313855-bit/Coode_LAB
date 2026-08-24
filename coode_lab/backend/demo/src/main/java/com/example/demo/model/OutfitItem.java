@@ -46,13 +46,13 @@ public class OutfitItem {
     // 多對一 : Many="OutfitItem" To One="Product"
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id", nullable = false)
-    @JsonIgnoreProperties("outfitItems")
+    @JsonIgnoreProperties("outfitItem")
     private Product product;
 
     // 多對一 : Many="OutfitItem" To One="Outfit"
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "outfit_id", nullable = false)
-    @JsonIgnoreProperties("outfitItems")
+    @JsonIgnoreProperties("outfitItem")
     private Outfit outfit;
 
 }

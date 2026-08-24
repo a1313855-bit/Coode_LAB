@@ -72,7 +72,7 @@ public class Cart {
     private User user;
 
     // 一對多 : One:"Cart" To Many:"CartItem"
-    @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, targetEntity = CartItem.class, fetch = FetchType.LAZY)
-    private List<CartItem> cartItems = new ArrayList<>();
+    @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true, targetEntity = CartItem.class, fetch = FetchType.LAZY)
+    private List<CartItem> cartItem = new ArrayList<>();
 
 }

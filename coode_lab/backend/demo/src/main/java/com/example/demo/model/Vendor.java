@@ -72,7 +72,7 @@ public class Vendor {
 
     @UpdateTimestamp
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    @Column(name = "update_at")
+    @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
     // ╔═════════════╗
@@ -81,14 +81,14 @@ public class Vendor {
 
     // 一對多 : One:"Vendor" To Many:"Product"
     @OneToMany(mappedBy = "vendor", cascade = CascadeType.ALL, targetEntity = Product.class, fetch = FetchType.LAZY)
-    private List<Product> products = new ArrayList<>();
+    private List<Product> product = new ArrayList<>();
 
     // 一對多 : One:"Vendor" To Many:"OrderItem"
     @OneToMany(mappedBy = "vendor", cascade = CascadeType.ALL, targetEntity = OrderItem.class, fetch = FetchType.LAZY)
-    private List<OrderItem> orderItems = new ArrayList<>();
+    private List<OrderItem> orderItem = new ArrayList<>();
 
     // 一對多 : One:"Vendor" To Many:"ReturnRequest"
     @OneToMany(mappedBy = "vendor", cascade = CascadeType.ALL, targetEntity = ReturnRequest.class, fetch = FetchType.LAZY)
-    private List<ReturnRequest> returnRequests = new ArrayList<>();
+    private List<ReturnRequest> returnRequest = new ArrayList<>();
 
 }

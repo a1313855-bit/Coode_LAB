@@ -59,7 +59,7 @@ public class ReturnRequest {
     @CreationTimestamp
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @Column(name = "created_at", updatable = false)
-    private LocalDateTime createAt;
+    private LocalDateTime createdAt;
 
     // ╔═════════════╗
     // ║ Foreign key ║
