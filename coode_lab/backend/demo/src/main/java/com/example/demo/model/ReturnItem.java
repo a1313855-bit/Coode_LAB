@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 // ========== Java ==========
 import java.math.BigDecimal;
+import java.util.stream.Stream;
 
 @Getter
 @Setter
@@ -75,4 +76,9 @@ public class ReturnItem {
     @JoinColumn(name = "return_requests_id", nullable = false)
     @JsonIgnoreProperties("returnItem")
     private ReturnRequest returnRequest;
+
+    public Stream<ReturnRequest> stream() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'stream'");
+    }
 }
