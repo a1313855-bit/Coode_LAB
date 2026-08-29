@@ -76,6 +76,8 @@ public class Product {
     @Column(name = "outfit_png", length = 255)
     private String outfitPng;
 
+    
+
     // ╔═════════════╗
     // ║ Foreign key ║
     // ╚═════════════╝
