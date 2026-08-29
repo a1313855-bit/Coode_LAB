@@ -1,0 +1,44 @@
+package com.example.demo.service;
+
+import java.util.List;
+
+import com.example.demo.dto.VendorActivateRequest;
+import com.example.demo.dto.VendorContractRequest;
+import com.example.demo.dto.VendorLoginRequest;
+import com.example.demo.dto.VendorRequest;
+import com.example.demo.dto.VendorResponse;
+import com.example.demo.dto.VendorUpdateRequest;
+
+public interface VendorService {
+
+	// 查全部廠商,回傳List<VendorResponse>
+	List<VendorResponse> findAll();
+
+	// 可用廠商id查一個廠商,回傳VendorResponse
+	VendorResponse findById(Long vendorId);
+
+	// 管理員搜尋 / 篩選廠商
+	List<VendorResponse> searchVendors(String keyword, String status);
+
+	// 廠商登入,帳號必須存在,密碼正確,狀態為ACTIVE,合約不能過期
+	VendorResponse login(VendorLoginRequest request);
+
+	// 管理員啟用廠商,狀態改為ACTIVE
+	VendorResponse activateVendor(Long vendorId, VendorActivateRequest request);
+
+	// 管理員停權廠商,狀態改為SUSPENDED
+	VendorResponse suspendVendor(Long vendorId);
+
+	// 管理員解除停權
+	VendorResponse reactivateVendor(Long vendorId);
+
+	// 管理員續約廠商
+	VendorResponse renewContract(Long vendorId, VendorContractRequest request);
+
+	// 新增廠商
+	VendorResponse createVendor(VendorRequest request);
+
+	// 修改廠商基本資料
+	VendorResponse updateVendor(Long vendorId, VendorUpdateRequest request);
+
+}
