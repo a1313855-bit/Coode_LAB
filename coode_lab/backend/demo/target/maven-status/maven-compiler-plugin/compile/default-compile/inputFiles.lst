@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 /Users/chalvent/Documents/Coode_LAB/coode_lab/backend/demo/src/main/java/com/example/demo/DemoApplication.java
 /Users/chalvent/Documents/Coode_LAB/coode_lab/backend/demo/src/main/java/com/example/demo/config/SecurityConfig.java
 /Users/chalvent/Documents/Coode_LAB/coode_lab/backend/demo/src/main/java/com/example/demo/controller/CartController.java
@@ -31,3 +32,39 @@
 /Users/chalvent/Documents/Coode_LAB/coode_lab/backend/demo/src/main/java/com/example/demo/service/impl/CartItemServiceImpl.java
 /Users/chalvent/Documents/Coode_LAB/coode_lab/backend/demo/src/main/java/com/example/demo/service/impl/CartServiceImpl.java
 /Users/chalvent/Documents/Coode_LAB/coode_lab/backend/demo/src/main/java/com/example/demo/service/impl/UserServiceImpl.java
+=======
+D:\GitHub\Coode_LAB\coode_lab\backend\demo\src\main\java\com\example\demo\controller\AdminController.java
+D:\GitHub\Coode_LAB\coode_lab\backend\demo\src\main\java\com\example\demo\controller\OutfitController.java
+D:\GitHub\Coode_LAB\coode_lab\backend\demo\src\main\java\com\example\demo\controller\OutfitItemController.java
+D:\GitHub\Coode_LAB\coode_lab\backend\demo\src\main\java\com\example\demo\DemoApplication.java
+D:\GitHub\Coode_LAB\coode_lab\backend\demo\src\main\java\com\example\demo\dto\AdminCreateRequest.java
+D:\GitHub\Coode_LAB\coode_lab\backend\demo\src\main\java\com\example\demo\dto\AdminLoginRequest.java
+D:\GitHub\Coode_LAB\coode_lab\backend\demo\src\main\java\com\example\demo\dto\AdminPasswordRequest.java
+D:\GitHub\Coode_LAB\coode_lab\backend\demo\src\main\java\com\example\demo\dto\AdminResponse.java
+D:\GitHub\Coode_LAB\coode_lab\backend\demo\src\main\java\com\example\demo\dto\OutfitCreateRequest.java
+D:\GitHub\Coode_LAB\coode_lab\backend\demo\src\main\java\com\example\demo\dto\OutfitItemRequest.java
+D:\GitHub\Coode_LAB\coode_lab\backend\demo\src\main\java\com\example\demo\dto\OutfitItemResponse.java
+D:\GitHub\Coode_LAB\coode_lab\backend\demo\src\main\java\com\example\demo\dto\OutfitResponse.java
+D:\GitHub\Coode_LAB\coode_lab\backend\demo\src\main\java\com\example\demo\dto\OutfitUpdateRequest.java
+D:\GitHub\Coode_LAB\coode_lab\backend\demo\src\main\java\com\example\demo\model\Admin.java
+D:\GitHub\Coode_LAB\coode_lab\backend\demo\src\main\java\com\example\demo\model\Cart.java
+D:\GitHub\Coode_LAB\coode_lab\backend\demo\src\main\java\com\example\demo\model\CartItem.java
+D:\GitHub\Coode_LAB\coode_lab\backend\demo\src\main\java\com\example\demo\model\Order.java
+D:\GitHub\Coode_LAB\coode_lab\backend\demo\src\main\java\com\example\demo\model\OrderItem.java
+D:\GitHub\Coode_LAB\coode_lab\backend\demo\src\main\java\com\example\demo\model\Outfit.java
+D:\GitHub\Coode_LAB\coode_lab\backend\demo\src\main\java\com\example\demo\model\OutfitItem.java
+D:\GitHub\Coode_LAB\coode_lab\backend\demo\src\main\java\com\example\demo\model\Product.java
+D:\GitHub\Coode_LAB\coode_lab\backend\demo\src\main\java\com\example\demo\model\ReturnItem.java
+D:\GitHub\Coode_LAB\coode_lab\backend\demo\src\main\java\com\example\demo\model\ReturnRequest.java
+D:\GitHub\Coode_LAB\coode_lab\backend\demo\src\main\java\com\example\demo\model\User.java
+D:\GitHub\Coode_LAB\coode_lab\backend\demo\src\main\java\com\example\demo\model\Vendor.java
+D:\GitHub\Coode_LAB\coode_lab\backend\demo\src\main\java\com\example\demo\repository\AdminRepository.java
+D:\GitHub\Coode_LAB\coode_lab\backend\demo\src\main\java\com\example\demo\repository\OutfitItemRepository.java
+D:\GitHub\Coode_LAB\coode_lab\backend\demo\src\main\java\com\example\demo\repository\OutfitRepository.java
+D:\GitHub\Coode_LAB\coode_lab\backend\demo\src\main\java\com\example\demo\service\AdminService.java
+D:\GitHub\Coode_LAB\coode_lab\backend\demo\src\main\java\com\example\demo\service\impl\AdminServiceImpl.java
+D:\GitHub\Coode_LAB\coode_lab\backend\demo\src\main\java\com\example\demo\service\impl\OutfitItemServiceImpl.java
+D:\GitHub\Coode_LAB\coode_lab\backend\demo\src\main\java\com\example\demo\service\impl\OutfitServiceImpl.java
+D:\GitHub\Coode_LAB\coode_lab\backend\demo\src\main\java\com\example\demo\service\OutfitItemService.java
+D:\GitHub\Coode_LAB\coode_lab\backend\demo\src\main\java\com\example\demo\service\OutfitService.java
+>>>>>>> Reby
