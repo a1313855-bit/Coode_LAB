@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 // ========== Project ==========
 import com.example.demo.dto.returnrequest.CreateReturnRequestRequest;
@@ -17,9 +18,9 @@ import com.example.demo.dto.returnrequest.UpdateReturnRequestStatusRequest;
 import com.example.demo.dto.returnrequest.ReturnRequestDTO;
 import com.example.demo.model.ReturnRequest;
 import com.example.demo.service.ReturnRequestService;
+import com.example.demo.util.SelectPartOfData;
 
 import jakarta.validation.Valid;
-import java.util.List;
 
 @RestController
 @RequestMapping("/return-requests")
@@ -59,10 +60,10 @@ public class ReturnRequestController {
     }
 
     @GetMapping("/all")
-    public ResponseEntity<List<ReturnRequestDTO>> getAllReturnRequests() {
-        // TODO: 查詢所有申請（admin 管理員）
-        List<ReturnRequestDTO> list = returnRequestService.findAll();
-        if (!list.isEmpty()) {
+    public ResponseEntity<SelectPartOfData.Result<ReturnRequestDTO>> getAllReturnRequests(
+            @RequestParam(defaultValue = "0") int page) {
+        SelectPartOfData.Result<ReturnRequestDTO> list = returnRequestService.findAll(page);
+        if (!list.getContent().isEmpty()) {
             return ResponseEntity.ok(list);
         } else {
             return ResponseEntity.notFound().build();
@@ -70,9 +71,11 @@ public class ReturnRequestController {
     }
 
     @GetMapping("/user/{userId}")
-    public ResponseEntity<List<ReturnRequestDTO>> findByUserId(@PathVariable Long userId) {
-        List<ReturnRequestDTO> list = returnRequestService.findByUserId(userId);
-        if (!list.isEmpty()) {
+    public ResponseEntity<SelectPartOfData.Result<ReturnRequestDTO>> findByUserId(
+            @PathVariable Long userId,
+            @RequestParam(defaultValue = "0") int page) {
+        SelectPartOfData.Result<ReturnRequestDTO> list = returnRequestService.findByUserId(userId, page);
+        if (!list.getContent().isEmpty()) {
             return ResponseEntity.ok(list);
         } else {
             return ResponseEntity.notFound().build();
@@ -80,9 +83,11 @@ public class ReturnRequestController {
     }
 
     @GetMapping("/vendor/{vendorId}")
-    public ResponseEntity<List<ReturnRequestDTO>> findByVendorId(@PathVariable Long vendorId) {
-        List<ReturnRequestDTO> list = returnRequestService.findByVendorId(vendorId);
-        if (!list.isEmpty()) {
+    public ResponseEntity<SelectPartOfData.Result<ReturnRequestDTO>> findByVendorId(
+            @PathVariable Long vendorId,
+            @RequestParam(defaultValue = "0") int page) {
+        SelectPartOfData.Result<ReturnRequestDTO> list = returnRequestService.findByVendorId(vendorId, page);
+        if (!list.getContent().isEmpty()) {
             return ResponseEntity.ok(list);
         } else {
             return ResponseEntity.notFound().build();

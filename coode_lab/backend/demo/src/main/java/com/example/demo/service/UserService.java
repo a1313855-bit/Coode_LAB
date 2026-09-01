@@ -7,6 +7,7 @@ import com.example.demo.dto.ChangePasswordRequest;
 import com.example.demo.dto.UserResponse;
 import com.example.demo.dto.UserUpdateRequest;
 import com.example.demo.model.User;
+import com.example.demo.util.SelectPartOfData;
 
 public interface UserService {
 
@@ -26,12 +27,18 @@ public interface UserService {
     // ╚═══════════════════════════════════════╝
     boolean existsByEmail(String email);
 
+    // 會員登入（驗證 Email、密碼與帳號狀態）
+    UserResponse login(String email, String password);
+
     // ╔═══════════════════════════════════════╗
     // ║ 查詢會員 READ                          ║
     // ╚═══════════════════════════════════════╝
 
     // 查詢所有會員
     List<UserResponse> findAllUsers();
+
+    // 查詢所有會員（分頁，固定每頁 10 筆，page 從 0 開始）
+    SelectPartOfData.Result<UserResponse> findAllUsers(int page);
 
     // 根據ID查詢會員
     Optional<UserResponse> findUserById(Long userId);
@@ -52,8 +59,8 @@ public interface UserService {
     // ║ 軟刪除會員資料  DELETE                  ║
     // ╚═══════════════════════════════════════╝
 
-    // (軟)刪除會員
-    UserResponse deactivateUser(Long userId);
+    // (軟)刪除會員 / 啟用會員
+    UserResponse toggleUserStatus(Long userId);
 
     // ╔═══════════════════════════════════════╗
     // ║ 管理員查詢用                            ║

@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.demo.dto.AdminCreateRequest;
@@ -20,6 +21,7 @@ import com.example.demo.dto.AdminPasswordRequest;
 import com.example.demo.dto.AdminResponse;
 import com.example.demo.model.Admin;
 import com.example.demo.service.AdminService;
+import com.example.demo.util.SelectPartOfData;
 
 
 @RestController
@@ -131,30 +133,30 @@ public class AdminController {
 
 
     // ==================== 查詢全部管理員 ====================
-    // GET /api/admins
+    // GET /api/admins?page=0 (固定每頁10筆,page 從 0 開始)
     @GetMapping
-    public ResponseEntity<List<AdminResponse>> findAll() {
+    public ResponseEntity<SelectPartOfData.Result<AdminResponse>> findAll(
+            @RequestParam(defaultValue = "0") int page) {
 
         /*
-         * 1、查詢全部 Admin
+         * 1、查詢全部 Admin（分頁）
          */
-        List<Admin> admins = adminService.findAll();
+        SelectPartOfData.Result<Admin> admins = adminService.findAll(page);
 
         /*
-         * 2、將 List<Admin> 轉成 List<AdminResponse>
+         * 2、將每一頁的 List<Admin> 轉成 List<AdminResponse>
          * 避免 password 回傳給前端
          */
-        List<AdminResponse> responses = admins.stream()
+        List<AdminResponse> responses = admins.getContent().stream()
                 .map(admin -> new AdminResponse(
                         admin.getAdminId(),
-                        admin.getEmail()
-                ))
+                        admin.getEmail()))
                 .toList();
 
-        /*
-         * 3、查詢成功回傳 200 OK
-         */
-        return ResponseEntity.ok(responses);
+        SelectPartOfData.Result<AdminResponse> result =
+                SelectPartOfData.pageOf10(responses, admins.getPage());
+
+        return ResponseEntity.ok(result);
     }
 
 

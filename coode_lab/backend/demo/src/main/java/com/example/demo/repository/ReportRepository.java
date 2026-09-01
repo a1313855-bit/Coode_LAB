@@ -100,7 +100,7 @@ public interface ReportRepository extends JpaRepository<OrderItem, Long> {
     @Query(value = """
             select ri.status as status,
                    count(ri) as count,
-                   coalesce(sum(ri.returnedQuantity), 0) as returnedQuantity
+                   coalesce(sum(ri.approvalQuantity), 0) as approvalQuantity
             from ReturnItem ri
             join ri.returnRequest rr
             where rr.vendor.vendorId = :vendorId

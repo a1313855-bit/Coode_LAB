@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 // ========== Java ==========
@@ -28,6 +29,9 @@ import com.example.demo.model.OutfitItem;
 // ========== Service ==========
 import com.example.demo.service.OutfitService;
 import com.example.demo.service.OutfitItemService;
+
+// ========== Util ==========
+import com.example.demo.util.SelectPartOfData;
 
 
 @RestController
@@ -128,28 +132,39 @@ public class OutfitController {
      * GET /api/outfits/user/1
      */
     @GetMapping("/user/{userId}")
-    public ResponseEntity<List<OutfitResponse>> findByUserId(
-            @PathVariable Long userId) {
+    public ResponseEntity<SelectPartOfData.Result<OutfitResponse>> findByUserId(
+            @PathVariable Long userId,
+            @RequestParam(defaultValue = "0") int page) {
 
         /*
          * 查詢此使用者建立的所有穿搭
          */
-        List<Outfit> outfits =
-                outfitService.findByUserId(userId);
+        SelectPartOfData.Result<Outfit> outfits =
+                outfitService.findByUserId(userId, page);
 
         /*
          * 將 List<Outfit>
          * 轉成 List<OutfitResponse>
          */
         List<OutfitResponse> response =
-                outfits.stream()
+                outfits.getContent().stream()
                         .map(this::toResponse)
                         .toList();
+
+        SelectPartOfData.Result<OutfitResponse> result =
+                new SelectPartOfData.Result<>(
+                        response,
+                        outfits.getPage(),
+                        outfits.getSize(),
+                        outfits.getTotalElements(),
+                        outfits.getTotalPages(),
+                        outfits.isLast()
+                );
 
         /*
          * 查詢成功回傳 200 OK
          */
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(result);
     }
 
 
@@ -227,7 +242,8 @@ public class OutfitController {
          */
         List<OutfitItemResponse> items =
                 outfitItemService
-                        .findByOutfitId(outfit.getOutfitId())
+                        .findByOutfitId(outfit.getOutfitId(), 0)
+                        .getContent()
                         .stream()
                         .map(this::toItemResponse)
                         .toList();

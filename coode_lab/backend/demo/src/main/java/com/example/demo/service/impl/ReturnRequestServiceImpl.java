@@ -28,7 +28,10 @@ import com.example.demo.repository.ReturnRequestRepository;
 import com.example.demo.repository.ReturnItemRepository;
 import com.example.demo.repository.OrderItemRepository;
 import com.example.demo.repository.OrderRepository;
+import com.example.demo.repository.UserRepository;
+import com.example.demo.repository.VendorRepository;
 import com.example.demo.service.ReturnRequestService;
+import com.example.demo.util.SelectPartOfData;
 
 @Service
 @Transactional
@@ -41,23 +44,27 @@ public class ReturnRequestServiceImpl implements ReturnRequestService {
     private final ReturnItemRepository returnItemRepository;
     private final OrderItemRepository orderItemRepository;
     private final OrderRepository orderRepository;
+    private final UserRepository userRepository;
+    private final VendorRepository vendorRepository;
 
     public ReturnRequestServiceImpl(ReturnRequestRepository returnRequestRepository,
             ReturnItemRepository returnItemRepository,
             OrderItemRepository orderItemRepository,
-            OrderRepository orderRepository) {
+            OrderRepository orderRepository,
+            UserRepository userRepository,
+            VendorRepository vendorRepository) {
         this.returnRequestRepository = returnRequestRepository;
         this.returnItemRepository = returnItemRepository;
         this.orderItemRepository = orderItemRepository;
         this.orderRepository = orderRepository;
+        this.userRepository = userRepository;
+        this.vendorRepository = vendorRepository;
     }
 
     // ╔══════════════════════════════════╗
     // ║ ReturnRequest（退換貨申請主表） ║
     // ╚══════════════════════════════════╝
 
-    // TODO: 依賴 UserRepository / VendorRepository（其他組員負責），待整合後改為真實查詢
-    // 目前 User 與 Vendor 以假資料代替（標註處需替換）
     @Override
     public ReturnRequest createReturnRequest(Long userId, Long orderId, CreateReturnRequestRequest request) {
         Optional<Order> optional = orderRepository.findById(orderId);
@@ -66,13 +73,15 @@ public class ReturnRequestServiceImpl implements ReturnRequestService {
         }
         Order order = optional.get();
 
-        // TODO: 替換成 userRepository.findById(userId)
-        User user = new User();
-        user.setUserId(userId);
+        User user = userRepository.findById(userId).orElse(null);
+        if (user == null) {
+            return null;
+        }
 
-        // TODO: 依商品明細所屬廠商取得真實 Vendor（待整合後改為真實查詢）
-        Vendor vendor = new Vendor();
-        vendor.setVendorId(1L);
+        Vendor vendor = null;
+        if (order.getOrderItem() != null && !order.getOrderItem().isEmpty()) {
+            vendor = order.getOrderItem().get(0).getVendor();
+        }
 
         ReturnRequest returnRequest = new ReturnRequest();
         returnRequest.setStatus("PENDING");
@@ -93,26 +102,29 @@ public class ReturnRequestServiceImpl implements ReturnRequestService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<ReturnRequestDTO> findAll() {
-        return returnRequestRepository.findAll().stream()
+    public SelectPartOfData.Result<ReturnRequestDTO> findAll(int page) {
+        List<ReturnRequestDTO> all = returnRequestRepository.findAll().stream()
                 .map(this::toReturnRequestDTO)
                 .toList();
+        return SelectPartOfData.pageOf10(all, page);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<ReturnRequestDTO> findByUserId(Long userId) {
-        return returnRequestRepository.findByUser_UserId(userId).stream()
+    public SelectPartOfData.Result<ReturnRequestDTO> findByUserId(Long userId, int page) {
+        List<ReturnRequestDTO> all = returnRequestRepository.findByUser_UserId(userId).stream()
                 .map(this::toReturnRequestDTO)
                 .toList();
+        return SelectPartOfData.pageOf10(all, page);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<ReturnRequestDTO> findByVendorId(Long vendorId) {
-        return returnRequestRepository.findByVendor_VendorId(vendorId).stream()
+    public SelectPartOfData.Result<ReturnRequestDTO> findByVendorId(Long vendorId, int page) {
+        List<ReturnRequestDTO> all = returnRequestRepository.findByVendor_VendorId(vendorId).stream()
                 .map(this::toReturnRequestDTO)
                 .toList();
+        return SelectPartOfData.pageOf10(all, page);
     }
 
     @Override
@@ -178,8 +190,7 @@ public class ReturnRequestServiceImpl implements ReturnRequestService {
 
         ReturnItem returnItem = new ReturnItem();
         returnItem.setStatus("PENDING_REVIEW");
-        returnItem.setReturnedQuantity(request.getRequestQuantity());
-        returnItem.setExchangedQuantity(0);
+        returnItem.setApprovalQuantity(request.getRequestQuantity());
         returnItem.setRejectedQuantity(0);
         returnItem.setRefund(BigDecimal.ZERO);
         returnItem.setOrderItem(orderItem);
@@ -211,12 +222,12 @@ public class ReturnRequestServiceImpl implements ReturnRequestService {
         OrderItem orderItem = returnItem.getOrderItem();
 
         if ("EXCHANGE".equals(requestType)) {
-            returnItem.setExchangedQuantity(approvedQuantity);
-            returnItem.setReturnedQuantity(0);
+            returnItem.setApprovalQuantity(approvedQuantity);
+            returnItem.setRejectedQuantity(0);
             returnItem.setRefund(BigDecimal.ZERO);
         } else {
-            returnItem.setReturnedQuantity(approvedQuantity);
-            returnItem.setExchangedQuantity(0);
+            returnItem.setApprovalQuantity(approvedQuantity);
+            returnItem.setRejectedQuantity(0);
             returnItem.setRefund(orderItem.getPrice()
                     .multiply(BigDecimal.valueOf(approvedQuantity)));
         }
@@ -253,8 +264,7 @@ public class ReturnRequestServiceImpl implements ReturnRequestService {
         dto.setStatus(returnItem.getStatus());
         dto.setReason(returnItem.getReason());
         dto.setDescription(returnItem.getDescription());
-        dto.setReturnedQuantity(returnItem.getReturnedQuantity());
-        dto.setExchangedQuantity(returnItem.getExchangedQuantity());
+        dto.setApprovalQuantity(returnItem.getApprovalQuantity());
         dto.setRejectedQuantity(returnItem.getRejectedQuantity());
         dto.setRefund(returnItem.getRefund());
 

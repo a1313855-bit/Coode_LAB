@@ -6,6 +6,9 @@ import java.util.List;
 // ========== Model ==========
 import com.example.demo.model.OutfitItem;
 
+// ========== Util ==========
+import com.example.demo.util.SelectPartOfData;
+
 
 /**
  * OutfitItem 業務邏輯介面。
@@ -33,13 +36,14 @@ public interface OutfitItemService {
 
 
     /**
-     * 查詢指定穿搭中的所有商品。
+     * 查詢指定穿搭中的所有商品 (固定每頁10筆,page 從 0 開始)。
      *
      * @param outfitId 穿搭 ID
-     * @return OutfitItem 清單
+     * @return OutfitItem 分頁結果
      */
-    List<OutfitItem> findByOutfitId(
-            Long outfitId
+    SelectPartOfData.Result<OutfitItem> findByOutfitId(
+            Long outfitId,
+            int page
     );
 
 

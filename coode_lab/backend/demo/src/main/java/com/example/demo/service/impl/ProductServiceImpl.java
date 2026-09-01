@@ -17,6 +17,7 @@ import com.example.demo.model.Vendor;
 import com.example.demo.repository.ProductRepository;
 import com.example.demo.repository.VendorRepository;
 import com.example.demo.service.ProductService;
+import com.example.demo.util.SelectPartOfData;
 
 @Service
 
@@ -31,29 +32,30 @@ public class ProductServiceImpl implements ProductService {
         this.vendorRepository = vendorRepository;
     }
 
-    // 查所有商品
+    // 查所有商品 (固定每頁10筆)
     @Override
-    public List<ProductResponse> findAll() {
-        return productRepository.findAll()
+    public SelectPartOfData.Result<ProductResponse> findAll(int page) {
+        List<ProductResponse> all = productRepository.findAll()
                 .stream()
                 .map(this::toResponse)
                 .toList();
-
+        return SelectPartOfData.pageOf10(all, page);
     }
 
-    // 商城呼叫使用,只顯示已上架且廠商狀態是啟用的商品
+    // 商城呼叫使用,只顯示已上架且廠商狀態是啟用的商品 (固定每頁10筆)
     @Override
-    public List<ProductResponse> findAvailableProducts() {
+    public SelectPartOfData.Result<ProductResponse> findAvailableProducts(int page) {
 
         Specification<Product> spec = ProductSpecification.isActive()
                 .and(ProductSpecification.vendorIsActive())
                 .and(ProductSpecification.vendorContractNotExpired());
 
-        return productRepository
+        List<ProductResponse> all = productRepository
                 .findAll(spec)
                 .stream()
                 .map(this::toResponse)
                 .toList();
+        return SelectPartOfData.pageOf10(all, page);
     }
 
     // 根據productId查詢單一商品
@@ -65,18 +67,20 @@ public class ProductServiceImpl implements ProductService {
 
     }
 
-    // 根據廠商ID查詢所有商品
+    // 根據廠商ID查詢所有商品 (固定每頁10筆)
     @Override
-    public List<ProductResponse> findByVendorId(Long vendorId) {
-        return productRepository.findByVendorVendorId(vendorId)
+    public SelectPartOfData.Result<ProductResponse> findByVendorId(Long vendorId, int page) {
+        List<ProductResponse> all = productRepository.findByVendorVendorId(vendorId)
                 .stream()
                 .map(this::toResponse)
                 .toList();
+        return SelectPartOfData.pageOf10(all, page);
     }
 
-    // 商城搜尋-多條件搜尋商品
+    // 商城搜尋-多條件搜尋商品 (固定每頁10筆)
     @Override
-    public List<ProductResponse> searchProducts(
+    public SelectPartOfData.Result<ProductResponse> searchProducts(
+            int page,
             String keyword,
             String categoryType,
             String style,
@@ -105,7 +109,7 @@ public class ProductServiceImpl implements ProductService {
                 .and(ProductSpecification.hasVendorId(vendorId));
 
         // 3. Repository 根據組好的條件查商品
-        return productRepository.findAll(spec)
+        List<ProductResponse> all = productRepository.findAll(spec)
                 .stream()
 
                 // 4. Product Entity → ProductResponse DTO
@@ -113,11 +117,13 @@ public class ProductServiceImpl implements ProductService {
 
                 // 5. 重新組成 List
                 .toList();
+        return SelectPartOfData.pageOf10(all, page);
     }
 
-    // 管理員後台多條件搜尋
+    // 管理員後台多條件搜尋 (固定每頁10筆)
     @Override
-    public List<ProductResponse> adminSearchProducts(
+    public SelectPartOfData.Result<ProductResponse> adminSearchProducts(
+            int page,
             String keyword,
             String categoryType,
             String style,
@@ -140,15 +146,17 @@ public class ProductServiceImpl implements ProductService {
                 .and(ProductSpecification.hasStatus(status))
                 .and(ProductSpecification.hasVendorId(vendorId));
 
-        return productRepository.findAll(spec)
+        List<ProductResponse> all = productRepository.findAll(spec)
                 .stream()
                 .map(this::toResponse)
                 .toList();
+        return SelectPartOfData.pageOf10(all, page);
     }
 
-    // 廠商後台多條件搜尋商品
+    // 廠商後台多條件搜尋商品 (固定每頁10筆)
     @Override
-    public List<ProductResponse> vendorSearchProducts(
+    public SelectPartOfData.Result<ProductResponse> vendorSearchProducts(
+            int page,
             Long vendorId,
             String keyword,
             String categoryType,
@@ -171,10 +179,11 @@ public class ProductServiceImpl implements ProductService {
                 .and(ProductSpecification.priceLessThanOrEqual(maxPrice))
                 .and(ProductSpecification.hasStatus(status));
 
-        return productRepository.findAll(spec)
+        List<ProductResponse> all = productRepository.findAll(spec)
                 .stream()
                 .map(this::toResponse)
                 .toList();
+        return SelectPartOfData.pageOf10(all, page);
     }
 
     // 廠商新增商品
@@ -437,15 +446,16 @@ public class ProductServiceImpl implements ProductService {
 
     }
 
-    // 低庫存查詢
+    // 低庫存查詢 (固定每頁10筆)
     @Override
-    public List<ProductResponse> findLowStockProducts(Long vendorId) {
+    public SelectPartOfData.Result<ProductResponse> findLowStockProducts(Long vendorId, int page) {
         List<Product> products = productRepository.findByVendorVendorIdAndStockLessThanEqual(vendorId, 10);
 
-        return products
+        List<ProductResponse> all = products
                 .stream()
                 .map(this::toResponse)
                 .toList();
+        return SelectPartOfData.pageOf10(all, page);
     }
 
     private ProductResponse toResponse(Product product) {

@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 // ========== Model ==========
@@ -18,6 +19,9 @@ import com.example.demo.model.OutfitItem;
 
 // ========== Service ==========
 import com.example.demo.service.OutfitItemService;
+
+// ========== Util ==========
+import com.example.demo.util.SelectPartOfData;
 
 
 /**
@@ -107,12 +111,13 @@ public class OutfitItemController {
     @GetMapping(
             "/outfits/{outfitId}"
     )
-    public ResponseEntity<List<OutfitItem>> findByOutfitId(
-            @PathVariable Long outfitId) {
+    public ResponseEntity<SelectPartOfData.Result<OutfitItem>> findByOutfitId(
+            @PathVariable Long outfitId,
+            @RequestParam(defaultValue = "0") int page) {
 
-        List<OutfitItem> outfitItems =
+        SelectPartOfData.Result<OutfitItem> outfitItems =
                 outfitItemService
-                        .findByOutfitId(outfitId);
+                        .findByOutfitId(outfitId, page);
 
         return ResponseEntity
                 .ok(outfitItems);

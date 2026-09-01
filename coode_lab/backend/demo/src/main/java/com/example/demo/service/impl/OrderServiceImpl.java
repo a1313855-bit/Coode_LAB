@@ -24,8 +24,13 @@ import com.example.demo.dto.orderitem.OrderItemDTO;
 import com.example.demo.dto.orderitem.OrderItemVendorDTO;
 import com.example.demo.repository.OrderRepository;
 import com.example.demo.repository.OrderItemRepository;
+import com.example.demo.repository.UserRepository;
+import com.example.demo.repository.CartItemRepository;
+import com.example.demo.repository.ProductRepository;
+import com.example.demo.repository.VendorRepository;
 import com.example.demo.service.OrderService;
 import com.example.demo.util.VendorStatusMapper;
+import com.example.demo.util.SelectPartOfData;
 
 @Service
 @Transactional
@@ -36,28 +41,37 @@ public class OrderServiceImpl implements OrderService {
     // ╚═══════════════╝
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
+    private final UserRepository userRepository;
+    private final CartItemRepository cartItemRepository;
+    private final ProductRepository productRepository;
+    private final VendorRepository vendorRepository;
 
-    public OrderServiceImpl(OrderRepository orderRepository, OrderItemRepository orderItemRepository) {
+    public OrderServiceImpl(OrderRepository orderRepository,
+            OrderItemRepository orderItemRepository,
+            UserRepository userRepository,
+            CartItemRepository cartItemRepository,
+            ProductRepository productRepository,
+            VendorRepository vendorRepository) {
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
+        this.userRepository = userRepository;
+        this.cartItemRepository = cartItemRepository;
+        this.productRepository = productRepository;
+        this.vendorRepository = vendorRepository;
     }
 
     // ╔══════════════════════════════╗
     // ║ Order（訂單主表） ║
     // ╚══════════════════════════════╝
 
-    // TODO: 依賴 CartItemRepository / UserRepository（其他組員負責），待整合後改為真實查詢
-    // 目前 User 與 CartItem 以假資料代替（標註處需替換）
     @Override
     public Order createOrder(CreateOrderRequest request) {
-        // TODO: 替換成 userRepository.findById(request.getUserId())
-        User user = new User();
-        user.setUserId(request.getUserId());
+        User user = userRepository.findById(request.getUserId()).orElse(null);
+        if (user == null) {
+            return null;
+        }
 
-        // TODO: 替換成 cartItemRepository.findAllById(request.getCartItemIds())
-        List<CartItem> cartItems = List.of(
-                buildPlaceholderCartItem(2L, 2, "500.00"),
-                buildPlaceholderCartItem(3L, 2, "1200.00"));
+        List<CartItem> cartItems = cartItemRepository.findAllById(request.getCartItemIds());
 
         int totalAmount = 0;
         BigDecimal sumTotal = BigDecimal.ZERO;
@@ -78,33 +92,22 @@ public class OrderServiceImpl implements OrderService {
         return orderRepository.save(order);
     }
 
-    // TODO: 假資料用輔助方法，整合 CartItemRepository 後可刪除
-    private CartItem buildPlaceholderCartItem(Long productId, int quantity, String price) {
-        CartItem item = new CartItem();
-        Product product = new Product();
-        product.setProductId(productId);
-        item.setProduct(product);
-        item.setProductQuantity(quantity);
-        item.setPrice(new BigDecimal(price));
-        return item;
+    @Override
+    @Transactional(readOnly = true)
+    public SelectPartOfData.Result<OrderDTO> findByUserId(Long userId, int page) {
+        List<OrderDTO> all = orderRepository.findByUser_UserId(userId).stream()
+                .map(this::toOrderDTO)
+                .toList();
+        return SelectPartOfData.pageOf10(all, page);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<OrderDTO> findByUserId(Long userId) {
-        List<OrderDTO> data = orderRepository.findByUser_UserId(userId).stream()
+    public SelectPartOfData.Result<OrderDTO> findAll(int page) {
+        List<OrderDTO> all = orderRepository.findAll().stream()
                 .map(this::toOrderDTO)
                 .toList();
-        return data;
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<OrderDTO> findAll() {
-        List<OrderDTO> data = orderRepository.findAll().stream()
-                .map(this::toOrderDTO)
-                .toList();
-        return data;
+        return SelectPartOfData.pageOf10(all, page);
     }
 
     @Override
@@ -230,8 +233,6 @@ public class OrderServiceImpl implements OrderService {
     // ║ OrderItem（訂單明細） ║
     // ╚══════════════════════════════╝
 
-    // TODO: 依賴 ProductRepository / VendorRepository（其他組員負責），待整合後改為真實查詢
-    // 目前 Product 與 Vendor 以假資料代替（標註處需替換）
     @Override
     public OrderItem createOrderItem(Long orderId, CreateOrderItemRequest request) {
         Optional<Order> optional = orderRepository.findById(orderId);
@@ -240,14 +241,15 @@ public class OrderServiceImpl implements OrderService {
         }
         Order order = optional.get();
 
-        // TODO: 替換成 productRepository.findById(request.getProductId())
-        Product product = new Product();
-        product.setProductId(request.getProductId());
-        product.setPrice(new BigDecimal("500.00"));
+        Product product = productRepository.findById(request.getProductId()).orElse(null);
+        if (product == null) {
+            return null;
+        }
 
-        // TODO: 替換成 vendorRepository.findById(product.getVendor().getVendorId())
-        Vendor vendor = new Vendor();
-        vendor.setVendorId(1L);
+        Vendor vendor = vendorRepository.findById(product.getVendor().getVendorId()).orElse(null);
+        if (vendor == null) {
+            return null;
+        }
 
         BigDecimal priceTotal = product.getPrice()
                 .multiply(BigDecimal.valueOf(request.getProductQuantity()));
@@ -266,27 +268,30 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<OrderItemDTO> findItemsByOrderId(Long orderId) {
-        return orderItemRepository.findByOrder_OrderId(orderId).stream()
+    public SelectPartOfData.Result<OrderItemDTO> findItemsByOrderId(Long orderId, int page) {
+        List<OrderItemDTO> all = orderItemRepository.findByOrder_OrderId(orderId).stream()
                 .map(this::toOrderItemDTO)
                 .toList();
+        return SelectPartOfData.pageOf10(all, page);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<OrderItemVendorDTO> findItemsByVendorId(Long vendorId) {
-        return orderItemRepository.findByVendor_VendorId(vendorId).stream()
+    public SelectPartOfData.Result<OrderItemVendorDTO> findItemsByVendorId(Long vendorId, int page) {
+        List<OrderItemVendorDTO> all = orderItemRepository.findByVendor_VendorId(vendorId).stream()
                 .map(this::toOrderItemVendorDTO)
                 .toList();
+        return SelectPartOfData.pageOf10(all, page);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<OrderItemVendorDTO> findItemsByVendorIdAndStatus(Long vendorId, String vendorStatus) {
+    public SelectPartOfData.Result<OrderItemVendorDTO> findItemsByVendorIdAndStatus(Long vendorId, String vendorStatus, int page) {
         List<String> statuses = VendorStatusMapper.toOrderItemStatuses(vendorStatus);
-        return orderItemRepository.findByVendor_VendorIdAndStatusIn(vendorId, statuses).stream()
+        List<OrderItemVendorDTO> all = orderItemRepository.findByVendor_VendorIdAndStatusIn(vendorId, statuses).stream()
                 .map(this::toOrderItemVendorDTO)
                 .toList();
+        return SelectPartOfData.pageOf10(all, page);
     }
 
     @Override

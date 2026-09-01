@@ -48,7 +48,7 @@ public class Vendor {
     @Column(name = "vendor_name", length = 100, nullable = false)
     private String vendorName;
 
-    @Column(name = "email", length = 100, nullable = false)
+    @Column(name = "email", length = 100, nullable = false , unique = true)
     private String email;
 
     @Column(name = "password", length = 100, nullable = false)

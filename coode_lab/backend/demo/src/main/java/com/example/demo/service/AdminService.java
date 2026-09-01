@@ -2,6 +2,7 @@ package com.example.demo.service;
 
 import java.util.List;
 import com.example.demo.model.Admin;
+import com.example.demo.util.SelectPartOfData;
 
 /**
  * AdminService
@@ -17,8 +18,8 @@ public interface AdminService {
     //查詢單一管理員
     Admin findById(Long adminId);
 
-    //查詢全部管理員
-    List<Admin> findAll();
+    //查詢全部管理員 (固定每頁10筆,page 從 0 開始)
+    SelectPartOfData.Result<Admin> findAll(int page);
 
     //修改管理員資料
     Admin updateAdmin(Admin admin);

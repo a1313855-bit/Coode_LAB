@@ -6,7 +6,6 @@ import java.util.Optional;
 
 // ========== Spring Data JPA ==========
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
 
 // ========== Model ==========
 import com.example.demo.model.Outfit;
@@ -28,7 +27,7 @@ import com.example.demo.model.OutfitItem;
  * 同一套 Outfit 的同一個 slotType
  * 最多只允許存在一筆 OutfitItem。
  */
-@Repository
+
 public interface OutfitItemRepository
         extends JpaRepository<OutfitItem, Long> {
 

@@ -13,9 +13,9 @@ import com.example.demo.dto.order.UpdateRecipientRequest;
 import com.example.demo.dto.order.OrderDTO;
 import com.example.demo.model.Order;
 import com.example.demo.service.OrderService;
+import com.example.demo.util.SelectPartOfData;
 
 import jakarta.validation.Valid;
-import java.util.List;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -48,10 +48,12 @@ public class OrderController {
     }
 
     @GetMapping("/user")
-    public ResponseEntity<List<OrderDTO>> getOrdersByUserId(@RequestParam Long userId) {
+    public ResponseEntity<SelectPartOfData.Result<OrderDTO>> getOrdersByUserId(
+            @RequestParam Long userId,
+            @RequestParam(defaultValue = "0") int page) {
         // TODO: 查詢訂單列表（依使用者）
-        List<OrderDTO> orders = orderService.findByUserId(userId);
-        if (!orders.isEmpty()) {
+        SelectPartOfData.Result<OrderDTO> orders = orderService.findByUserId(userId, page);
+        if (!orders.getContent().isEmpty()) {
             return ResponseEntity.ok(orders);
         } else {
             return ResponseEntity.notFound().build();
@@ -67,10 +69,11 @@ public class OrderController {
     }
 
     @GetMapping("/all")
-    public ResponseEntity<List<OrderDTO>> getAllOrders() {
+    public ResponseEntity<SelectPartOfData.Result<OrderDTO>> getAllOrders(
+            @RequestParam(defaultValue = "0") int page) {
         // TODO: 查詢所有訂單（admin 管理員）
-        List<OrderDTO> orders = orderService.findAll();
-        if (!orders.isEmpty()) {
+        SelectPartOfData.Result<OrderDTO> orders = orderService.findAll(page);
+        if (!orders.getContent().isEmpty()) {
             return ResponseEntity.ok(orders);
         } else {
             return ResponseEntity.notFound().build();

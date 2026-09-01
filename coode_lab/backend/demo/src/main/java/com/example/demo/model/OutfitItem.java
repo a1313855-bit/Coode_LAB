@@ -9,6 +9,7 @@ import lombok.AllArgsConstructor;
 // ========== Jakarta Persistence（JPA） ==========
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import jakarta.persistence.Id;
 import jakarta.persistence.Column;
 import jakarta.persistence.JoinColumn;
@@ -25,7 +26,8 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "outfit_items")
+@Table(name = "outfit_items", uniqueConstraints = {
+        @UniqueConstraint(name = "uk_outfit_slot", columnNames = { "outfit_id", "slot_type" }) })
 public class OutfitItem {
 
     // ╔═══════╗
@@ -36,7 +38,7 @@ public class OutfitItem {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long outfititemsId;
 
-    @Column(name = "slot_type", length = 100, nullable = false)
+    @Column(name = "slot_type", length = 100, nullable = false )
     private String slotType;
 
     // ╔═════════════╗

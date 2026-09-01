@@ -13,11 +13,9 @@ import com.example.demo.model.User;
 
 // ========== Repository ==========
 import com.example.demo.repository.OutfitRepository;
-
-// ========== Service ==========
+import com.example.demo.repository.UserRepository;
 import com.example.demo.service.OutfitService;
-//import com.example.demo.service.UserService;
-
+import com.example.demo.util.SelectPartOfData;
 
 /**
  * OutfitService 的實作類別。
@@ -32,14 +30,13 @@ public class OutfitServiceImpl implements OutfitService {
     // ╚════════════╝
 
     private final OutfitRepository outfitRepository;
-
+    private final UserRepository userRepository;
 
     // ╔═════════╗
     // ║ Service ║
     // ╚═════════╝
 
-    //private final UserService userService;
-
+    // private final UserService userService;
 
     // ╔═════════════╗
     // ║ Constructor ║
@@ -49,19 +46,20 @@ public class OutfitServiceImpl implements OutfitService {
      * 建構 OutfitServiceImpl。
      *
      * @param outfitRepository Outfit 資料存取元件
-     * @param userService User 業務邏輯元件
+     * @param userService      User 業務邏輯元件
      */
     public OutfitServiceImpl(
-            OutfitRepository outfitRepository) 
-            /* ,UserService userService*/{
+            OutfitRepository outfitRepository,
+            UserRepository userRepository)
+    /* ,UserService userService */ {
 
         this.outfitRepository = outfitRepository;
-        //this.userService = userService;
+        this.userRepository = userRepository;
+        // this.userService = userService;
     }
 
-
     // ╔════════════════╗
-    // ║ Create Outfit  ║
+    // ║ Create Outfit ║
     // ╚════════════════╝
 
     /**
@@ -74,7 +72,7 @@ public class OutfitServiceImpl implements OutfitService {
      * 4、穿搭名稱不得超過資料庫欄位限制。
      *
      * @param userId 建立穿搭的使用者 ID
-     * @param name 穿搭名稱
+     * @param name   穿搭名稱
      * @return 建立完成的 Outfit
      * @throws IllegalArgumentException 使用者不存在或穿搭名稱不符合規則時
      */
@@ -101,9 +99,8 @@ public class OutfitServiceImpl implements OutfitService {
         return outfitRepository.save(outfit);
     }
 
-
     // ╔═══════════════╗
-    // ║ Find Outfit   ║
+    // ║ Find Outfit ║
     // ╚═══════════════╝
 
     /**
@@ -120,7 +117,6 @@ public class OutfitServiceImpl implements OutfitService {
         return getOutfit(outfitId);
     }
 
-
     /**
      * 查詢指定使用者建立的所有穿搭。
      *
@@ -133,18 +129,18 @@ public class OutfitServiceImpl implements OutfitService {
      */
     @Override
     @Transactional(readOnly = true)
-    public List<Outfit> findByUserId(Long userId) {
+    public SelectPartOfData.Result<Outfit> findByUserId(Long userId, int page) {
 
         // 1、確認使用者存在
         User user = getUser(userId);
 
         // 2、查詢此使用者建立的所有穿搭
-        return outfitRepository.findByUser(user);
+        List<Outfit> all = outfitRepository.findByUser(user);
+        return SelectPartOfData.pageOf10(all, page);
     }
 
-
     // ╔════════════════╗
-    // ║ Update Outfit  ║
+    // ║ Update Outfit ║
     // ╚════════════════╝
 
     /**
@@ -157,7 +153,7 @@ public class OutfitServiceImpl implements OutfitService {
      * 4、新名稱不得超過資料庫欄位限制。
      *
      * @param outfitId 穿搭 ID
-     * @param name 新的穿搭名稱
+     * @param name     新的穿搭名稱
      * @return 修改完成的 Outfit
      * @throws IllegalArgumentException 找不到穿搭或名稱不符合規則時
      */
@@ -186,9 +182,8 @@ public class OutfitServiceImpl implements OutfitService {
         return outfitRepository.save(existingOutfit);
     }
 
-
     // ╔════════════════╗
-    // ║ Delete Outfit  ║
+    // ║ Delete Outfit ║
     // ╚════════════════╝
 
     /**
@@ -208,9 +203,8 @@ public class OutfitServiceImpl implements OutfitService {
         outfitRepository.delete(outfit);
     }
 
-
     // ╔══════════════════════╗
-    // ║ Private - Get User   ║
+    // ║ Private - Get User ║
     // ╚══════════════════════╝
 
     /**
@@ -225,23 +219,19 @@ public class OutfitServiceImpl implements OutfitService {
      */
     private User getUser(Long userId) {
 
-    if (userId == null) {
-        throw new IllegalArgumentException(
-                "使用者 ID 不得為空"
-        );
+        if (userId == null) {
+            throw new IllegalArgumentException(
+                    "使用者 ID 不得為空");
+        }
+
+        return userRepository
+                .findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "找不到使用者資料"));
     }
 
-    return userService
-            .findById(userId)
-            .orElseThrow(() ->
-                    new IllegalArgumentException(
-                            "找不到使用者資料"
-                    ));
-}
-
-
     // ╔════════════════════════╗
-    // ║ Private - Get Outfit   ║
+    // ║ Private - Get Outfit ║
     // ╚════════════════════════╝
 
     /**
@@ -256,22 +246,18 @@ public class OutfitServiceImpl implements OutfitService {
         // 1、檢查 outfitId
         if (outfitId == null) {
             throw new IllegalArgumentException(
-                    "穿搭 ID 不得為空"
-            );
+                    "穿搭 ID 不得為空");
         }
 
         // 2、根據 outfitId 查詢 Outfit
         return outfitRepository
                 .findById(outfitId)
-                .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "找不到穿搭資料"
-                        ));
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "找不到穿搭資料"));
     }
 
-
     // ╔══════════════════════════════╗
-    // ║ Private - Validate Name      ║
+    // ║ Private - Validate Name ║
     // ╚══════════════════════════════╝
 
     /**
@@ -289,8 +275,7 @@ public class OutfitServiceImpl implements OutfitService {
         // 1、不可為 null 或空白
         if (name == null || name.isBlank()) {
             throw new IllegalArgumentException(
-                    "請給你的穿搭一個風格名稱"
-            );
+                    "請給你的穿搭一個風格名稱");
         }
 
         // 2、移除名稱前後多餘空白
@@ -299,8 +284,7 @@ public class OutfitServiceImpl implements OutfitService {
         // 3、檢查資料庫 VARCHAR(100) 長度限制
         if (normalizedName.length() > 100) {
             throw new IllegalArgumentException(
-                    "穿搭名稱不可超過 100 個字元"
-            );
+                    "穿搭名稱不可超過 100 個字元");
         }
 
         return normalizedName;

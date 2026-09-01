@@ -14,7 +14,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
-import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.FetchType;
@@ -27,8 +27,6 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 // ========== Java ==========
-import java.util.List;
-import java.util.ArrayList;
 import java.time.LocalDateTime;
 
 @Getter
@@ -65,9 +63,9 @@ public class ReturnRequest {
     // ║ Foreign key ║
     // ╚═════════════╝
 
-    // 一對多 : One:"ReturnRequest" To Many:"ReturnItem"
-    @OneToMany(mappedBy = "returnRequest", cascade = CascadeType.ALL, targetEntity = ReturnItem.class, fetch = FetchType.LAZY)
-    private List<ReturnItem> returnItem = new ArrayList<ReturnItem>();
+    // 一對一 : One:"ReturnRequest" To One:"ReturnItem"
+    @OneToOne(mappedBy = "returnRequest", cascade = CascadeType.ALL, orphanRemoval = true, targetEntity = ReturnItem.class, fetch = FetchType.LAZY)
+    private ReturnItem returnItem;
 
     // 多對一 : Many="ReturnRequest" To One="Order"
     @ManyToOne(fetch = FetchType.LAZY)

@@ -2,7 +2,6 @@ package com.example.demo.repository;
 
 // ========== Spring Data JPA ==========
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
 
 // ========== Model ==========
 import com.example.demo.model.Outfit;
@@ -11,8 +10,6 @@ import com.example.demo.model.User;
 // ========== Java ==========
 import java.util.List;
 
-
-@Repository
 /*
 Outfit：代表這個 Repository 要操作的 Entity
 Long:代表Outfit PK outfitId的資料類別

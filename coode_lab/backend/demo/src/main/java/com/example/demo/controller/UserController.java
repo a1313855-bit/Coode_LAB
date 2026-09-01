@@ -5,15 +5,16 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.demo.dto.ChangePasswordRequest;
+import com.example.demo.dto.UserLoginRequest;
 import com.example.demo.dto.UserResponse;
 import com.example.demo.dto.UserUpdateRequest;
 import com.example.demo.model.User;
 import com.example.demo.service.UserService;
+import com.example.demo.util.SelectPartOfData;
 
 import java.util.List;
 import java.util.Optional;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -39,6 +40,18 @@ public class UserController {
         UserResponse createdUser = userService.createUser(user);
 
         return ResponseEntity.ok(createdUser);
+    }
+
+    // =================
+    // 會員登入
+    // =================
+    @PostMapping("/login")
+    public ResponseEntity<UserResponse> login(@RequestBody UserLoginRequest loginRequest) {
+        UserResponse user = userService.login(
+                loginRequest.getEmail(),
+                loginRequest.getPassword()
+        );
+        return ResponseEntity.ok(user);
     }
 
     // =================
@@ -82,6 +95,16 @@ public class UserController {
     }
 
     // =================
+    // 查詢所有會員（分頁，固定每頁 10 筆，page 從 0 開始）
+    // 範例：/api/users/page?page=0 （第 1 頁，每頁 10 筆）
+    // =================
+    @GetMapping("/page")
+    public ResponseEntity<SelectPartOfData.Result<UserResponse>> findAllUsersPaged(
+            @RequestParam(defaultValue = "0") int page) {
+        return ResponseEntity.ok(userService.findAllUsers(page));
+    }
+
+    // =================
     // 更新會員資料
     // =================
     @PatchMapping("/{userId}")
@@ -95,13 +118,13 @@ public class UserController {
     }
 
     // =================
-    // 軟刪除(更新會員資料)
+    // 軟刪除/重新啟用(更新會員資料)
     // =================
     @PatchMapping("/{userId}/deactivate")
-    public ResponseEntity<UserResponse> deactivateUser(
+    public ResponseEntity<UserResponse> toggleUserStatus(
             @PathVariable Long userId) {
 
-        UserResponse deactivatedUser = userService.deactivateUser(userId);
+        UserResponse deactivatedUser = userService.toggleUserStatus(userId);
 
         return ResponseEntity.ok(deactivatedUser);
     }

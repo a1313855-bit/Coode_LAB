@@ -9,6 +9,7 @@ import com.example.demo.dto.ProductRequest;
 import com.example.demo.dto.ProductResponse;
 import com.example.demo.dto.StockRequest;
 import com.example.demo.service.ProductService;
+import com.example.demo.util.SelectPartOfData;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -32,20 +33,22 @@ public class ProductController {
         this.productService = productService;
     }
 
-    // 查全部商品,管理員用
+    // 查全部商品,管理員用 (固定每頁10筆,page 從 0 開始)
     @GetMapping
-    public List<ProductResponse> findAll() {
-        return productService.findAll();
+    public SelectPartOfData.Result<ProductResponse> findAll(
+            @RequestParam(defaultValue = "0") int page) {
+        return productService.findAll(page);
     }
 
-    // 查詢商城目前可以顯示的商品,商城使用
+    // 查詢商城目前可以顯示的商品,商城使用 (固定每頁10筆,page 從 0 開始)
     // 只有 Product = ACTIVE
     // 且 Vendor = ACTIVE
     // 且 Vendor 合約尚未到期才會出現
     @GetMapping("/available")
-    public List<ProductResponse> findAvailableProducts() {
+    public SelectPartOfData.Result<ProductResponse> findAvailableProducts(
+            @RequestParam(defaultValue = "0") int page) {
 
-        return productService.findAvailableProducts();
+        return productService.findAvailableProducts(page);
     }
 
     // 管理員/廠商後台查詢商品用
@@ -54,15 +57,18 @@ public class ProductController {
         return productService.findById(productId);
     }
 
-    // 管理員/廠商後台,看某廠商的全部商品用
+    // 管理員/廠商後台,看某廠商的全部商品用 (固定每頁10筆,page 從 0 開始)
     @GetMapping("/vendor/{vendorId}")
-    public List<ProductResponse> findByVendorId(@PathVariable Long vendorId) {
-        return productService.findByVendorId(vendorId);
+    public SelectPartOfData.Result<ProductResponse> findByVendorId(
+            @PathVariable Long vendorId,
+            @RequestParam(defaultValue = "0") int page) {
+        return productService.findByVendorId(vendorId, page);
     }
 
-    // 商城多條件搜尋商品
+    // 商城多條件搜尋商品 (固定每頁10筆,page 從 0 開始)
     @GetMapping("/filter")
-    public List<ProductResponse> searchProducts(
+    public SelectPartOfData.Result<ProductResponse> searchProducts(
+            @RequestParam(defaultValue = "0") int page,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String categoryType,
             @RequestParam(required = false) String style,
@@ -74,6 +80,7 @@ public class ProductController {
             @RequestParam(required = false) Long vendorId) {
 
         return productService.searchProducts(
+                page,
                 keyword,
                 categoryType,
                 style,
@@ -85,9 +92,10 @@ public class ProductController {
                 vendorId);
     }
 
-    // 管理員後台多條件搜尋商品
+    // 管理員後台多條件搜尋商品 (固定每頁10筆,page 從 0 開始)
     @GetMapping("/admin/filter")
-    public List<ProductResponse> adminSearchProducts(
+    public SelectPartOfData.Result<ProductResponse> adminSearchProducts(
+            @RequestParam(defaultValue = "0") int page,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String categoryType,
             @RequestParam(required = false) String style,
@@ -100,6 +108,7 @@ public class ProductController {
             @RequestParam(required = false) Long vendorId) {
 
         return productService.adminSearchProducts(
+                page,
                 keyword,
                 categoryType,
                 style,
@@ -112,9 +121,10 @@ public class ProductController {
                 vendorId);
     }
 
-    // 廠商後台搜尋自己的商品
+    // 廠商後台搜尋自己的商品 (固定每頁10筆,page 從 0 開始)
     @GetMapping("/vendor/filter")
-    public List<ProductResponse> vendorSearchProducts(
+    public SelectPartOfData.Result<ProductResponse> vendorSearchProducts(
+            @RequestParam(defaultValue = "0") int page,
             @RequestParam Long vendorId,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String categoryType,
@@ -127,6 +137,7 @@ public class ProductController {
             @RequestParam(required = false) String status) {
 
         return productService.vendorSearchProducts(
+                page,
                 vendorId,
                 keyword,
                 categoryType,
@@ -160,10 +171,12 @@ public class ProductController {
         return productService.updateStock(vendorId, productId, request);
     }
 
-    //低庫存管理
+    //低庫存管理 (固定每頁10筆,page 從 0 開始)
     @GetMapping("/vendor/{vendorId}/low-stock")
-    public List<ProductResponse> findLowStockProducts(@PathVariable Long vendorId){
-        return productService.findLowStockProducts(vendorId);
+    public SelectPartOfData.Result<ProductResponse> findLowStockProducts(
+            @PathVariable Long vendorId,
+            @RequestParam(defaultValue = "0") int page){
+        return productService.findLowStockProducts(vendorId, page);
     }
 
     // 廠商上架自己商品按鈕

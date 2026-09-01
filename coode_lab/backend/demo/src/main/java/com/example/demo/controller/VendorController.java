@@ -1,7 +1,5 @@
 package com.example.demo.controller;
 
-import java.util.List;
-
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -18,6 +16,7 @@ import com.example.demo.dto.VendorRequest;
 import com.example.demo.dto.VendorResponse;
 import com.example.demo.dto.VendorUpdateRequest;
 import com.example.demo.service.VendorService;
+import com.example.demo.util.SelectPartOfData;
 
 @RestController
 @RequestMapping("/coode_lab/vendors")
@@ -29,10 +28,11 @@ public class VendorController {
         this.vendorService = vendorService;
     }
 
-    // 管理員查看全部廠商
+    // 管理員查看全部廠商 (固定每頁10筆,page 從 0 開始)
     @GetMapping
-    public List<VendorResponse> findAll() {
-        return vendorService.findAll();
+    public SelectPartOfData.Result<VendorResponse> findAll(
+            @RequestParam(defaultValue = "0") int page) {
+        return vendorService.findAll(page);
     }
 
     // 管理員查看單一廠商資料詳細頁
@@ -41,13 +41,14 @@ public class VendorController {
         return vendorService.findById(vendorId);
     }
 
-    // 管理員搜尋 / 篩選廠商
+    // 管理員搜尋 / 篩選廠商 (固定每頁10筆,page 從 0 開始)
     @GetMapping("/filter")
-    public List<VendorResponse> searchVendors(
+    public SelectPartOfData.Result<VendorResponse> searchVendors(
+            @RequestParam(defaultValue = "0") int page,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String status) {
 
-        return vendorService.searchVendors(keyword, status);
+        return vendorService.searchVendors(page, keyword, status);
     }
 
     // 廠商登入

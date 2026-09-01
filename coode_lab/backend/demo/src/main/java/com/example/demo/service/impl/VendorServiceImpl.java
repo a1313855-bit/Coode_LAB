@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.example.demo.dto.VendorActivateRequest;
@@ -16,28 +17,32 @@ import com.example.demo.exception.VendorSpecification;
 import com.example.demo.model.Vendor;
 import com.example.demo.repository.VendorRepository;
 import com.example.demo.service.VendorService;
+import com.example.demo.util.SelectPartOfData;
 
 @Service
 
 public class VendorServiceImpl implements VendorService {
 
     private final VendorRepository vendorRepository;
+    private final PasswordEncoder passwordEncoder;
 
     // 建構子注入
     // Spring Boot 會自動把 VendorRepository 放進來,把 Spring Boot 傳進來的
     // vendorRepository，存到這個左邊 Service 自己的 vendorRepository 裡。
-    public VendorServiceImpl(VendorRepository vendorRepository) {
+    public VendorServiceImpl(VendorRepository vendorRepository, PasswordEncoder passwordEncoder) {
         this.vendorRepository = vendorRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
-    // 查所有廠商
+    // 查所有廠商 (固定每頁10筆)
     @Override
-    public List<VendorResponse> findAll() {
+    public SelectPartOfData.Result<VendorResponse> findAll(int page) {
 
-        return vendorRepository.findAll()
+        List<VendorResponse> all = vendorRepository.findAll()
                 .stream()
                 .map(this::toResponse)
                 .toList();
+        return SelectPartOfData.pageOf10(all, page);
     }
 
     // 根據vendorId查詢單一廠商
@@ -49,17 +54,18 @@ public class VendorServiceImpl implements VendorService {
         return toResponse(vendor);
     }
 
-    // 管理員搜尋 / 篩選廠商
+    // 管理員搜尋 / 篩選廠商 (固定每頁10筆)
     @Override
-    public List<VendorResponse> searchVendors(String keyword, String status) {
+    public SelectPartOfData.Result<VendorResponse> searchVendors(int page, String keyword, String status) {
 
         Specification<Vendor> spec = VendorSpecification.keywordContains(keyword)
                 .and(VendorSpecification.hasStatus(status));
 
-        return vendorRepository.findAll(spec)
+        List<VendorResponse> all = vendorRepository.findAll(spec)
                 .stream()
                 .map(this::toResponse)
                 .toList();
+        return SelectPartOfData.pageOf10(all, page);
     }
 
     // 根據email查詢廠商並檢查密碼、帳號狀態、合約到期時間
@@ -79,8 +85,12 @@ public class VendorServiceImpl implements VendorService {
         // 根據email查詢廠商
         Vendor vendor = vendorRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new RuntimeException("廠商 Email帳號不存在"));
-        // 檢查密碼是否正確
-        if (!vendor.getPassword().equals(request.getPassword())) {
+        // 檢查密碼是否正確（資料庫可能是 BCrypt 加密或明文）
+        String stored = vendor.getPassword();
+        boolean passwordOk = stored != null
+                && (passwordEncoder.matches(request.getPassword(), stored)
+                    || stored.equals(request.getPassword()));
+        if (!passwordOk) {
             throw new RuntimeException("密碼錯誤");
         }
 
@@ -289,7 +299,7 @@ public class VendorServiceImpl implements VendorService {
         // 把管理員輸入的資料放進 Vendor
         vendor.setVendorName(request.getVendorName());
         vendor.setEmail(request.getEmail());
-        vendor.setPassword(request.getPassword());
+        vendor.setPassword(passwordEncoder.encode(request.getPassword()));
 
         // 新建立的廠商預設還沒啟用
         vendor.setStatus("PENDING");

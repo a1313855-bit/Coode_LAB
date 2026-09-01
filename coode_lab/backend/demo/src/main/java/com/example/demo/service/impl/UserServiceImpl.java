@@ -3,7 +3,6 @@ package com.example.demo.service.impl;
 import java.util.List;
 import java.util.Optional;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -11,11 +10,10 @@ import com.example.demo.dto.ChangePasswordRequest;
 import com.example.demo.dto.UserResponse;
 import com.example.demo.dto.UserUpdateRequest;
 import com.example.demo.model.Cart;
-import com.example.demo.model.Order;
-import com.example.demo.model.ReturnRequest;
 import com.example.demo.model.User;
 import com.example.demo.repository.UserRepository;
 import com.example.demo.service.UserService;
+import com.example.demo.util.SelectPartOfData;
 
 import jakarta.transaction.Transactional;
 
@@ -33,6 +31,33 @@ public class UserServiceImpl implements UserService {
             PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+    }
+
+    // ╔═══════════════════════════════════════╗
+    // ║ 會員登入  AUTH                          ║
+    // ╚═══════════════════════════════════════╝
+    @Override
+    public UserResponse login(String email, String password) {
+        // 1.基本欄位檢查
+        if (email == null || email.isBlank()) {
+            throw new IllegalArgumentException("Email不能為空");
+        }
+        if (password == null || password.isBlank()) {
+            throw new IllegalArgumentException("密碼不能為空");
+        }
+        // 2.根據 Email 查詢會員
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("會員帳號不存在"));
+        // 3.檢查密碼是否正確（資料庫存的是 BCrypt 加密）
+        if (!passwordEncoder.matches(password, user.getPassword())) {
+            throw new IllegalArgumentException("密碼錯誤");
+        }
+        // 4.檢查帳號是否啟用
+        if (!"ACTIVE".equals(user.getStatus())) {
+            throw new IllegalArgumentException("會員帳號未啟用");
+        }
+        // 5.回傳會員資料（不含密碼）
+        return toUserResponse(user);
     }
 
     // ╔═══════════════════════╗
@@ -81,6 +106,15 @@ public class UserServiceImpl implements UserService {
         return userRepository.findAll().stream().map(this::toUserResponse).toList();
     }
 
+    // 查詢所有會員（分頁，固定每頁 10 筆，page 從 0 開始）
+    @Override
+    public SelectPartOfData.Result<UserResponse> findAllUsers(int page) {
+        List<UserResponse> all = userRepository.findAll().stream()
+                .map(this::toUserResponse)
+                .toList();
+        return SelectPartOfData.pageOf10(all, page);
+    }
+
     // 用帳號( Email )查詢會員
     @Override
     public Optional<UserResponse> findUserByEmail(String email) {
@@ -125,20 +159,29 @@ public class UserServiceImpl implements UserService {
         return toUserResponse(savedUser);
     }
 
-    // UPDATE-deactivateUser軟刪除 / 修改(更新UPDATE)會員狀態
+    // UPDATE-deactivateUser軟刪除 / 修改(更新UPDATE)會員狀態 / 重新啟用
     @Override
     @Transactional
-    public UserResponse deactivateUser(Long userId) {
+    public UserResponse toggleUserStatus(Long userId) {
         // TODO Auto-generated method stub
         // 1.根據 userId 查詢會員
         User existingUser = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("查無會員資料"));
-        // 2.將會員狀態改為停用
-        existingUser.setStatus("INACTIVE");
-
+        // 2.判斷目前會員狀態
+        if ("ACTIVE".equals(existingUser.getStatus())) {
+            // 目前為啟用 -> 改成停用(軟刪除)
+            existingUser.setStatus("INACTIVE");
+        } else if ("INACTIVE".equals(existingUser.getStatus())) {
+            // 目前為停用 -> 重新啟用
+            existingUser.setStatus("ACTIVE");
+        } else {
+            // 避免資料庫出現非預期狀態
+            throw new IllegalArgumentException("會員狀態異常： " + existingUser.getStatus());
+        }
+        // 儲存修改後的會員資料
         User savedUser = userRepository.save(existingUser);
 
-        // 3.儲存修改後的會員資料
+        // 4.Entity -> DTO
         return toUserResponse(savedUser);
     }
 

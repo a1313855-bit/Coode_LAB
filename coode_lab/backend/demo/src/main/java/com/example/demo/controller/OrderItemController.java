@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 // ========== Project ==========
 import com.example.demo.dto.orderitem.CreateOrderItemRequest;
@@ -19,9 +20,9 @@ import com.example.demo.dto.orderitem.OrderItemDTO;
 import com.example.demo.dto.orderitem.OrderItemVendorDTO;
 import com.example.demo.model.OrderItem;
 import com.example.demo.service.OrderService;
+import com.example.demo.util.SelectPartOfData;
 
 import jakarta.validation.Valid;
-import java.util.List;
 
 @RestController
 @RequestMapping("/orders/{orderId}/items")
@@ -53,9 +54,11 @@ public class OrderItemController {
     }
 
     @GetMapping
-    public ResponseEntity<List<OrderItemDTO>> getItemsByOrderId(@PathVariable Long orderId) {
-        List<OrderItemDTO> items = orderService.findItemsByOrderId(orderId);
-        if (!items.isEmpty()) {
+    public ResponseEntity<SelectPartOfData.Result<OrderItemDTO>> getItemsByOrderId(
+            @PathVariable Long orderId,
+            @RequestParam(defaultValue = "0") int page) {
+        SelectPartOfData.Result<OrderItemDTO> items = orderService.findItemsByOrderId(orderId, page);
+        if (!items.getContent().isEmpty()) {
             return ResponseEntity.ok(items);
         } else {
             return ResponseEntity.notFound().build();
@@ -75,16 +78,17 @@ public class OrderItemController {
     }
 
     @GetMapping("/vendor/{vendorId}")
-    public ResponseEntity<List<OrderItemVendorDTO>> getItemsByVendorId(
+    public ResponseEntity<SelectPartOfData.Result<OrderItemVendorDTO>> getItemsByVendorId(
             @PathVariable Long vendorId,
+            @RequestParam(defaultValue = "0") int page,
             @Valid VendorOrderItemQuery query) {
-        List<OrderItemVendorDTO> items;
+        SelectPartOfData.Result<OrderItemVendorDTO> items;
         if (query.getStatus() == null) {
-            items = orderService.findItemsByVendorId(vendorId);
+            items = orderService.findItemsByVendorId(vendorId, page);
         } else {
-            items = orderService.findItemsByVendorIdAndStatus(vendorId, query.getStatus());
+            items = orderService.findItemsByVendorIdAndStatus(vendorId, query.getStatus(), page);
         }
-        if (!items.isEmpty()) {
+        if (!items.getContent().isEmpty()) {
             return ResponseEntity.ok(items);
         } else {
             return ResponseEntity.notFound().build();

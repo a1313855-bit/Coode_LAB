@@ -15,6 +15,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.FetchType;
 
 // ========== Jackson ==========
@@ -49,11 +50,8 @@ public class ReturnItem {
     @Column(name = "description", length = 255)
     private String description;
 
-    @Column(name = "returned_quantity", nullable = false)
-    private Integer returnedQuantity;
-
-    @Column(name = "exchanged_quantity", nullable = false)
-    private Integer exchangedQuantity;
+    @Column(name = "approval_quantity", nullable = false)
+    private Integer approvalQuantity;
 
     @Column(name = "rejected_quantity", nullable = false)
     private Integer rejectedQuantity;
@@ -71,9 +69,8 @@ public class ReturnItem {
     @JsonIgnoreProperties("returnItem")
     private OrderItem orderItem;
 
-    // 多對一 : Many="ReturnItem" To One="ReturnRequest"
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "return_requests_id", nullable = false)
+    @OneToOne(targetEntity = ReturnRequest.class, fetch = FetchType.LAZY)
+    @JoinColumn(name = "return_requests_id", nullable = false, unique = true)
     @JsonIgnoreProperties("returnItem")
     private ReturnRequest returnRequest;
 

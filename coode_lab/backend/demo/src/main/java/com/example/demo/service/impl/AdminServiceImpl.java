@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.demo.model.Admin;
 import com.example.demo.repository.AdminRepository;
 import com.example.demo.service.AdminService;
+import com.example.demo.util.SelectPartOfData;
 
 @Service
 public class AdminServiceImpl implements AdminService{
@@ -85,17 +86,10 @@ public class AdminServiceImpl implements AdminService{
     }
 
 
-    //查詢全部管理員
+    //查詢全部管理員 (固定每頁10筆,page 從 0 開始)
     @Override
-    public List<Admin> findAll() {
-        /*
-        1、呼叫AdminRepository的findAll()方式
-        finAll()是JpaRepository內建的方法，會回傳List<Admin>
-        這個方法會到admin資料表查詢所有管理員資料
-        
-        2、回傳List<Admin>給Controller
-        */
-        return adminRepository.findAll();   
+    public SelectPartOfData.Result<Admin> findAll(int page) {
+        return SelectPartOfData.pageOf10(adminRepository.findAll(), page);
     }
 
 

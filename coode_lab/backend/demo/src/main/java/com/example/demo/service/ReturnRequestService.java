@@ -14,6 +14,7 @@ import com.example.demo.dto.returnitem.CreateReturnItemRequest;
 import com.example.demo.dto.returnitem.UpdateReturnItemQuantityRequest;
 import com.example.demo.dto.returnitem.UpdateReturnItemStatusRequest;
 import com.example.demo.dto.returnitem.ReturnItemDTO;
+import com.example.demo.util.SelectPartOfData;
 
 public interface ReturnRequestService {
 
@@ -27,14 +28,14 @@ public interface ReturnRequestService {
     // 查詢單一申請
     Optional<ReturnRequestDTO> findById(Long returnRequestId);
 
-    // 查詢所有申請（admin 管理員系統）
-    List<ReturnRequestDTO> findAll();
+    // 查詢所有申請（admin 管理員系統）(固定每頁10筆,page 從 0 開始)
+    SelectPartOfData.Result<ReturnRequestDTO> findAll(int page);
 
-    // 查詢會員所有申請
-    List<ReturnRequestDTO> findByUserId(Long userId);
+    // 查詢會員所有申請 (固定每頁10筆,page 從 0 開始)
+    SelectPartOfData.Result<ReturnRequestDTO> findByUserId(Long userId, int page);
 
-    // 查詢某廠商需要處理的申請
-    List<ReturnRequestDTO> findByVendorId(Long vendorId);
+    // 查詢某廠商需要處理的申請 (固定每頁10筆,page 從 0 開始)
+    SelectPartOfData.Result<ReturnRequestDTO> findByVendorId(Long vendorId, int page);
 
     // 更新申請狀態
     ReturnRequest updateStatus(Long returnRequestId, UpdateReturnRequestStatusRequest request);

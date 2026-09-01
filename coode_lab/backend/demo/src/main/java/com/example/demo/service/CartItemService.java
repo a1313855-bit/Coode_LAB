@@ -5,6 +5,7 @@ import java.util.List;
 import com.example.demo.dto.AddCartItemRequest;
 import com.example.demo.dto.CartItemResponse;
 import com.example.demo.dto.UpdateCartItemRequest;
+import com.example.demo.util.SelectPartOfData;
 
 public interface CartItemService {
 
@@ -12,8 +13,8 @@ public interface CartItemService {
     // ║ 購物車商品 查詢 READ         ║
     // ╚══════════════════════════════╝
 
-    // 查詢購物車全部商品
-    List<CartItemResponse> findCartItemsByCartId(Long cartId);
+    // 查詢購物車全部商品 (固定每頁10筆,page 從 0 開始)
+    SelectPartOfData.Result<CartItemResponse> findCartItemsByCartId(Long cartId, int page);
 
     // 查詢購物車某商品
     CartItemResponse findCartItemByCartIdAndProductId(
@@ -23,10 +24,11 @@ public interface CartItemService {
     // 計算購物車有幾種商品
     Long countDistinctProducts(Long cartId);
 
-    // 依名稱關鍵字搜尋購物車商品
-    List<CartItemResponse> findCartItemsByKeyword(
+    // 依名稱關鍵字搜尋購物車商品 (固定每頁10筆,page 從 0 開始)
+    SelectPartOfData.Result<CartItemResponse> findCartItemsByKeyword(
             Long cartId,
-            String keyword);
+            String keyword,
+            int page);
 
     // ╔══════════════════════════════╗
     // ║ 購物車商品 CREATE            ║

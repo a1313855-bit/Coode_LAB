@@ -17,6 +17,7 @@ import com.example.demo.dto.AddCartItemRequest;
 import com.example.demo.dto.CartItemResponse;
 import com.example.demo.dto.UpdateCartItemRequest;
 import com.example.demo.service.CartItemService;
+import com.example.demo.util.SelectPartOfData;
 
 @RestController
 @RequestMapping("/api/cart-items")
@@ -34,13 +35,14 @@ public class CartItemController {
     // 查詢購物車全部商品
     // =========================
     @GetMapping("/cart/{cartId}")
-    public ResponseEntity<List<CartItemResponse>>
+    public ResponseEntity<SelectPartOfData.Result<CartItemResponse>>
             findCartItemsByCartId(
-                    @PathVariable Long cartId) {
+                    @PathVariable Long cartId,
+                    @RequestParam(defaultValue = "0") int page) {
 
-        List<CartItemResponse> items =
+        SelectPartOfData.Result<CartItemResponse> items =
                 cartItemService
-                        .findCartItemsByCartId(cartId);
+                        .findCartItemsByCartId(cartId, page);
 
         return ResponseEntity.ok(items);
     }
@@ -81,16 +83,18 @@ public class CartItemController {
     // 關鍵字搜尋
     // =========================
     @GetMapping("/cart/{cartId}/search")
-    public ResponseEntity<List<CartItemResponse>>
+    public ResponseEntity<SelectPartOfData.Result<CartItemResponse>>
             findCartItemsByKeyword(
                     @PathVariable Long cartId,
-                    @RequestParam String keyword) {
+                    @RequestParam String keyword,
+                    @RequestParam(defaultValue = "0") int page) {
 
-        List<CartItemResponse> items =
+        SelectPartOfData.Result<CartItemResponse> items =
                 cartItemService
                         .findCartItemsByKeyword(
                                 cartId,
-                                keyword);
+                                keyword,
+                                page);
 
         return ResponseEntity.ok(items);
     }

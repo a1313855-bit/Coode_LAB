@@ -13,6 +13,7 @@ import com.example.demo.dto.orderitem.CreateOrderItemRequest;
 import com.example.demo.dto.order.OrderDTO;
 import com.example.demo.dto.orderitem.OrderItemDTO;
 import com.example.demo.dto.orderitem.OrderItemVendorDTO;
+import com.example.demo.util.SelectPartOfData;
 
 public interface OrderService {
 
@@ -23,14 +24,14 @@ public interface OrderService {
     // 將選中的 CartItem 結帳並建立訂單
     Order createOrder(CreateOrderRequest request);
 
-    // 查詢會員的所有訂單
-    List<OrderDTO> findByUserId(Long userId);
+    // 查詢會員的所有訂單 (固定每頁10筆,page 從 0 開始)
+    SelectPartOfData.Result<OrderDTO> findByUserId(Long userId, int page);
 
     // 查詢單一訂單
     Optional<OrderDTO> findById(Long orderId);
 
-    // 查詢所有訂單（admin 管理員系統）
-    List<OrderDTO> findAll();
+    // 查詢所有訂單（admin 管理員系統）(固定每頁10筆,page 從 0 開始)
+    SelectPartOfData.Result<OrderDTO> findAll(int page);
 
     // 修改收件資訊
     Order updateRecipient(Long orderId, UpdateRecipientRequest request);
@@ -42,14 +43,14 @@ public interface OrderService {
     // 建立訂單明細
     OrderItem createOrderItem(Long orderId, CreateOrderItemRequest request);
 
-    // 查詢某張訂單所有商品
-    List<OrderItemDTO> findItemsByOrderId(Long orderId);
+    // 查詢某張訂單所有商品 (固定每頁10筆,page 從 0 開始)
+    SelectPartOfData.Result<OrderItemDTO> findItemsByOrderId(Long orderId, int page);
 
-    // 廠商查看自己收到的訂單商品
-    List<OrderItemVendorDTO> findItemsByVendorId(Long vendorId);
+    // 廠商查看自己收到的訂單商品 (固定每頁10筆,page 從 0 開始)
+    SelectPartOfData.Result<OrderItemVendorDTO> findItemsByVendorId(Long vendorId, int page);
 
-    // 廠商查看自己收到的訂單商品（依狀態群組）
-    List<OrderItemVendorDTO> findItemsByVendorIdAndStatus(Long vendorId, String vendorStatus);
+    // 廠商查看自己收到的訂單商品（依狀態群組）(固定每頁10筆,page 從 0 開始)
+    SelectPartOfData.Result<OrderItemVendorDTO> findItemsByVendorIdAndStatus(Long vendorId, String vendorStatus, int page);
 
     // 修改訂單明細狀態
     OrderItem updateStatus(Long orderItemId, String status);
