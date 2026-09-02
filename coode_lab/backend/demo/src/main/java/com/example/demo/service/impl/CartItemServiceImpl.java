@@ -382,6 +382,9 @@ public class CartItemServiceImpl implements CartItemService {
 
                 response.setProductQuantity(cartItem.getProductQuantity());
 
+                // 即時庫存，供前端連動庫存檢查
+                response.setStock(product.getStock());
+
                 // 不再直接使用 CartItem 舊價格
                 response.setPrice(currentPrice);
 

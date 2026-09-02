@@ -21,8 +21,8 @@ public interface OrderService {
     // ║ Order（訂單主表）            ║
     // ╚══════════════════════════════╝
 
-    // 將選中的 CartItem 結帳並建立訂單
-    Order createOrder(CreateOrderRequest request);
+    // 將選中的 CartItem 結帳並建立訂單（回傳 DTO，避免 Entity 序列化無限迴圈）
+    OrderDTO createOrder(CreateOrderRequest request);
 
     // 查詢會員的所有訂單 (固定每頁10筆,page 從 0 開始)
     SelectPartOfData.Result<OrderDTO> findByUserId(Long userId, int page);
@@ -33,8 +33,8 @@ public interface OrderService {
     // 查詢所有訂單（admin 管理員系統）(固定每頁10筆,page 從 0 開始)
     SelectPartOfData.Result<OrderDTO> findAll(int page);
 
-    // 修改收件資訊
-    Order updateRecipient(Long orderId, UpdateRecipientRequest request);
+    // 修改收件資訊（回傳 DTO，避免 Entity 序列化無限迴圈）
+    OrderDTO updateRecipient(Long orderId, UpdateRecipientRequest request);
 
     // ╔══════════════════════════════╗
     // ║ OrderItem（訂單明細）        ║

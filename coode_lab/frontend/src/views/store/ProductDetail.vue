@@ -27,6 +27,10 @@ async function load() {
 async function addToCart() {
   message.value = ''
   error.value = ''
+  if (!canAdd()) {
+    error.value = '數量超過目前庫存或商品無庫存'
+    return
+  }
   try {
     // 取得登入會員的購物車（未登入時用測試帳號）
     const cart = await cartApi.findByUserId(currentUserId())
@@ -41,6 +45,15 @@ async function addToCart() {
   } catch (e) {
     error.value = '加入失敗：' + e.message
   }
+}
+
+function stock() {
+  return Number(product.value?.stock || 0)
+}
+
+// 數量必須在 1 ~ 目前庫存之間，且要有庫存
+function canAdd() {
+  return stock() > 0 && Number(qty.value) >= 1 && Number(qty.value) <= stock()
 }
 
 onMounted(load)
@@ -74,8 +87,11 @@ onMounted(load)
 
         <div v-if="product.status === 'ACTIVE'" class="buy-row">
           <label>數量</label>
-          <input v-model.number="qty" type="number" min="1" class="qty-input" />
-          <button class="btn btn-primary" @click="addToCart">加入購物車</button>
+          <input v-model.number="qty" type="number" min="1" :max="stock()" class="qty-input" />
+          <button class="btn btn-primary" :disabled="!canAdd()" @click="addToCart">加入購物車</button>
+          <span v-if="!canAdd()" class="muted stock-warn">
+            超過庫存或無庫存，無法加入
+          </span>
         </div>
         <div v-else class="muted">此商品目前暫未上架</div>
 
@@ -143,6 +159,14 @@ onMounted(load)
   padding: 8px;
   border: 1px solid var(--c-border);
   border-radius: 8px;
+}
+.stock-warn {
+  color: var(--c-danger);
+  font-size: 13px;
+}
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 @media (max-width: 700px) {
   .detail {

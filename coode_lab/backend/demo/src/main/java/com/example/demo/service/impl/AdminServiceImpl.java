@@ -1,6 +1,7 @@
 package com.example.demo.service.impl;
 import java.util.List;
 
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,10 +14,12 @@ import com.example.demo.util.SelectPartOfData;
 public class AdminServiceImpl implements AdminService{
 
     private final AdminRepository adminRepository;
+    private final PasswordEncoder passwordEncoder;
 
     //建構子注入
-    public AdminServiceImpl(AdminRepository adminRepository){
+    public AdminServiceImpl(AdminRepository adminRepository, PasswordEncoder passwordEncoder){
         this.adminRepository=adminRepository;
+        this.passwordEncoder=passwordEncoder;
     }
 
 
@@ -32,12 +35,14 @@ public class AdminServiceImpl implements AdminService{
         .orElseThrow(()->
         new IllegalArgumentException("管理員帳號不存在")); 
         /*
-        2、.admin.gerPassword() => 取得資料庫中此管理員密碼
-        ! => NOT(不相等)
-        .equals(password)=>比較兩個字串內容是否相同
-        if=> 若輸入的密碼和資料庫不同則拋出("密碼錯誤")
+        2、.admin.getPassword() => 取得資料庫中此管理員密碼
+        比對輸入的密碼與資料庫密碼（密碼可能是 BCrypt 加密或明文）
         */
-        if(!admin.getPassword().equals(password)){
+        String stored = admin.getPassword();
+        boolean passwordOk = stored != null
+                && (passwordEncoder.matches(password, stored)
+                    || stored.equals(password));
+        if(!passwordOk){
         throw new IllegalArgumentException("密碼錯誤");
         }
 
@@ -57,12 +62,15 @@ public class AdminServiceImpl implements AdminService{
 
             /*
             2、如果Email已存在，就不允許新增
-            post man:500 "Internal Server Error"
             */
             throw new IllegalArgumentException("Email 已存在");
         }
         /*
-        3、如果Email不存在，就把Admin物件存進mysql
+        3、密碼以 BCrypt 加密後再存入資料庫
+        */
+        admin.setPassword(passwordEncoder.encode(admin.getPassword()));
+        /*
+        4、如果Email不存在，就把Admin物件存進mysql
         save(admin)會執行新增資料的動作
         回傳儲存後的Admin物件
         */
@@ -155,9 +163,9 @@ public class AdminServiceImpl implements AdminService{
 
         /*
         3、把查到Admin物件中的password
-        修改成使用者傳進來的新password
+        修改成使用者傳進來的新password（BCrypt 加密）
         */
-        admin.setPassword(newPassword);
+        admin.setPassword(passwordEncoder.encode(newPassword));
 
         /*
         4、將修改後的Admin物件存回資料庫

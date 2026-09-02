@@ -22,6 +22,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import jakarta.validation.Valid;
+
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
@@ -35,7 +37,7 @@ public class UserController {
     // 會員註冊
     // =================
     @PostMapping
-    public ResponseEntity<UserResponse> createUser(@RequestBody User user) {
+    public ResponseEntity<UserResponse> createUser(@Valid @RequestBody User user) {
 
         UserResponse createdUser = userService.createUser(user);
 
@@ -46,7 +48,7 @@ public class UserController {
     // 會員登入
     // =================
     @PostMapping("/login")
-    public ResponseEntity<UserResponse> login(@RequestBody UserLoginRequest loginRequest) {
+    public ResponseEntity<UserResponse> login(@Valid @RequestBody UserLoginRequest loginRequest) {
         UserResponse user = userService.login(
                 loginRequest.getEmail(),
                 loginRequest.getPassword()
@@ -110,7 +112,7 @@ public class UserController {
     @PatchMapping("/{userId}")
     public ResponseEntity<UserResponse> updateUser(
             @PathVariable Long userId,
-            @RequestBody UserUpdateRequest request) {
+            @Valid @RequestBody UserUpdateRequest request) {
 
         UserResponse updatedUser = userService.updateUser(userId, request);
 
@@ -153,7 +155,7 @@ public class UserController {
     // 會員變更密碼
     // =================
     @PatchMapping("/{userId}/password")
-    public ResponseEntity<UserResponse> changePassword(@PathVariable Long userId, @RequestBody ChangePasswordRequest request) {
+    public ResponseEntity<UserResponse> changePassword(@PathVariable Long userId, @Valid @RequestBody ChangePasswordRequest request) {
         UserResponse updatedUser = userService.changePassword(userId, request);
 
         return ResponseEntity.ok(updatedUser);

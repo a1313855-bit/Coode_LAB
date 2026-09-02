@@ -13,11 +13,13 @@ import RegisterView from '../views/RegisterView.vue'
 
 // 廠商後台
 import VendorLayout from '../layouts/VendorLayout.vue'
-import VendorDashboard from '../views/vendor/VendorDashboard.vue'
+import VendorOverview from '../views/vendor/VendorOverview.vue'
 import VendorProducts from '../views/vendor/VendorProducts.vue'
-import VendorLowStock from '../views/vendor/VendorLowStock.vue'
 import VendorOrders from '../views/vendor/VendorOrders.vue'
 import VendorReturns from '../views/vendor/VendorReturns.vue'
+import VendorDashboard from '../views/vendor/VendorDashboard.vue'
+import VendorAccount from '../views/vendor/VendorAccount.vue'
+import VendorContract from '../views/vendor/VendorContract.vue'
 
 // 管理員後台
 import AdminLayout from '../layouts/AdminLayout.vue'
@@ -56,11 +58,13 @@ const router = createRouter({
       redirect: '/vendor/dashboard',
       meta: { auth: 'vendor' },
       children: [
-        { path: 'dashboard', name: 'vendor-dashboard', component: VendorDashboard },
-        { path: 'products', name: 'vendor-products', component: VendorProducts },
-        { path: 'low-stock', name: 'vendor-low-stock', component: VendorLowStock },
-        { path: 'orders', name: 'vendor-orders', component: VendorOrders },
-        { path: 'returns', name: 'vendor-returns', component: VendorReturns },
+        { path: 'dashboard', name: 'vendor-overview', component: VendorOverview, meta: { title: '首頁總覽' } },
+        { path: 'products', name: 'vendor-products', component: VendorProducts, meta: { title: '商品管理' } },
+        { path: 'orders', name: 'vendor-orders', component: VendorOrders, meta: { title: '訂單管理' } },
+        { path: 'returns', name: 'vendor-returns', component: VendorReturns, meta: { title: '退換貨管理' } },
+        { path: 'reports', name: 'vendor-reports', component: VendorDashboard, meta: { title: '銷售報表' } },
+        { path: 'account', name: 'vendor-account', component: VendorAccount, meta: { title: '帳號資訊' } },
+        { path: 'contract', name: 'vendor-contract', component: VendorContract, meta: { title: '合約資訊' } },
       ],
     },
     // ═══ 管理員後台（需 admin 登入）═══

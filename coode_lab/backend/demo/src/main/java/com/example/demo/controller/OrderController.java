@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import com.example.demo.dto.order.CreateOrderRequest;
 import com.example.demo.dto.order.UpdateRecipientRequest;
 import com.example.demo.dto.order.OrderDTO;
-import com.example.demo.model.Order;
 import com.example.demo.service.OrderService;
 import com.example.demo.util.SelectPartOfData;
 
@@ -36,9 +35,9 @@ public class OrderController {
     // ╚════════════╝
 
     @PostMapping
-    public ResponseEntity<Order> createOrder(@Valid @RequestBody CreateOrderRequest request) {
+    public ResponseEntity<OrderDTO> createOrder(@Valid @RequestBody CreateOrderRequest request) {
         // TODO: 新增訂單
-        Order order = orderService.createOrder(request);
+        OrderDTO order = orderService.createOrder(request);
         if (order != null) {
             return ResponseEntity.status(HttpStatus.CREATED).body(order);
         } else {
@@ -81,8 +80,8 @@ public class OrderController {
     }
 
     @PutMapping("/{id}/recipient")
-    public ResponseEntity<Order> updateRecipient(@PathVariable Long id, @Valid @RequestBody UpdateRecipientRequest request) {
-        Order order = orderService.updateRecipient(id, request);
+    public ResponseEntity<OrderDTO> updateRecipient(@PathVariable Long id, @Valid @RequestBody UpdateRecipientRequest request) {
+        OrderDTO order = orderService.updateRecipient(id, request);
         if (order != null) {
             return ResponseEntity.ok(order);
         } else {

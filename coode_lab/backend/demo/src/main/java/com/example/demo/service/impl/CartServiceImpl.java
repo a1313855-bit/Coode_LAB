@@ -51,19 +51,18 @@ public class CartServiceImpl implements CartService {
 
     // 計算購物車目前有幾種商品
     @Override
-    public Integer calculateTotalQuantity(Long cartId) {
+    public Optional<Integer> calculateTotalQuantity(Long cartId) {
 
-        // 1. 先確認購物車是否存在
+        // 1. 先確認購物車是否存在，不存在回傳 empty（Controller 對應 404）
         if (!cartRepository.existsById(cartId)) {
-            throw new IllegalArgumentException(
-                    "找不到購物車，cartId: " + cartId);
+            return Optional.empty();
         }
 
         // 2. 計算該購物車中的 CartItem 筆數
         Long count = cartItemRepository.countByCart_CartId(cartId);
 
         // 3. Long 轉 Integer 後回傳
-        return count.intValue();
+        return Optional.of(count.intValue());
     }
 
     // 重新計算並更新 totalQuantity

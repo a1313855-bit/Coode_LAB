@@ -50,6 +50,10 @@ public class ReturnItem {
     @Column(name = "description", length = 255)
     private String description;
 
+    // 退換貨商品照片（base64 data URL，使用 LONGTEXT 儲存較長內容）
+    @Column(name = "picture", columnDefinition = "LONGTEXT")
+    private String picture;
+
     @Column(name = "approval_quantity", nullable = false)
     private Integer approvalQuantity;
 

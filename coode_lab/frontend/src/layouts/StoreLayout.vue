@@ -19,7 +19,7 @@ function logout() {
           <RouterLink to="/" class="brand">Coode LAB</RouterLink>
           <nav>
             <RouterLink to="/store">商城首頁</RouterLink>
-            <RouterLink to="/outfits">我的穿搭</RouterLink>
+            <RouterLink to="/outfits" class="tryon-link">試衣間</RouterLink>
             <RouterLink to="/orders">我的訂單</RouterLink>
             <RouterLink to="/returns">退換貨</RouterLink>
             <RouterLink to="/cart">購物車</RouterLink>
@@ -56,5 +56,9 @@ function logout() {
 .hello {
   font-size: 14px;
   color: var(--c-text-light);
+}
+.tryon-link.router-link-active {
+  color: #db2777;
+  background: #fdf2f8;
 }
 </style>

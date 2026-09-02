@@ -146,6 +146,24 @@ public class ProductSpecification {
     }
 
     // =====================================================
+    // 8-1. 商品性別
+    // 例如：MEN（男裝）、WOMEN（女裝）、KIDS（童裝）
+    // =====================================================
+    public static Specification<Product> hasGender(String gender) {
+
+        return (root, query, criteriaBuilder) -> {
+
+            if (gender == null || gender.isBlank()) {
+                return criteriaBuilder.conjunction();
+            }
+
+            return criteriaBuilder.equal(
+                    root.get("gender"),
+                    gender);
+        };
+    }
+
+    // =====================================================
     // 9. 最低價格
     // 例如：500 元以上
     // =====================================================

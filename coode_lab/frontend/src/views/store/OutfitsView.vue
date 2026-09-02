@@ -1,256 +1,468 @@
 <script setup>
-import { ref, onMounted } from 'vue'
-import { outfitApi, outfitItemApi, productApi } from '../../api'
-import { slotLabel, categoryLabel } from '../../utils/format'
-import AppPagination from '../../components/AppPagination.vue'
+import { ref, reactive, computed, onMounted, onBeforeUnmount } from 'vue'
+import { useRouter } from 'vue-router'
+import {
+  SLOTS,
+  SLOT_LABELS,
+  categoryToSlot,
+  emptyLook,
+  lookTotal,
+  fetchAllProducts,
+  fetchSavedOutfits,
+  loadOutfit as loadOutfitData,
+  saveLook,
+  renameOutfit,
+  deleteOutfit,
+} from '../../api/outfitService'
 import { currentUserId } from '../../composables/auth'
+import ProductBrowser from '../../components/outfit/ProductBrowser.vue'
+import TryOnCanvas from '../../components/outfit/TryOnCanvas.vue'
+import SelectedItemsPanel from '../../components/outfit/SelectedItemsPanel.vue'
+import SaveOutfitModal from '../../components/outfit/SaveOutfitModal.vue'
+import SavedOutfitCarousel from '../../components/outfit/SavedOutfitCarousel.vue'
 
+const router = useRouter()
+
+// TODO: 正式版要從登入會員取得 userId
 const userId = ref(currentUserId())
-const outfits = ref([])
-const page = ref(0)
-const totalPages = ref(1)
-const loading = ref(false)
-const error = ref('')
 
-// 建立穿搭
-const showCreate = ref(false)
-const newName = ref('')
+// ── 左側商品
+const products = ref([])
+const loadingProducts = ref(false)
+const activeCategory = ref('ALL')
+const sortOption = ref('newest')
+const productMap = ref(new Map())
 
-// 加入商品到某一套穿搭
-const targetOutfit = ref(null)
-const showPicker = ref(false)
-const availableProducts = ref([])
+// ── 中間試穿 / 右側已選
+const look = reactive(emptyLook())
+const selectedProduct = ref(null)
+const canvasScale = ref(1)
 
-async function load() {
-  loading.value = true
-  error.value = ''
+// ── 下方收藏
+const savedOutfits = ref([])
+const loadingOutfits = ref(false)
+const editingOutfitId = ref(null)
+const editingOutfitName = ref('')
+
+// ── 收藏愛心（後端尚未串接，先保留前端狀態）
+const favoriteIds = reactive(new Set())
+
+// ── Modal / 提示
+const showSaveModal = ref(false)
+const toast = ref('')
+const errorMsg = ref('')
+let toastTimer = null
+
+const browserCol = ref(null)
+
+// ============================================================
+// 商品
+// ============================================================
+
+async function fetchProducts() {
+  loadingProducts.value = true
+  errorMsg.value = ''
   try {
-    const res = await outfitApi.byUser(userId.value, page.value)
-    outfits.value = res.content || []
-    page.value = res.page || 0
-    totalPages.value = res.totalPages || 1
+    const list = await fetchAllProducts()
+    products.value = list
+    productMap.value = new Map(list.map((p) => [p.productId, p]))
   } catch (e) {
-    error.value = e.message
+    errorMsg.value = '商品載入失敗，請稍後再試'
   } finally {
-    loading.value = false
+    loadingProducts.value = false
   }
 }
 
-function changePage(p) {
-  page.value = p
-  load()
+// 依目前分類 + 排序顯示的商品
+const displayedProducts = computed(() => {
+  let list = products.value
+  if (activeCategory.value !== 'ALL') {
+    list = list.filter((p) => p.categoryType === activeCategory.value)
+  }
+  if (sortOption.value === 'priceAsc') {
+    list = [...list].sort((a, b) => Number(a.price) - Number(b.price))
+  } else if (sortOption.value === 'priceDesc') {
+    list = [...list].sort((a, b) => Number(b.price) - Number(a.price))
+  }
+  return list
+})
+
+// ============================================================
+// 試穿互動
+// ============================================================
+
+// 目前總價
+const currentTotal = computed(() => lookTotal(look))
+
+// 點「試穿」：依商品分類自動放進對應 Slot；同類商品直接替換
+function tryOn(product) {
+  const slot = categoryToSlot(product.categoryType)
+  if (!slot) {
+    showToast('此分類不支援試穿')
+    return
+  }
+  look[slot] = product
+  selectedProduct.value = product
+  showToast(`已將「${product.name}」放入${SLOT_LABELS[slot]}`)
 }
 
-async function createOutfit() {
-  error.value = ''
+// 移除單一 Slot
+function removeSlot(slot) {
+  if (look[slot] && selectedProduct.value && selectedProduct.value.productId === look[slot].productId) {
+    selectedProduct.value = null
+  }
+  look[slot] = null
+}
+
+// 清空目前穿搭
+function clearCurrentLook() {
+  Object.assign(look, emptyLook())
+  selectedProduct.value = null
+  showToast('已清空目前穿搭')
+}
+
+// 隨機搭配：TOP / BOTTOM / SHOES 必選，OUTER / ACCESSORY 隨機
+function randomizeOutfit() {
+  const bySlot = (slot) =>
+    products.value.filter((p) => categoryToSlot(p.categoryType) === slot)
+
+  const pick = (list) => {
+    if (!list.length) return null
+    return list[Math.floor(Math.random() * list.length)]
+  }
+
+  const next = emptyLook()
+  next.TOP = pick(bySlot('TOP'))
+  next.BOTTOM = pick(bySlot('BOTTOM'))
+  next.SHOES = pick(bySlot('SHOES'))
+  if (Math.random() < 0.6) next.OUTER = pick(bySlot('OUTER'))
+  if (Math.random() < 0.5) next.ACCESSORY = pick(bySlot('ACCESSORY'))
+
+  Object.assign(look, next)
+  selectedProduct.value = null
+  showToast('已產生隨機搭配')
+}
+
+// Canvas 縮放
+function zoomIn() {
+  canvasScale.value = Math.min(1.4, Math.round((canvasScale.value + 0.1) * 10) / 10)
+}
+function zoomOut() {
+  canvasScale.value = Math.max(0.7, Math.round((canvasScale.value - 0.1) * 10) / 10)
+}
+function resetZoom() {
+  canvasScale.value = 1
+}
+
+// 查看商品頁
+function openProductDetail(product) {
+  router.push(`/store/product/${product.productId}`)
+}
+
+// 右側「選擇商品」：切換左側分類並捲回商品區
+function chooseSlot(slot) {
+  activeCategory.value = slot
+  browserCol.value && browserCol.value.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
+// 收藏愛心（待串後端收藏 API）
+function toggleFavorite(productId) {
+  if (favoriteIds.has(productId)) favoriteIds.delete(productId)
+  else favoriteIds.add(productId)
+}
+
+// ============================================================
+// 儲存 / 收藏穿搭
+// ============================================================
+
+async function fetchSavedOutfitsData() {
+  loadingOutfits.value = true
+  errorMsg.value = ''
   try {
-    await outfitApi.create({ userId: userId.value, name: newName.value })
-    showCreate.value = false
-    newName.value = ''
-    await load()
+    const list = await fetchSavedOutfits(userId.value)
+    savedOutfits.value = list.map(augmentOutfit)
   } catch (e) {
-    error.value = e.message
+    errorMsg.value = '穿搭載入失敗，請稍後再試'
+  } finally {
+    loadingOutfits.value = false
   }
 }
 
-async function deleteOutfit(o) {
-  if (!confirm(`確定刪除穿搭「${o.name}」？`)) return
+// 把 OutfitResponse.items（只有 productId + slotType）加上商品縮圖，供下方 Carousel 預覽
+function augmentOutfit(outfit) {
+  const mini = []
+  for (const it of outfit.items || []) {
+    const slot = it.slotType === 'UPPER_BODY' ? 'TOP' : it.slotType
+    if (!SLOT_LABELS[slot]) continue
+    const product = productMap.value.get(it.productId)
+    mini.push({
+      slot,
+      label: SLOT_LABELS[slot],
+      png: (product && product.outfitPng) || null,
+    })
+  }
+  return { ...outfit, mini }
+}
+
+// 點收藏卡 → 載入整套穿搭
+async function loadOutfit(outfit) {
   try {
-    await outfitApi.remove(o.outfitId)
-    await load()
+    const data = await loadOutfitData(outfit.outfitId)
+    Object.assign(look, data.look)
+    editingOutfitId.value = data.outfitId
+    editingOutfitName.value = data.name
+    selectedProduct.value = null
+    showToast(`已載入「${data.name}」`)
   } catch (e) {
-    error.value = e.message
+    errorMsg.value = '載入穿搭失敗：' + e.message
   }
 }
 
-async function openPicker(o) {
-  targetOutfit.value = o
-  showPicker.value = true
-  error.value = ''
+// 點「儲存穿搭」CTA
+function openSaveModal() {
+  if (!chosenItems().length) {
+    errorMsg.value = '請至少選擇一件商品再儲存穿搭'
+    showToast('')
+    return
+  }
+  errorMsg.value = ''
+  showSaveModal.value = true
+}
+
+function chosenItems() {
+  return SLOTS.filter((slot) => look[slot])
+}
+
+// Modal 確定儲存
+async function confirmSave(name) {
   try {
-    const res = await productApi.available(0)
-    availableProducts.value = res.content || []
+    await saveLook(userId.value, name, { ...look }, editingOutfitId.value)
+    editingOutfitName.value = name
+    showSaveModal.value = false
+    showToast(editingOutfitId.value ? '穿搭已更新' : '穿搭已儲存')
+    await fetchSavedOutfitsData()
   } catch (e) {
-    availableProducts.value = []
+    errorMsg.value = '儲存失敗：' + e.message
   }
 }
 
-async function addToOutfit(p) {
+async function renameOutfitAction(outfit) {
+  const name = window.prompt(`重新命名「${outfit.name}」`, outfit.name)
+  if (!name || !name.trim()) return
   try {
-    await outfitItemApi.add(targetOutfit.value.outfitId, p.productId)
-    showPicker.value = false
-    await load()
+    await renameOutfit(outfit.outfitId, name.trim())
+    if (editingOutfitId.value === outfit.outfitId) editingOutfitName.value = name.trim()
+    showToast('已重新命名')
+    await fetchSavedOutfitsData()
   } catch (e) {
-    error.value = e.message
+    errorMsg.value = '重新命名失敗：' + e.message
   }
 }
 
-async function clearOutfit(o) {
-  if (!confirm(`清空穿搭「${o.name}」所有商品？`)) return
+async function deleteOutfitAction(outfit) {
+  if (!window.confirm(`確定刪除穿搭「${outfit.name}」？`)) return
   try {
-    await outfitItemApi.clear(o.outfitId)
-    await load()
+    await deleteOutfit(outfit.outfitId)
+    if (editingOutfitId.value === outfit.outfitId) {
+      Object.assign(look, emptyLook())
+      editingOutfitId.value = null
+      editingOutfitName.value = ''
+      selectedProduct.value = null
+    }
+    showToast('已刪除穿搭')
+    await fetchSavedOutfitsData()
   } catch (e) {
-    error.value = e.message
+    errorMsg.value = '刪除失敗：' + e.message
   }
 }
 
-function thumbs(o) {
-  return (o.items || []).map((i) => i.slotType)
+// 新增另一套穿搭
+function newOutfit() {
+  Object.assign(look, emptyLook())
+  editingOutfitId.value = null
+  editingOutfitName.value = ''
+  selectedProduct.value = null
+  showToast('開始建立新的穿搭')
+  if (window.scrollTo) window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
-onMounted(load)
+// ============================================================
+// 提示
+// ============================================================
+
+function showToast(text) {
+  toast.value = text
+  if (toastTimer) clearTimeout(toastTimer)
+  toastTimer = setTimeout(() => {
+    toast.value = ''
+  }, 2600)
+}
+
+onMounted(async () => {
+  await fetchProducts()
+  await fetchSavedOutfitsData()
+})
+
+onBeforeUnmount(() => {
+  if (toastTimer) clearTimeout(toastTimer)
+})
 </script>
 
 <template>
-  <div class="container">
-    <div class="page-header flex-between">
-      <div>
-        <h1>我的穿搭</h1>
-        <p>搭配並儲存你的專屬造型</p>
+  <div class="outfit-page">
+    <div class="outfit-inner">
+      <transition name="fade">
+        <div v-if="toast" class="toast">{{ toast }}</div>
+      </transition>
+      <div v-if="errorMsg" class="alert alert-error page-alert">{{ errorMsg }}</div>
+
+      <div class="outfit-grid">
+        <aside ref="browserCol" class="browser-col">
+          <ProductBrowser
+            :products="displayedProducts"
+            :loading="loadingProducts"
+            :active-category="activeCategory"
+            :sort-option="sortOption"
+            :favorite-ids="[...favoriteIds]"
+            @update:active-category="(v) => (activeCategory = v)"
+            @update:sort-option="(v) => (sortOption = v)"
+            @try-on="tryOn"
+            @favorite="toggleFavorite"
+            @detail="(id) => openProductDetail({ productId: id })"
+          />
+        </aside>
+
+        <section class="canvas-col">
+          <TryOnCanvas
+            :look="look"
+            :scale="canvasScale"
+            @clear="clearCurrentLook"
+            @randomize="randomizeOutfit"
+            @zoom-in="zoomIn"
+            @zoom-out="zoomOut"
+            @reset-zoom="resetZoom"
+          />
+        </section>
+
+        <aside class="panel-col">
+          <SelectedItemsPanel
+            :look="look"
+            :selected-product="selectedProduct"
+            @remove-slot="removeSlot"
+            @choose-slot="chooseSlot"
+            @view-product="openProductDetail"
+            @preview="(p) => (selectedProduct = p)"
+            @save="openSaveModal"
+          />
+        </aside>
       </div>
-      <div class="flex">
-        <input v-model.number="userId" type="number" placeholder="會員 ID" class="uid" />
-        <button class="btn btn-primary" @click="load">查詢</button>
-        <button class="btn btn-success" @click="showCreate = true">+ 新增穿搭</button>
-      </div>
-    </div>
 
-    <div v-if="error" class="alert alert-error">{{ error }}</div>
-    <div v-if="loading" class="empty">載入中...</div>
-    <div v-else-if="outfits.length === 0" class="empty">還沒有穿搭，建立第一套吧！</div>
-
-    <div v-else class="grid-3">
-      <div v-for="o in outfits" :key="o.outfitId" class="card outfit">
-        <div class="outfit-head">
-          <b>{{ o.name }}</b>
-          <div class="flex">
-            <button class="btn btn-sm" @click="openPicker(o)">+ 加商品</button>
-            <button class="btn btn-sm" @click="clearOutfit(o)">清空</button>
-            <button class="btn btn-sm btn-danger" @click="deleteOutfit(o)">刪除</button>
-          </div>
-        </div>
-        <div class="slots">
-          <div v-if="!o.items || o.items.length === 0" class="muted small">尚未放入商品</div>
-          <div v-for="it in o.items" :key="it.outfititemsId" class="slot">
-            <span class="slot-tag">{{ slotLabel(it.slotType) }}</span>
-            <span>商品 #{{ it.productId }}</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <AppPagination :page="page" :total-pages="totalPages" @change="changePage" />
-
-    <!-- 新增穿搭 -->
-    <div v-if="showCreate" class="modal-mask">
-      <div class="modal">
-        <h3>新增穿搭</h3>
-        <div class="form-field">
-          <label>穿搭名稱</label>
-          <input v-model="newName" placeholder="例如：夏日清爽" />
-        </div>
-        <div class="flex">
-          <button class="btn btn-primary" @click="createOutfit">建立</button>
-          <button class="btn" @click="showCreate = false">取消</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- 挑選商品 -->
-    <div v-if="showPicker" class="modal-mask">
-      <div class="modal wide">
-        <h3>加入商品到「{{ targetOutfit.name }}」</h3>
-        <div v-if="availableProducts.length === 0" class="muted">目前沒有可上架商品</div>
-        <div class="picker-list">
-          <div
-            v-for="p in availableProducts"
-            :key="p.productId"
-            class="picker-item"
-            @click="addToOutfit(p)"
-          >
-            <b>{{ p.name }}</b>
-            <span class="muted small">{{ categoryLabel(p.categoryType) }}</span>
-          </div>
-        </div>
-        <div class="flex">
-          <button class="btn" @click="showPicker = false">關閉</button>
-        </div>
+      <div class="saved-section card">
+        <SavedOutfitCarousel
+          :outfits="savedOutfits"
+          :loading="loadingOutfits"
+          @load-outfit="loadOutfit"
+          @delete-outfit="deleteOutfitAction"
+          @rename-outfit="renameOutfitAction"
+          @new-outfit="newOutfit"
+        />
       </div>
     </div>
+
+    <SaveOutfitModal
+      :open="showSaveModal"
+      :current-name="editingOutfitName"
+      @save="confirmSave"
+      @cancel="showSaveModal = false"
+    />
   </div>
 </template>
 
 <style scoped>
-.uid {
-  width: 90px;
-  padding: 8px;
-  border: 1px solid var(--c-border);
-  border-radius: 8px;
-}
-.outfit-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-}
-.slots {
-  margin-top: 8px;
-}
-.slot {
-  display: flex;
-  justify-content: space-between;
-  padding: 6px 0;
-  border-top: 1px solid var(--c-border);
-  font-size: 14px;
-}
-.slot-tag {
-  background: #eff6ff;
-  color: var(--c-primary);
-  border-radius: 6px;
-  padding: 0 8px;
-  font-size: 12px;
-}
-.small {
-  font-size: 12px;
-}
-.modal-mask {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 100;
-}
-.modal {
+.outfit-page {
   background: #fff;
-  border-radius: var(--radius);
-  padding: 24px;
-  width: 420px;
-  max-width: 90vw;
+  min-height: 100vh;
 }
-.modal.wide {
-  width: 520px;
+.outfit-inner {
+  max-width: 1380px;
+  margin: 0 auto;
+  padding: 24px 20px 40px;
+  position: relative;
 }
-.modal h3 {
-  margin-bottom: 16px;
+.page-alert {
+  margin-bottom: 14px;
 }
-.picker-list {
-  max-height: 300px;
+.col-head {
+  font-size: 18px;
+}
+
+/* ── 三欄 ── */
+.outfit-grid {
+  display: grid;
+  grid-template-columns: 380px minmax(0, 1fr) 300px;
+  gap: 20px;
+  align-items: start;
+}
+.browser-col {
+  position: sticky;
+  top: 76px;
+  height: calc(100vh - 100px);
+  min-height: 0;
+}
+.canvas-col {
+  min-width: 0;
+}
+.panel-col {
+  position: sticky;
+  top: 76px;
+  max-height: calc(100vh - 100px);
   overflow-y: auto;
+  padding-right: 2px;
 }
-.picker-item {
-  display: flex;
-  justify-content: space-between;
-  padding: 10px 12px;
-  border: 1px solid var(--c-border);
-  border-radius: 8px;
-  margin-bottom: 8px;
-  cursor: pointer;
+
+/* ── 下方收藏 ── */
+.saved-section {
+  margin-top: 28px;
+  padding: 16px;
 }
-.picker-item:hover {
-  border-color: var(--c-primary);
-  background: #eff6ff;
+
+/* ── Toast ── */
+.toast {
+  position: fixed;
+  top: 70px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #312e2e;
+  color: #fff;
+  padding: 8px 18px;
+  border-radius: 999px;
+  font-size: 13px;
+  z-index: 200;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+}
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  transform: translate(-50%, -6px);
+}
+
+/* ── Responsive ── */
+@media (max-width: 1120px) {
+  .outfit-grid {
+    grid-template-columns: 1fr;
+  }
+  .browser-col {
+    position: static;
+    height: auto;
+  }
+  .panel-col {
+    position: static;
+    max-height: none;
+    overflow: visible;
+  }
 }
 </style>

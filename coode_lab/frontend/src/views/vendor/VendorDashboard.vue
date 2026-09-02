@@ -35,7 +35,7 @@ onMounted(load)
   <div class="admin-content">
     <div class="page-header flex-between">
       <div>
-        <h1>銷售儀表板</h1>
+        <h1>銷售報表</h1>
         <p>廠商銷售數據總覽</p>
       </div>
       <div class="flex">

@@ -20,6 +20,12 @@ public class CreateReturnRequestRequest {
     private String requestType;
 
     @NotNull
+    private Long orderItemId;
+
+    @NotNull
     @Min(1)
-    private Integer returnRequestQuantity;
+    private Integer requestQuantity;
+
+    // 退貨商品照片（可選）
+    private String picture;
 }

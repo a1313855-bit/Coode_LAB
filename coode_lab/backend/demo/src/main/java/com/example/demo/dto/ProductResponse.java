@@ -43,4 +43,6 @@ public class ProductResponse {
 
     private String vendorName;
 
+    private String gender;
+
 }

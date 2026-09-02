@@ -18,6 +18,10 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.FetchType;
 
+// ========== Jakarta Validation ==========
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+
 // ========== hibernate ==========
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -48,9 +52,12 @@ public class User {
 	private Long userId;
 
 	@Column(name = "email", length = 100, nullable = false , unique = true)
+	@NotBlank(message = "Email 不能為空")
+	@Email(message = "Email 格式不正確")
 	private String email;
 
 	@Column(name = "password", length = 200, nullable = false)
+	@NotBlank(message = "密碼不能為空")
 	private String password;
 
 	@Column(name = "name", length = 50)

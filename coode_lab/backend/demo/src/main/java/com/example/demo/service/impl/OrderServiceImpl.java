@@ -6,10 +6,14 @@ import org.springframework.stereotype.Service;
 
 // ========== Java ==========
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 // ========== Project ==========
+import com.example.demo.model.Cart;
 import com.example.demo.model.Order;
 import com.example.demo.model.OrderItem;
 import com.example.demo.model.User;
@@ -65,31 +69,99 @@ public class OrderServiceImpl implements OrderService {
     // ╚══════════════════════════════╝
 
     @Override
-    public Order createOrder(CreateOrderRequest request) {
+    public OrderDTO createOrder(CreateOrderRequest request) {
+        // 1. 找會員
         User user = userRepository.findById(request.getUserId()).orElse(null);
         if (user == null) {
             return null;
         }
 
+        // 2. 找出前端選購要結帳的購物車商品
         List<CartItem> cartItems = cartItemRepository.findAllById(request.getCartItemIds());
-
-        int totalAmount = 0;
-        BigDecimal sumTotal = BigDecimal.ZERO;
-        for (CartItem item : cartItems) {
-            totalAmount += item.getProductQuantity();
-            sumTotal = sumTotal.add(item.getPrice()
-                    .multiply(BigDecimal.valueOf(item.getProductQuantity())));
+        if (cartItems.isEmpty()) {
+            throw new IllegalArgumentException("請先選擇要結帳的商品");
         }
 
+        // 3. 確認這些購物車商品都屬於同一個會員（防止越權）
+        for (CartItem cartItem : cartItems) {
+            if (cartItem.getCart() == null
+                    || cartItem.getCart().getUser() == null
+                    || !cartItem.getCart().getUser().getUserId().equals(user.getUserId())) {
+                throw new IllegalArgumentException("購物車內容與會員不符，請重新整理購物車");
+            }
+        }
+
+        // 4. 先建立訂單主表
         Order order = new Order();
         order.setRecipientName(request.getRecipientName());
         order.setRecipientPhone(request.getRecipientPhone());
         order.setRecipientAddress(request.getRecipientAddress());
-        order.setTotalAmount(totalAmount);
-        order.setSumTotal(sumTotal);
+        order.setTotalAmount(0);
+        order.setSumTotal(BigDecimal.ZERO);
         order.setUser(user);
+        Order savedOrder = orderRepository.save(order);
 
-        return orderRepository.save(order);
+        // 5. 每個購物車商品：即時檢查庫存 → 扣庫存 → 建立訂單明細
+        List<OrderItem> orderItems = new ArrayList<>();
+        int totalAmount = 0;
+        BigDecimal sumTotal = BigDecimal.ZERO;
+
+        for (CartItem cartItem : cartItems) {
+            Product product = cartItem.getProduct();
+            int qty = cartItem.getProductQuantity();
+
+            // 即時庫存檢查（與購物車加入/修改相同邏輯）
+            if (product.getStock() == null || product.getStock() <= 0) {
+                throw new IllegalArgumentException("商品「" + product.getName() + "」目前無庫存");
+            }
+            if (qty > product.getStock()) {
+                throw new IllegalArgumentException(
+                        "商品「" + product.getName() + "」庫存不足，目前僅剩 " + product.getStock() + " 件");
+            }
+
+            // 更新商品庫存（扣掉購買數量）
+            product.setStock(product.getStock() - qty);
+            productRepository.save(product);
+
+            // 建立訂單明細
+            OrderItem orderItem = new OrderItem();
+            orderItem.setOrder(savedOrder);
+            orderItem.setProduct(product);
+            orderItem.setVendor(product.getVendor());
+            orderItem.setProductQuantity(qty);
+            orderItem.setPrice(product.getPrice());
+            orderItem.setPriceTotal(
+                    product.getPrice().multiply(BigDecimal.valueOf(qty)));
+            orderItem.setStatus("PENDING");
+            orderItems.add(orderItem);
+
+            totalAmount += qty;
+            sumTotal = sumTotal.add(orderItem.getPriceTotal());
+        }
+
+        orderItemRepository.saveAll(orderItems);
+
+        // 6. 更新訂單總額
+        savedOrder.setTotalAmount(totalAmount);
+        savedOrder.setSumTotal(sumTotal);
+        savedOrder = orderRepository.save(savedOrder);
+
+        // 7. 刪除已結帳的購物車商品，並同步 Cart.totalQuantity
+        cartItemRepository.deleteAll(cartItems);
+
+        Set<Cart> carts = new LinkedHashSet<>();
+        for (CartItem cartItem : cartItems) {
+            if (cartItem.getCart() != null) {
+                carts.add(cartItem.getCart());
+            }
+        }
+        for (Cart cart : carts) {
+            Long count = cartItemRepository.countByCart_CartId(cart.getCartId());
+            cart.setTotalQuantity(count.intValue());
+        }
+
+        // 回傳 OrderDTO，避免 Entity 序列化無限迴圈
+        return toOrderDTO(savedOrder);
     }
 
     @Override
@@ -117,7 +189,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public Order updateRecipient(Long orderId, UpdateRecipientRequest request) {
+    public OrderDTO updateRecipient(Long orderId, UpdateRecipientRequest request) {
         Optional<Order> optional = orderRepository.findById(orderId);
         if (optional.isEmpty()) {
             return null;
@@ -126,7 +198,8 @@ public class OrderServiceImpl implements OrderService {
         order.setRecipientName(request.getRecipientName());
         order.setRecipientPhone(request.getRecipientPhone());
         order.setRecipientAddress(request.getRecipientAddress());
-        return orderRepository.save(order);
+        // 回傳 OrderDTO，避免 Entity 序列化無限迴圈
+        return toOrderDTO(orderRepository.save(order));
     }
 
     // ╔══════════════════════════════╗

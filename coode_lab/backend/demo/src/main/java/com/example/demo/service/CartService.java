@@ -16,8 +16,8 @@ public interface CartService {
     // 根據userId查詢購物車
     Optional<CartResponse> findCartByUserId(Long userId);
 
-    //計算購物車目前有幾種商品
-    Integer calculateTotalQuantity(Long cartId);
+    //計算購物車目前有幾種商品（查無購物車回傳 empty → Controller 對應 404）
+    Optional<Integer> calculateTotalQuantity(Long cartId);
 
     //重新計算並更新 totalQuantity
     CartResponse updateTotalQuantity(Long cartId);

@@ -13,6 +13,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+// ========== Validation ==========
+import jakarta.validation.Valid;
+
 // ========== Java ==========
 import java.util.List;
 
@@ -70,7 +73,7 @@ public class OutfitController {
      */
     @PostMapping
     public ResponseEntity<OutfitResponse> createOutfit(
-            @RequestBody OutfitCreateRequest request) {
+            @Valid @RequestBody OutfitCreateRequest request) {
 
         /*
          * 呼叫 Service 建立穿搭
@@ -181,7 +184,7 @@ public class OutfitController {
     @PatchMapping("/{outfitId}")
     public ResponseEntity<OutfitResponse> updateOutfitName(
             @PathVariable Long outfitId,
-            @RequestBody OutfitUpdateRequest request) {
+            @Valid @RequestBody OutfitUpdateRequest request) {
 
         /*
          * 呼叫 Service 修改穿搭名稱

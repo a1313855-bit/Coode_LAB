@@ -36,6 +36,27 @@ public interface OutfitItemService {
 
 
     /**
+     * 將商品加入穿搭的指定位置。
+     *
+     * 與 addItem() 不同，這個方法由前端明確指定 slotType，
+     * 讓 TOP 與 OUTER 可以同時存在（分別放在不同位置）。
+     *
+     * 如果該位置目前沒有商品，則新增 OutfitItem；
+     * 如果該位置已有商品，則直接替換原商品。
+     *
+     * @param outfitId  穿搭 ID
+     * @param productId 商品 ID
+     * @param slotType  穿搭位置（TOP / OUTER / BOTTOM / SHOES / ACCESSORY）
+     * @return 新增或替換完成的 OutfitItem
+     */
+    OutfitItem addItemWithSlot(
+            Long outfitId,
+            Long productId,
+            String slotType
+    );
+
+
+    /**
      * 查詢指定穿搭中的所有商品 (固定每頁10筆,page 從 0 開始)。
      *
      * @param outfitId 穿搭 ID

@@ -30,7 +30,13 @@ async function request(url, options = {}, base = '') {
 
   if (res.status === 204) return null
   const text = await res.text()
-  return text ? JSON.parse(text) : null
+  if (!text) return null
+  try {
+    return JSON.parse(text)
+  } catch (e) {
+    // 2xx 但回傳內容無法解析成 JSON 時，回傳 null 避免前端直接報 JSON 語法錯誤
+    return null
+  }
 }
 
 function buildQuery(params) {
@@ -87,7 +93,7 @@ export const cartItemApi = {
   search: (cartId, keyword, page) => get(`/api/cart-items/cart/${cartId}/search`, { keyword, page }),
   add: (body) => post('/api/cart-items', body),
   update: (cartItemId, body) => patch(`/api/cart-items/${cartItemId}`, body),
-  remove: (cartItemId) => del(`/api/cart-items/${cartItemId}`),
+  remove: (cartId, productId) => del(`/api/cart-items/cart/${cartId}/product/${productId}`),
 }
 
 // ============================================================
@@ -185,6 +191,7 @@ export const outfitItemApi = {
   items: (outfitId, page) => get(`/api/outfit-items/outfits/${outfitId}`, { page }),
   add: (outfitId, productId) =>
     post(`/api/outfit-items/outfits/${outfitId}/products/${productId}`),
+  addSlot: (outfitId, body) => post(`/api/outfit-items/outfits/${outfitId}`, body),
   replace: (outfitId, productId) =>
     put(`/api/outfit-items/outfits/${outfitId}/products/${productId}`),
   remove: (outfitItemId) => del(`/api/outfit-items/${outfitItemId}`),

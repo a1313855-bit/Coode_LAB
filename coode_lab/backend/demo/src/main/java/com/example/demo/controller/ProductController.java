@@ -1,5 +1,7 @@
 package com.example.demo.controller;
 
+import jakarta.validation.Valid;
+
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -71,6 +73,7 @@ public class ProductController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String categoryType,
+            @RequestParam(required = false) String gender,
             @RequestParam(required = false) String style,
             @RequestParam(required = false) String color,
             @RequestParam(required = false) String size,
@@ -83,6 +86,7 @@ public class ProductController {
                 page,
                 keyword,
                 categoryType,
+                gender,
                 style,
                 color,
                 size,
@@ -98,6 +102,7 @@ public class ProductController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String categoryType,
+            @RequestParam(required = false) String gender,
             @RequestParam(required = false) String style,
             @RequestParam(required = false) String color,
             @RequestParam(required = false) String size,
@@ -111,6 +116,7 @@ public class ProductController {
                 page,
                 keyword,
                 categoryType,
+                gender,
                 style,
                 color,
                 size,
@@ -128,6 +134,7 @@ public class ProductController {
             @RequestParam Long vendorId,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String categoryType,
+            @RequestParam(required = false) String gender,
             @RequestParam(required = false) String style,
             @RequestParam(required = false) String color,
             @RequestParam(required = false) String size,
@@ -141,6 +148,7 @@ public class ProductController {
                 vendorId,
                 keyword,
                 categoryType,
+                gender,
                 style,
                 color,
                 size,
@@ -152,7 +160,7 @@ public class ProductController {
 
     // 新增商品
     @PostMapping("/vendor/{vendorId}")
-    public ProductResponse createProduct(@PathVariable Long vendorId, @RequestBody ProductRequest request) {
+    public ProductResponse createProduct(@PathVariable Long vendorId, @Valid @RequestBody ProductRequest request) {
         return productService.createProduct(vendorId, request);
 
     }
@@ -160,14 +168,14 @@ public class ProductController {
     // 修改商品
     @PutMapping("/vendor/{vendorId}/{productId}")
     public ProductResponse updateProduct(@PathVariable Long vendorId, @PathVariable Long productId,
-            @RequestBody ProductRequest request) {
+            @Valid @RequestBody ProductRequest request) {
         return productService.updateProduct(vendorId, productId, request);
     }
 
     // 廠商修改自己商品庫存
     @PatchMapping("/vendor/{vendorId}/{productId}/stock")
     public ProductResponse updateStock(@PathVariable Long vendorId, @PathVariable Long productId,
-            @RequestBody StockRequest request) {
+            @Valid @RequestBody StockRequest request) {
         return productService.updateStock(vendorId, productId, request);
     }
 
@@ -187,7 +195,7 @@ public class ProductController {
 
     //廠商批次上架
     @PatchMapping("/vendor/{vendorId}/batch-activate")
-    public List<ProductResponse> batchActivateProducts(@PathVariable Long vendorId,@RequestBody BatchProductRequest request){
+    public List<ProductResponse> batchActivateProducts(@PathVariable Long vendorId,@Valid @RequestBody BatchProductRequest request){
         return productService.batchActivateProducts(vendorId, request.getProductIds());
     }
 
@@ -199,7 +207,7 @@ public class ProductController {
 
     //廠商批次下架
     @PatchMapping("/vendor/{vendorId}/batch-deactivate")
-    public List<ProductResponse> batchDeactivateProducts(@PathVariable Long vendorId,@RequestBody BatchProductRequest request){
+    public List<ProductResponse> batchDeactivateProducts(@PathVariable Long vendorId,@Valid @RequestBody BatchProductRequest request){
         return productService.batchDeactivateProducts(vendorId, request.getProductIds());
     }
 

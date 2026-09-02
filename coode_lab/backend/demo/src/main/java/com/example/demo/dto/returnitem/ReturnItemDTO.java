@@ -18,6 +18,7 @@ public class ReturnItemDTO {
     private String status;
     private String reason;
     private String description;
+    private String picture;
     private Integer approvalQuantity;
     private Integer rejectedQuantity;
     private BigDecimal refund;

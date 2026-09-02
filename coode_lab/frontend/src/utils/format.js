@@ -30,6 +30,8 @@ export function statusLabel(status) {
     PROCESSING: '處理中',
     RECEIVED: '已收貨',
     SHIPPED: '已出貨',
+    ARRIVED: '已到貨',
+    PROCESSED: '已處理',
     COMPLETED: '已完成',
     CANCELLED: '已取消',
     RETURN: '退貨',
@@ -37,6 +39,7 @@ export function statusLabel(status) {
     LOW_STOCK: '庫存不足',
     MALE: '男',
     FEMALE: '女',
+    KIDS: '童裝',
   }
   if (status == null) return '-'
   return map[String(status).toUpperCase()] || String(status)
@@ -57,13 +60,17 @@ export function statusBadgeClass(status) {
     REVIEWED: 'badge-info',
     APPROVED: 'badge-success',
     REJECTED: 'badge-danger',
+    COMPLETED: 'badge-success',
     PROCESSING: 'badge-info',
     RECEIVED: 'badge-success',
     SHIPPED: 'badge-info',
+    ARRIVED: 'badge-info',
+    PROCESSED: 'badge-info',
     RETURN: 'badge-warning',
     EXCHANGE: 'badge-info',
     MALE: 'badge-info',
     FEMALE: 'badge-warning',
+    KIDS: 'badge-warning',
     LOW_STOCK: 'badge-danger',
   }
   if (status == null) return 'badge-muted'

@@ -19,6 +19,9 @@ public class CartItemResponse {
 
     private Integer productQuantity;
 
+    // 商品目前即時庫存（前端用來做連動庫存檢查）
+    private Integer stock;
+
     private BigDecimal price;
 
     private BigDecimal totalPrice;

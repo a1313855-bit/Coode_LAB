@@ -56,19 +56,20 @@ function applySearch() {
   load()
 }
 
-function resetFilters() {
-  filters.value = {
-    keyword: '',
-    categoryType: '',
-    style: '',
-    color: '',
-    size: '',
-    pattern: '',
-    minPrice: '',
-    maxPrice: '',
-  }
+function clearKeyword() {
+  filters.value.keyword = ''
   page.value = 0
   load()
+}
+
+function priceInput(key, e) {
+  const raw = String(e.target.value).trim()
+  filters.value[key] = raw === '' || Number(raw) < 0 ? '' : raw
+}
+
+function blockInvalidPriceKeys(e) {
+  const k = e.key
+  if (k === '-' || k === 'e' || k === 'E') e.preventDefault()
 }
 
 function goDetail(id) {
@@ -87,12 +88,23 @@ onMounted(load)
 
     <div class="card filter-panel">
       <div class="filter-top">
-        <input
-          v-model="filters.keyword"
-          class="search-input"
-          placeholder="搜尋商品名稱..."
-          @keyup.enter="applySearch"
-        />
+        <div class="search-wrap">
+          <input
+            v-model="filters.keyword"
+            class="search-input"
+            placeholder="搜尋商品名稱..."
+            @keyup.enter="applySearch"
+          />
+          <button
+            v-if="filters.keyword"
+            type="button"
+            class="clear-keyword"
+            aria-label="清空搜尋文字"
+            @click="clearKeyword"
+          >
+            ×
+          </button>
+        </div>
         <select v-model="filters.categoryType">
           <option value="">全部分類</option>
           <option v-for="c in categories" :key="c" :value="c">{{ categoryLabel(c) }}</option>
@@ -110,12 +122,27 @@ onMounted(load)
           <option value="黑">黑</option>
           <option value="卡其">卡其</option>
         </select>
-        <input v-model="filters.minPrice" type="number" placeholder="最低價" class="price-input" />
-        <input v-model="filters.maxPrice" type="number" placeholder="最高價" class="price-input" />
+        <input
+          :value="filters.minPrice"
+          type="number"
+          min="0"
+          placeholder="最低價"
+          class="price-input"
+          @input="priceInput('minPrice', $event)"
+          @keydown="blockInvalidPriceKeys"
+        />
+        <input
+          :value="filters.maxPrice"
+          type="number"
+          min="0"
+          placeholder="最高價"
+          class="price-input"
+          @input="priceInput('maxPrice', $event)"
+          @keydown="blockInvalidPriceKeys"
+        />
       </div>
       <div class="filter-actions">
         <button class="btn btn-primary" @click="applySearch">搜尋</button>
-        <button class="btn" @click="resetFilters">清空</button>
       </div>
     </div>
 
@@ -154,9 +181,40 @@ onMounted(load)
   border-radius: 8px;
   background: #fff;
 }
+.search-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 180px;
+}
+.filter-top .search-input {
+  width: 100%;
+  padding: 8px 32px 8px 10px;
+}
 .search-input {
   flex: 1;
   min-width: 180px;
+}
+.clear-keyword {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: #d1d5db;
+  color: #fff;
+  font-size: 14px;
+  line-height: 1;
+  padding: 0;
+  cursor: pointer;
+}
+.clear-keyword:hover {
+  background: #9ca3af;
 }
 .price-input {
   width: 100px;

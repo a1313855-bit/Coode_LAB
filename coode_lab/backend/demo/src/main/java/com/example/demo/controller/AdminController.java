@@ -2,6 +2,8 @@ package com.example.demo.controller;
 
 import java.util.List;
 
+import jakarta.validation.Valid;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -42,7 +44,7 @@ public class AdminController {
     // POST /api/admins/login
     @PostMapping("/login")
     public ResponseEntity<AdminResponse> login(
-            @RequestBody AdminLoginRequest loginRequest) {
+            @Valid @RequestBody AdminLoginRequest loginRequest) {
 
         /*
          * 1、取得前端傳入的 Email、Password
@@ -73,7 +75,7 @@ public class AdminController {
     // POST /api/admins
     @PostMapping
     public ResponseEntity<AdminResponse> createAdmin(
-            @RequestBody AdminCreateRequest request) {
+            @Valid @RequestBody AdminCreateRequest request) {
 
         /*
          * 1、將前端傳入的 DTO 轉成 Admin Entity
@@ -165,7 +167,7 @@ public class AdminController {
     @PutMapping("/{adminId}")
     public ResponseEntity<AdminResponse> updateAdmin(
             @PathVariable("adminId") Long adminId,
-            @RequestBody AdminCreateRequest request) {
+            @Valid @RequestBody AdminCreateRequest request) {
 
         /*
          * 1、建立 Admin 物件
@@ -204,7 +206,7 @@ public class AdminController {
     @PatchMapping("/{adminId}/password")
     public ResponseEntity<Void> changePassword(
             @PathVariable("adminId") Long adminId,
-            @RequestBody AdminPasswordRequest request) {
+            @Valid @RequestBody AdminPasswordRequest request) {
 
         /*
          * 呼叫 AdminService.changePassword()

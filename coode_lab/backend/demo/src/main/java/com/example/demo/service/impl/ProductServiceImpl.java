@@ -83,6 +83,7 @@ public class ProductServiceImpl implements ProductService {
             int page,
             String keyword,
             String categoryType,
+            String gender,
             String style,
             String color,
             String size,
@@ -100,6 +101,7 @@ public class ProductServiceImpl implements ProductService {
                 // 2. 以下條件有傳值才會真的限制
                 .and(ProductSpecification.nameContains(keyword))
                 .and(ProductSpecification.hasCategoryType(categoryType))
+                .and(ProductSpecification.hasGender(gender))
                 .and(ProductSpecification.hasStyle(style))
                 .and(ProductSpecification.hasColor(color))
                 .and(ProductSpecification.hasSize(size))
@@ -126,6 +128,7 @@ public class ProductServiceImpl implements ProductService {
             int page,
             String keyword,
             String categoryType,
+            String gender,
             String style,
             String color,
             String size,
@@ -137,6 +140,7 @@ public class ProductServiceImpl implements ProductService {
 
         Specification<Product> spec = ProductSpecification.nameContains(keyword)
                 .and(ProductSpecification.hasCategoryType(categoryType))
+                .and(ProductSpecification.hasGender(gender))
                 .and(ProductSpecification.hasStyle(style))
                 .and(ProductSpecification.hasColor(color))
                 .and(ProductSpecification.hasSize(size))
@@ -160,6 +164,7 @@ public class ProductServiceImpl implements ProductService {
             Long vendorId,
             String keyword,
             String categoryType,
+            String gender,
             String style,
             String color,
             String size,
@@ -171,6 +176,7 @@ public class ProductServiceImpl implements ProductService {
         Specification<Product> spec = ProductSpecification.hasVendorId(vendorId)
                 .and(ProductSpecification.nameContains(keyword))
                 .and(ProductSpecification.hasCategoryType(categoryType))
+                .and(ProductSpecification.hasGender(gender))
                 .and(ProductSpecification.hasStyle(style))
                 .and(ProductSpecification.hasColor(color))
                 .and(ProductSpecification.hasSize(size))
@@ -231,6 +237,7 @@ public class ProductServiceImpl implements ProductService {
         product.setName(request.getName());
         product.setPattern(request.getPattern());
         product.setCategoryType(request.getCategoryType());
+        product.setGender(request.getGender());
         product.setStyle(request.getStyle());
         product.setColor(request.getColor());
         product.setSize(request.getSize());
@@ -397,6 +404,7 @@ public class ProductServiceImpl implements ProductService {
         oldProduct.setName(request.getName());
         oldProduct.setPattern(request.getPattern());
         oldProduct.setCategoryType(request.getCategoryType());
+        oldProduct.setGender(request.getGender());
         oldProduct.setStyle(request.getStyle());
         oldProduct.setColor(request.getColor());
         oldProduct.setSize(request.getSize());
@@ -449,7 +457,7 @@ public class ProductServiceImpl implements ProductService {
     // 低庫存查詢 (固定每頁10筆)
     @Override
     public SelectPartOfData.Result<ProductResponse> findLowStockProducts(Long vendorId, int page) {
-        List<Product> products = productRepository.findByVendorVendorIdAndStockLessThanEqual(vendorId, 10);
+        List<Product> products = productRepository.findByVendorVendorIdAndStockLessThanEqual(vendorId, 5);
 
         List<ProductResponse> all = products
                 .stream()
@@ -474,7 +482,8 @@ public class ProductServiceImpl implements ProductService {
                 product.getOutfitPng(),
                 product.getStatus(),
                 product.getVendor().getVendorId(),
-                product.getVendor().getVendorName()
+                product.getVendor().getVendorName(),
+                product.getGender()
 
         );
     }

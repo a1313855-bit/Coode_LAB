@@ -1,5 +1,7 @@
 package com.example.demo.controller;
 
+import jakarta.validation.Valid;
+
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -53,25 +55,25 @@ public class VendorController {
 
     // 廠商登入
     @PostMapping("/login")
-    public VendorResponse login(@RequestBody VendorLoginRequest request) {
+    public VendorResponse login(@Valid @RequestBody VendorLoginRequest request) {
         return vendorService.login(request);
     }
 
     // 新增廠商
     @PostMapping
-    public VendorResponse createVendor(@RequestBody VendorRequest request) {
+    public VendorResponse createVendor(@Valid @RequestBody VendorRequest request) {
         return vendorService.createVendor(request);
     }
 
     // 修改廠商
     @PutMapping("/{vendorId}")
-    public VendorResponse updateVendor(@PathVariable Long vendorId, @RequestBody VendorUpdateRequest request) {
+    public VendorResponse updateVendor(@PathVariable Long vendorId, @Valid @RequestBody VendorUpdateRequest request) {
         return vendorService.updateVendor(vendorId, request);
     }
 
     // 管理員啟用廠商
     @PutMapping("/{vendorId}/activate")
-    public VendorResponse activateVendor(@PathVariable Long vendorId, @RequestBody VendorActivateRequest request) {
+    public VendorResponse activateVendor(@PathVariable Long vendorId, @Valid @RequestBody VendorActivateRequest request) {
         return vendorService.activateVendor(vendorId, request);
     }
 
@@ -89,7 +91,7 @@ public class VendorController {
 
     // 管理員續約廠商
     @PutMapping("/{vendorId}/renew-contract")
-    public VendorResponse renewContract(@PathVariable Long vendorId, @RequestBody VendorContractRequest request) {
+    public VendorResponse renewContract(@PathVariable Long vendorId, @Valid @RequestBody VendorContractRequest request) {
         return vendorService.renewContract(vendorId, request);
     }
 

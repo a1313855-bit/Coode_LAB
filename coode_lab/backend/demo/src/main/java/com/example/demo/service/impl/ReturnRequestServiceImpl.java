@@ -78,18 +78,53 @@ public class ReturnRequestServiceImpl implements ReturnRequestService {
             return null;
         }
 
-        Vendor vendor = null;
-        if (order.getOrderItem() != null && !order.getOrderItem().isEmpty()) {
-            vendor = order.getOrderItem().get(0).getVendor();
+        // 只有訂單擁有者可以申請退換貨
+        if (order.getUser() == null || !order.getUser().getUserId().equals(userId)) {
+            return null;
+        }
+
+        // 該訂單明細必須存在，且必須屬於此訂單
+        Optional<OrderItem> itemOptional = orderItemRepository.findById(request.getOrderItemId());
+        if (itemOptional.isEmpty()) {
+            return null;
+        }
+        OrderItem orderItem = itemOptional.get();
+        if (orderItem.getOrder() == null || !orderItem.getOrder().getOrderId().equals(orderId)) {
+            throw new IllegalArgumentException("訂單明細不存在於此訂單");
+        }
+
+        // 退換貨數量不可大於該明細的購買數量
+        Integer orderQuantity = orderItem.getProductQuantity();
+        if (orderQuantity == null || orderQuantity < 1) {
+            throw new IllegalArgumentException("此商品數量無法申請退換貨");
+        }
+        if (request.getRequestQuantity() > orderQuantity) {
+            throw new IllegalArgumentException("退換貨數量不可大於訂單明細數量");
+        }
+
+        Vendor vendor = orderItem.getVendor();
+        if (vendor == null) {
+            return null;
         }
 
         ReturnRequest returnRequest = new ReturnRequest();
         returnRequest.setStatus("PENDING");
         returnRequest.setRequestType(request.getRequestType());
-        returnRequest.setReturnRequestQuantity(request.getReturnRequestQuantity());
+        returnRequest.setReturnRequestQuantity(request.getRequestQuantity());
         returnRequest.setOrder(order);
         returnRequest.setUser(user);
         returnRequest.setVendor(vendor);
+
+        // 一併建立退換貨明細（包含退貨照片）
+        ReturnItem returnItem = new ReturnItem();
+        returnItem.setStatus("PENDING_REVIEW");
+        returnItem.setApprovalQuantity(request.getRequestQuantity());
+        returnItem.setRejectedQuantity(0);
+        returnItem.setRefund(BigDecimal.ZERO);
+        returnItem.setPicture(request.getPicture());
+        returnItem.setOrderItem(orderItem);
+        returnItem.setReturnRequest(returnRequest);
+        returnRequest.setReturnItem(returnItem);
 
         return returnRequestRepository.save(returnRequest);
     }
@@ -167,6 +202,27 @@ public class ReturnRequestServiceImpl implements ReturnRequestService {
             userInfo.setName(returnRequest.getUser().getName());
             dto.setUser(userInfo);
         }
+        if (returnRequest.getReturnItem() != null) {
+            ReturnItem returnItem = returnRequest.getReturnItem();
+            ReturnRequestDTO.ReturnItemInfo itemInfo = new ReturnRequestDTO.ReturnItemInfo();
+            itemInfo.setReturnItemId(returnItem.getReturnItemId());
+            itemInfo.setStatus(returnItem.getStatus());
+            itemInfo.setApprovalQuantity(returnItem.getApprovalQuantity());
+            itemInfo.setRejectedQuantity(returnItem.getRejectedQuantity());
+            itemInfo.setPicture(returnItem.getPicture());
+            if (returnItem.getOrderItem() != null) {
+                itemInfo.setOrderItemId(returnItem.getOrderItem().getOrderItemId());
+                if (returnItem.getOrderItem().getProduct() != null) {
+                    Product product = returnItem.getOrderItem().getProduct();
+                    itemInfo.setProductName(product.getName());
+                    itemInfo.setCategoryType(product.getCategoryType());
+                    itemInfo.setColor(product.getColor());
+                    itemInfo.setSize(product.getSize());
+                    itemInfo.setPattern(product.getPattern());
+                }
+            }
+            dto.setReturnItem(itemInfo);
+        }
         return dto;
     }
 
@@ -193,6 +249,7 @@ public class ReturnRequestServiceImpl implements ReturnRequestService {
         returnItem.setApprovalQuantity(request.getRequestQuantity());
         returnItem.setRejectedQuantity(0);
         returnItem.setRefund(BigDecimal.ZERO);
+        returnItem.setPicture(request.getPicture());
         returnItem.setOrderItem(orderItem);
         returnItem.setReturnRequest(returnRequest);
 
@@ -264,6 +321,7 @@ public class ReturnRequestServiceImpl implements ReturnRequestService {
         dto.setStatus(returnItem.getStatus());
         dto.setReason(returnItem.getReason());
         dto.setDescription(returnItem.getDescription());
+        dto.setPicture(returnItem.getPicture());
         dto.setApprovalQuantity(returnItem.getApprovalQuantity());
         dto.setRejectedQuantity(returnItem.getRejectedQuantity());
         dto.setRefund(returnItem.getRefund());

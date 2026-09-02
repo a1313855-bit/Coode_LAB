@@ -57,3 +57,9 @@ export function currentUserId() {
   if (state.value && state.value.role === 'user') return state.value.id
   return 1
 }
+
+// 廠商後台使用的廠商 ID：登入為 vendor 時用登入者的 ID，否則退回測試廠商 1
+export function currentVendorId() {
+  if (state.value && state.value.role === 'vendor') return state.value.id
+  return 1
+}

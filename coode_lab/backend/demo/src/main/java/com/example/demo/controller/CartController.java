@@ -53,8 +53,10 @@ public class CartController {
     public ResponseEntity<Integer> calculateTotalQuantity(
             @PathVariable Long cartId) {
 
-        return ResponseEntity.ok(
-                cartService.calculateTotalQuantity(cartId));
+        return cartService.calculateTotalQuantity(cartId)
+                .map(ResponseEntity::ok)
+                .orElseGet(() ->
+                        ResponseEntity.notFound().build());
     }
 
     // =========================

@@ -28,6 +28,7 @@ public class ReturnRequestDTO {
     private OrderInfo order;
     private VendorInfo vendor;
     private UserInfo user;
+    private ReturnItemInfo returnItem;
 
     // ╔══════════════════════════════════╗
     // ║ Nested class : 訂單（精簡）     ║
@@ -56,5 +57,24 @@ public class ReturnRequestDTO {
     public static class UserInfo {
         private Long userId;
         private String name;
+    }
+
+    // ╔══════════════════════════════════╗
+    // ║ Nested class : 退貨商品（精簡） ║
+    // ╚══════════════════════════════════╝
+    @Getter
+    @Setter
+    public static class ReturnItemInfo {
+        private Long returnItemId;
+        private String status;
+        private Long orderItemId;
+        private Integer approvalQuantity;
+        private Integer rejectedQuantity;
+        private String productName;
+        private String picture;
+        private String categoryType;
+        private String color;
+        private String size;
+        private String pattern;
     }
 }

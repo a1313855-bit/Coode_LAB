@@ -92,11 +92,11 @@ public class TestFakeData implements CommandLineRunner {
         // ╚═══════════╝
         Admin admin1 = new Admin();
         admin1.setEmail("admin1@coode.com");
-        admin1.setPassword("admin123");
+        admin1.setPassword(passwordEncoder.encode("admin123"));
 
         Admin admin2 = new Admin();
         admin2.setEmail("admin2@coode.com");
-        admin2.setPassword("admin456");
+        admin2.setPassword(passwordEncoder.encode("admin456"));
 
         adminRepository.saveAll(List.of(admin1, admin2));
 
@@ -155,6 +155,7 @@ public class TestFakeData implements CommandLineRunner {
         product1.setName("白色純棉T恤");
         product1.setPattern("純色");
         product1.setCategoryType("TOP");
+        product1.setGender("MEN");
         product1.setStyle("休閒");
         product1.setColor("白");
         product1.setSize("M");
@@ -170,6 +171,7 @@ public class TestFakeData implements CommandLineRunner {
         product2.setName("黑色牛仔外套");
         product2.setPattern("純色");
         product2.setCategoryType("OUTER");
+        product2.setGender("MEN");
         product2.setStyle("街頭");
         product2.setColor("黑");
         product2.setSize("L");
@@ -185,6 +187,7 @@ public class TestFakeData implements CommandLineRunner {
         product3.setName("卡其色工裝長褲");
         product3.setPattern("純色");
         product3.setCategoryType("BOTTOM");
+        product3.setGender("WOMEN");
         product3.setStyle("機能");
         product3.setColor("卡其");
         product3.setSize("32");
@@ -200,6 +203,7 @@ public class TestFakeData implements CommandLineRunner {
         product4.setName("白色休閒運動鞋");
         product4.setPattern("純色");
         product4.setCategoryType("SHOES");
+        product4.setGender("WOMEN");
         product4.setStyle("運動");
         product4.setColor("白");
         product4.setSize("US9");
@@ -211,7 +215,39 @@ public class TestFakeData implements CommandLineRunner {
         product4.setStatus("ACTIVE");
         product4.setVendor(vendor2);
 
-        productRepository.saveAll(List.of(product1, product2, product3, product4));
+        Product product5 = new Product();
+        product5.setName("灰色針織毛衣");
+        product5.setPattern("針織");
+        product5.setCategoryType("TOP");
+        product5.setGender("WOMEN");
+        product5.setStyle("韓系");
+        product5.setColor("灰");
+        product5.setSize("S");
+        product5.setStock(2);
+        product5.setPrice(new BigDecimal("499.00"));
+        product5.setDescription("柔軟針織，秋冬必備");
+        product5.setImagesJpg("knitwear_gray.jpg");
+        product5.setOutfitPng("knitwear_gray.png");
+        product5.setStatus("DRAFT");
+        product5.setVendor(vendor1);
+
+        Product product6 = new Product();
+        product6.setName("藍色格紋襯衫");
+        product6.setPattern("格紋");
+        product6.setCategoryType("TOP");
+        product6.setGender("MEN");
+        product6.setStyle("正式");
+        product6.setColor("藍");
+        product6.setSize("L");
+        product6.setStock(0);
+        product6.setPrice(new BigDecimal("599.00"));
+        product6.setDescription("商務休閒皆宜");
+        product6.setImagesJpg("shirt_blue.jpg");
+        product6.setOutfitPng("shirt_blue.png");
+        product6.setStatus("INACTIVE");
+        product6.setVendor(vendor1);
+
+        productRepository.saveAll(List.of(product1, product2, product3, product4, product5, product6));
 
         // ╔═══════════╗
         // ║  Cart ║
@@ -397,7 +433,7 @@ public class TestFakeData implements CommandLineRunner {
 
         System.out.println("======================================");
         System.out.println("Test fake data inserted successfully!");
-        System.out.println("Users: 2, Vendors: 2, Admins: 2, Products: 4,");
+        System.out.println("Users: 2, Vendors: 2, Admins: 2, Products: 6,");
         System.out.println("Carts: 2, CartItems: 4, Orders: 2, OrderItems: 4,");
         System.out.println("Outfits: 2, OutfitItems: 2, ReturnRequests: 2, ReturnItems: 2");
         System.out.println("======================================");

@@ -2,6 +2,8 @@ package com.example.demo.controller;
 
 import java.util.List;
 
+import jakarta.validation.Valid;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -105,7 +107,7 @@ public class CartItemController {
     @PostMapping
     public ResponseEntity<CartItemResponse>
             addCartItem(
-                    @RequestBody AddCartItemRequest request) {
+                    @Valid @RequestBody AddCartItemRequest request) {
 
         CartItemResponse addedItem =
                 cartItemService.addCartItem(request);
@@ -120,7 +122,7 @@ public class CartItemController {
     public ResponseEntity<CartItemResponse>
             updateCartItem(
                     @PathVariable Long cartItemId,
-                    @RequestBody UpdateCartItemRequest request) {
+                    @Valid @RequestBody UpdateCartItemRequest request) {
 
         CartItemResponse updatedItem =
                 cartItemService.updateCartItem(

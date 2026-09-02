@@ -1,5 +1,8 @@
 package com.example.demo.dto;
 
+// ========== jakarta validation ==========
+import jakarta.validation.constraints.NotBlank;
+
 // ========== lombok ==========
 import lombok.Getter;
 import lombok.Setter;
@@ -19,5 +22,6 @@ import lombok.AllArgsConstructor;
 public class OutfitUpdateRequest {
 
     // 新的穿搭名稱
+    @NotBlank(message = "穿搭名稱不能為空")
     private String name;
 }

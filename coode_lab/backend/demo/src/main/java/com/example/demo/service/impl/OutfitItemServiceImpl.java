@@ -156,12 +156,80 @@ public class OutfitItemServiceImpl implements OutfitItemService {
                 outfitItem.setProduct(product);
                 outfitItem.setSlotType(slotType);
 
+return outfitItemRepository
+                                .save(outfitItem);
+        }
+
+        // ╔═════════════════════╗
+        // ║ Add Item With Slot ║
+        // ╚═════════════════════╝
+
+        /**
+         * 將商品加入穿搭的指定位置。
+         *
+         * 與 addItem() 不同，此方法由前端明確指定 slotType，
+         * 因此 TOP 與 OUTER 可以同時存在：
+         *
+         * TOP → 自己的 TOP 位置
+         * OUTER → 自己的 OUTER 位置
+         *
+         * @param outfitId  穿搭 ID
+         * @param productId 商品 ID
+         * @param slotType  穿搭位置
+         * @return 新增或替換完成的 OutfitItem
+         */
+        @Override
+        @Transactional
+        public OutfitItem addItemWithSlot(
+                        Long outfitId,
+                        Long productId,
+                        String slotType) {
+
+                // 1、確認 Outfit 存在
+                Outfit outfit = getOutfit(outfitId);
+
+                // 2、確認 Product 存在
+                Product product = getProduct(productId);
+
+                // 3、檢查並整理穿搭位置
+                String normalizedSlot = validateSlot(slotType);
+
+                /*
+                 * 4、查詢該位置目前是否已有商品。
+                 */
+                Optional<OutfitItem> existingItem = outfitItemRepository
+                                .findByOutfitAndSlotType(
+                                                outfit,
+                                                normalizedSlot);
+
+                /*
+                 * 5、該位置已商品 → 直接替換。
+                 */
+                if (existingItem.isPresent()) {
+
+                        OutfitItem outfitItem = existingItem.get();
+
+                        outfitItem.setProduct(product);
+
+                        return outfitItemRepository
+                                        .save(outfitItem);
+                }
+
+                /*
+                 * 6、該位置目前沒有商品 → 建立新的 OutfitItem。
+                 */
+                OutfitItem outfitItem = new OutfitItem();
+
+                outfitItem.setOutfit(outfit);
+                outfitItem.setProduct(product);
+                outfitItem.setSlotType(normalizedSlot);
+
                 return outfitItemRepository
                                 .save(outfitItem);
         }
 
         // ╔══════════════════════╗
-        // ║ Find Outfit Items ║
+        // ║ Find Outfit Items    ║
         // ╚══════════════════════╝
 
         /**
@@ -450,6 +518,40 @@ public class OutfitItemServiceImpl implements OutfitItemService {
                                                 "商品分類 "
                                                                 + categoryType
                                                                 + " 不支援試衣間功能");
+                }
+        }
+
+        // ╔═════════════════════════╗
+        // ║ Private - Validate Slot ║
+        // ╚═════════════════════════╝
+
+        /**
+         * 檢查前端指定的穿搭位置是否合法。
+         *
+         * @param slotType 前端傳入的穿搭位置
+         * @return 大寫的合法位置
+         */
+        private String validateSlot(String slotType) {
+
+                if (slotType == null || slotType.isBlank()) {
+                        throw new IllegalArgumentException(
+                                        "穿搭位置不得為空");
+                }
+
+                String normalized = slotType
+                                .trim()
+                                .toUpperCase(Locale.ROOT);
+
+                switch (normalized) {
+                        case "TOP":
+                        case "OUTER":
+                        case "BOTTOM":
+                        case "SHOES":
+                        case "ACCESSORY":
+                                return normalized;
+                        default:
+                                throw new IllegalArgumentException(
+                                                "穿搭位置 " + slotType + " 不合法");
                 }
         }
 }

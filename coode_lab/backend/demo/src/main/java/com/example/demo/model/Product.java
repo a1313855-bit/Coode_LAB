@@ -52,6 +52,9 @@ public class Product {
     @Column(name = "category_type", length = 100)
     private String categoryType;
 
+    @Column(name = "gender", length = 50)
+    private String gender;
+
     @Column(name = "style", length = 100)
     private String style;
 
