@@ -246,32 +246,13 @@ public class OutfitController {
         List<OutfitItemResponse> items =
                 outfitItemService
                         .findByOutfitId(outfit.getOutfitId(), 0)
-                        .getContent()
-                        .stream()
-                        .map(this::toItemResponse)
-                        .toList();
+                        .getContent();
 
         return new OutfitResponse(
                 outfit.getOutfitId(),
                 outfit.getUser().getUserId(),
                 outfit.getName(),
                 items
-        );
-    }
-
-
-    /*
-     * 將 OutfitItem Entity
-     * 轉換成 OutfitItemResponse DTO
-     */
-    private OutfitItemResponse toItemResponse(
-            OutfitItem outfitItem) {
-
-        return new OutfitItemResponse(
-                outfitItem.getOutfititemsId(),
-                outfitItem.getOutfit().getOutfitId(),
-                outfitItem.getProduct().getProductId(),
-                outfitItem.getSlotType()
         );
     }
 }

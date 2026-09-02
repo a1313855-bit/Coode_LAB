@@ -30,7 +30,7 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @Entity
 @Table(name = "cart_items", uniqueConstraints = {
-        @UniqueConstraint(name = "uk_cart_product", columnNames = { "cart_id", "product_id" }) })
+        @UniqueConstraint(name = "uk_cart_variant", columnNames = { "cart_id", "variant_id" }) })
 public class CartItem {
 
     // ╔═══════╗
@@ -60,10 +60,11 @@ public class CartItem {
     @JsonIgnoreProperties("cartItem")
     private Cart cart;
 
-    // 多對一 : Many="CartItem" To One="Product"
+    // 多對一 : Many="CartItem" To One="ProductVariant"
+    // 會員買的是「哪個顏色＋哪個尺寸」的規格
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "product_id", nullable = false)
-    @JsonIgnoreProperties("cartItem")
-    private Product product;
+    @JoinColumn(name = "variant_id", nullable = false)
+    @JsonIgnoreProperties("product")
+    private ProductVariant variant;
 
 }

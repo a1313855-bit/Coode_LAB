@@ -17,6 +17,7 @@ import com.example.demo.model.OrderItem;
 import com.example.demo.model.Outfit;
 import com.example.demo.model.OutfitItem;
 import com.example.demo.model.Product;
+import com.example.demo.model.ProductVariant;
 import com.example.demo.model.ReturnItem;
 import com.example.demo.model.ReturnRequest;
 import com.example.demo.model.User;
@@ -29,6 +30,7 @@ import com.example.demo.repository.OrderRepository;
 import com.example.demo.repository.OutfitItemRepository;
 import com.example.demo.repository.OutfitRepository;
 import com.example.demo.repository.ProductRepository;
+import com.example.demo.repository.ProductVariantRepository;
 import com.example.demo.repository.ReturnItemRepository;
 import com.example.demo.repository.ReturnRequestRepository;
 import com.example.demo.repository.UserRepository;
@@ -43,6 +45,7 @@ public class TestFakeData implements CommandLineRunner {
     private final UserRepository userRepository;
     private final VendorRepository vendorRepository;
     private final ProductRepository productRepository;
+    private final ProductVariantRepository productVariantRepository;
     private final CartRepository cartRepository;
     private final CartItemRepository cartItemRepository;
     private final OrderRepository orderRepository;
@@ -57,6 +60,7 @@ public class TestFakeData implements CommandLineRunner {
                         UserRepository userRepository,
                         VendorRepository vendorRepository,
                         ProductRepository productRepository,
+                        ProductVariantRepository productVariantRepository,
                         CartRepository cartRepository,
                         CartItemRepository cartItemRepository,
                         OrderRepository orderRepository,
@@ -70,6 +74,7 @@ public class TestFakeData implements CommandLineRunner {
         this.userRepository = userRepository;
         this.vendorRepository = vendorRepository;
         this.productRepository = productRepository;
+        this.productVariantRepository = productVariantRepository;
         this.cartRepository = cartRepository;
         this.cartItemRepository = cartItemRepository;
         this.orderRepository = orderRepository;
@@ -149,17 +154,13 @@ public class TestFakeData implements CommandLineRunner {
         vendorRepository.saveAll(List.of(vendor1, vendor2));
 
         // ╔═══════════╗
-        // ║  Product ║
+        // ║  Product（商品主表只存共用資訊）║
         // ╚═══════════╝
         Product product1 = new Product();
         product1.setName("白色純棉T恤");
-        product1.setPattern("純色");
+        product1.setPattern("MEN");
         product1.setCategoryType("TOP");
-        product1.setGender("MEN");
         product1.setStyle("休閒");
-        product1.setColor("白");
-        product1.setSize("M");
-        product1.setStock(50);
         product1.setPrice(new BigDecimal("299.00"));
         product1.setDescription("100%純棉，透氣舒適");
         product1.setImagesJpg("t_shirt_white.jpg");
@@ -169,13 +170,9 @@ public class TestFakeData implements CommandLineRunner {
 
         Product product2 = new Product();
         product2.setName("黑色牛仔外套");
-        product2.setPattern("純色");
+        product2.setPattern("MEN");
         product2.setCategoryType("OUTER");
-        product2.setGender("MEN");
         product2.setStyle("街頭");
-        product2.setColor("黑");
-        product2.setSize("L");
-        product2.setStock(30);
         product2.setPrice(new BigDecimal("899.00"));
         product2.setDescription("經典牛仔，百搭款式");
         product2.setImagesJpg("denim_jacket_black.jpg");
@@ -185,13 +182,9 @@ public class TestFakeData implements CommandLineRunner {
 
         Product product3 = new Product();
         product3.setName("卡其色工裝長褲");
-        product3.setPattern("純色");
+        product3.setPattern("WOMEN");
         product3.setCategoryType("BOTTOM");
-        product3.setGender("WOMEN");
         product3.setStyle("機能");
-        product3.setColor("卡其");
-        product3.setSize("32");
-        product3.setStock(40);
         product3.setPrice(new BigDecimal("699.00"));
         product3.setDescription("多口袋設計，耐磨耐穿");
         product3.setImagesJpg("cargo_pants_khaki.jpg");
@@ -200,30 +193,22 @@ public class TestFakeData implements CommandLineRunner {
         product3.setVendor(vendor2);
 
         Product product4 = new Product();
-        product4.setName("白色休閒運動鞋");
-        product4.setPattern("純色");
-        product4.setCategoryType("SHOES");
-        product4.setGender("WOMEN");
-        product4.setStyle("運動");
-        product4.setColor("白");
-        product4.setSize("US9");
-        product4.setStock(60);
-        product4.setPrice(new BigDecimal("1290.00"));
-        product4.setDescription("輕量緩震，日常穿搭必備");
-        product4.setImagesJpg("sneaker_white.jpg");
-        product4.setOutfitPng("sneaker_white.png");
+        product4.setName("黑色連身洋裝");
+        product4.setPattern("WOMEN");
+        product4.setCategoryType("DRESS");
+        product4.setStyle("韓系");
+        product4.setPrice(new BigDecimal("999.00"));
+        product4.setDescription("剪裁俐落，一件即可完成穿搭");
+        product4.setImagesJpg("dress_black.jpg");
+        product4.setOutfitPng("dress_black.png");
         product4.setStatus("ACTIVE");
         product4.setVendor(vendor2);
 
         Product product5 = new Product();
         product5.setName("灰色針織毛衣");
-        product5.setPattern("針織");
+        product5.setPattern("WOMEN");
         product5.setCategoryType("TOP");
-        product5.setGender("WOMEN");
         product5.setStyle("韓系");
-        product5.setColor("灰");
-        product5.setSize("S");
-        product5.setStock(2);
         product5.setPrice(new BigDecimal("499.00"));
         product5.setDescription("柔軟針織，秋冬必備");
         product5.setImagesJpg("knitwear_gray.jpg");
@@ -233,13 +218,9 @@ public class TestFakeData implements CommandLineRunner {
 
         Product product6 = new Product();
         product6.setName("藍色格紋襯衫");
-        product6.setPattern("格紋");
+        product6.setPattern("MEN");
         product6.setCategoryType("TOP");
-        product6.setGender("MEN");
         product6.setStyle("正式");
-        product6.setColor("藍");
-        product6.setSize("L");
-        product6.setStock(0);
         product6.setPrice(new BigDecimal("599.00"));
         product6.setDescription("商務休閒皆宜");
         product6.setImagesJpg("shirt_blue.jpg");
@@ -247,7 +228,62 @@ public class TestFakeData implements CommandLineRunner {
         product6.setStatus("INACTIVE");
         product6.setVendor(vendor1);
 
-        productRepository.saveAll(List.of(product1, product2, product3, product4, product5, product6));
+        Product product7 = new Product();
+        product7.setName("黑色棒球帽");
+        product7.setPattern("KIDS");
+        product7.setCategoryType("HEADWEAR");
+        product7.setStyle("街頭");
+        product7.setPrice(new BigDecimal("399.00"));
+        product7.setDescription("百搭帽款，男女童皆適");
+        product7.setImagesJpg("cap_black.jpg");
+        product7.setOutfitPng("cap_black.png");
+        product7.setStatus("ACTIVE");
+        product7.setVendor(vendor1);
+
+        productRepository.saveAll(List.of(product1, product2, product3, product4, product5, product6, product7));
+
+        // ╔═══════════╗
+        // ║  ProductVariant（規格表：顏色 × 尺寸 × 庫存 × 圖片 × 販售狀態）║
+        // ╚═══════════╝
+        ProductVariant v1a = variant(product1, "白", "M", 48, "t_shirt_white_m.jpg", "t_shirt_white_m.png", "ACTIVE");
+        ProductVariant v1b = variant(product1, "白", "L", 28, "t_shirt_white_l.jpg", "t_shirt_white_l.png", "ACTIVE");
+        ProductVariant v1c = variant(product1, "黑", "M", 20, "t_shirt_black_m.jpg", "t_shirt_black_m.png", "ACTIVE");
+        ProductVariant v1d = variant(product1, "黑", "L", 12, "t_shirt_black_l.jpg", "t_shirt_black_l.png", "ACTIVE");
+        // 示範「黑色停售、白色照賣」：黑/L 設為停售
+        ProductVariant v1e = variant(product1, "黑", "XL", 0, "t_shirt_black_xl.jpg", "t_shirt_black_xl.png", "INACTIVE");
+
+        ProductVariant v2a = variant(product2, "黑", "M", 16, "denim_jacket_black_m.jpg", "denim_jacket_black_m.png", "ACTIVE");
+        ProductVariant v2b = variant(product2, "黑", "L", 8, "denim_jacket_black_l.jpg", "denim_jacket_black_l.png", "ACTIVE");
+        ProductVariant v2c = variant(product2, "藍", "M", 6, "denim_jacket_blue_m.jpg", "denim_jacket_blue_m.png", "ACTIVE");
+
+        ProductVariant v3a = variant(product3, "卡其", "30", 18, "cargo_pants_khaki_30.jpg", "cargo_pants_khaki_30.png", "ACTIVE");
+        ProductVariant v3b = variant(product3, "卡其", "32", 22, "cargo_pants_khaki_32.jpg", "cargo_pants_khaki_32.png", "ACTIVE");
+        ProductVariant v3c = variant(product3, "軍綠", "32", 5, "cargo_pants_green_32.jpg", "cargo_pants_green_32.png", "ACTIVE");
+
+        ProductVariant v4a = variant(product4, "黑", "S", 15, "dress_black_s.jpg", "dress_black_s.png", "ACTIVE");
+        ProductVariant v4b = variant(product4, "黑", "M", 12, "dress_black_m.jpg", "dress_black_m.png", "ACTIVE");
+        ProductVariant v4c = variant(product4, "白", "M", 9, "dress_white_m.jpg", "dress_white_m.png", "ACTIVE");
+
+        ProductVariant v5a = variant(product5, "灰", "S", 2, "knitwear_gray_s.jpg", "knitwear_gray_s.png", "ACTIVE");
+        ProductVariant v5b = variant(product5, "灰", "M", 4, "knitwear_gray_m.jpg", "knitwear_gray_m.png", "ACTIVE");
+        ProductVariant v5c = variant(product5, "米白", "M", 10, "knitwear_cream_m.jpg", "knitwear_cream_m.png", "ACTIVE");
+
+        ProductVariant v6a = variant(product6, "藍", "M", 0, "shirt_blue_m.jpg", "shirt_blue_m.png", "ACTIVE");
+        ProductVariant v6b = variant(product6, "藍", "L", 20, "shirt_blue_l.jpg", "shirt_blue_l.png", "ACTIVE");
+        ProductVariant v6c = variant(product6, "白", "L", 8, "shirt_white_l.jpg", "shirt_white_l.png", "ACTIVE");
+
+        ProductVariant v7a = variant(product7, "黑", "F", 25, "cap_black_f.jpg", "cap_black_f.png", "ACTIVE");
+        ProductVariant v7b = variant(product7, "黑", "U", 18, "cap_black_u.jpg", "cap_black_u.png", "ACTIVE");
+        ProductVariant v7c = variant(product7, "白", "U", 30, "cap_white_u.jpg", "cap_white_u.png", "ACTIVE");
+
+        productVariantRepository.saveAll(List.of(
+                v1a, v1b, v1c, v1d, v1e,
+                v2a, v2b, v2c,
+                v3a, v3b, v3c,
+                v4a, v4b, v4c,
+                v5a, v5b, v5c,
+                v6a, v6b, v6c,
+                v7a, v7b, v7c));
 
         // ╔═══════════╗
         // ║  Cart ║
@@ -263,32 +299,32 @@ public class TestFakeData implements CommandLineRunner {
         cartRepository.saveAll(List.of(cart1, cart2));
 
         // ╔═══════════╗
-        // ║  CartItem ║
+        // ║  CartItem（以規格為單位）║
         // ╚═══════════╝
         CartItem cartItem1 = new CartItem();
         cartItem1.setCart(cart1);
-        cartItem1.setProduct(product1);
+        cartItem1.setVariant(v1a);
         cartItem1.setProductQuantity(2);
         cartItem1.setPrice(product1.getPrice());
         cartItem1.setTotalPrice(product1.getPrice().multiply(BigDecimal.valueOf(2)));
 
         CartItem cartItem2 = new CartItem();
         cartItem2.setCart(cart1);
-        cartItem2.setProduct(product2);
+        cartItem2.setVariant(v2a);
         cartItem2.setProductQuantity(1);
         cartItem2.setPrice(product2.getPrice());
         cartItem2.setTotalPrice(product2.getPrice());
 
         CartItem cartItem3 = new CartItem();
         cartItem3.setCart(cart2);
-        cartItem3.setProduct(product3);
+        cartItem3.setVariant(v3a);
         cartItem3.setProductQuantity(1);
         cartItem3.setPrice(product3.getPrice());
         cartItem3.setTotalPrice(product3.getPrice());
 
         CartItem cartItem4 = new CartItem();
         cartItem4.setCart(cart2);
-        cartItem4.setProduct(product4);
+        cartItem4.setVariant(v4a);
         cartItem4.setProductQuantity(2);
         cartItem4.setPrice(product4.getPrice());
         cartItem4.setTotalPrice(product4.getPrice().multiply(BigDecimal.valueOf(2)));
@@ -317,12 +353,12 @@ public class TestFakeData implements CommandLineRunner {
         orderRepository.saveAll(List.of(order1, order2));
 
         // ╔═══════════╗
-        // ║  OrderItem ║
+        // ║  OrderItem（以規格為單位）║
         // ╚═══════════╝
         OrderItem orderItem1 = new OrderItem();
         orderItem1.setOrder(order1);
         orderItem1.setVendor(vendor1);
-        orderItem1.setProduct(product1);
+        orderItem1.setVariant(v1a);
         orderItem1.setProductQuantity(2);
         orderItem1.setPrice(product1.getPrice());
         orderItem1.setPriceTotal(product1.getPrice().multiply(BigDecimal.valueOf(2)));
@@ -331,7 +367,7 @@ public class TestFakeData implements CommandLineRunner {
         OrderItem orderItem2 = new OrderItem();
         orderItem2.setOrder(order1);
         orderItem2.setVendor(vendor1);
-        orderItem2.setProduct(product2);
+        orderItem2.setVariant(v2a);
         orderItem2.setProductQuantity(1);
         orderItem2.setPrice(product2.getPrice());
         orderItem2.setPriceTotal(product2.getPrice());
@@ -340,7 +376,7 @@ public class TestFakeData implements CommandLineRunner {
         OrderItem orderItem3 = new OrderItem();
         orderItem3.setOrder(order2);
         orderItem3.setVendor(vendor2);
-        orderItem3.setProduct(product3);
+        orderItem3.setVariant(v3a);
         orderItem3.setProductQuantity(1);
         orderItem3.setPrice(product3.getPrice());
         orderItem3.setPriceTotal(product3.getPrice());
@@ -349,7 +385,7 @@ public class TestFakeData implements CommandLineRunner {
         OrderItem orderItem4 = new OrderItem();
         orderItem4.setOrder(order2);
         orderItem4.setVendor(vendor2);
-        orderItem4.setProduct(product4);
+        orderItem4.setVariant(v4a);
         orderItem4.setProductQuantity(2);
         orderItem4.setPrice(product4.getPrice());
         orderItem4.setPriceTotal(product4.getPrice().multiply(BigDecimal.valueOf(2)));
@@ -371,17 +407,19 @@ public class TestFakeData implements CommandLineRunner {
         outfitRepository.saveAll(List.of(outfit1, outfit2));
 
         // ╔═══════════╗
-        // ║  OutfitItem ║
+        // ║  OutfitItem（含規格：記錄顏色）║
         // ╚═══════════╝
         OutfitItem outfitItem1 = new OutfitItem();
         outfitItem1.setOutfit(outfit1);
         outfitItem1.setProduct(product1);
+        outfitItem1.setVariant(v1a);
         outfitItem1.setSlotType("UPPER_BODY");
 
         OutfitItem outfitItem2 = new OutfitItem();
         outfitItem2.setOutfit(outfit2);
         outfitItem2.setProduct(product4);
-        outfitItem2.setSlotType("SHOES");
+        outfitItem2.setVariant(v4b);
+        outfitItem2.setSlotType("FULL_BODY");
 
         outfitItemRepository.saveAll(List.of(outfitItem1, outfitItem2));
 
@@ -433,9 +471,22 @@ public class TestFakeData implements CommandLineRunner {
 
         System.out.println("======================================");
         System.out.println("Test fake data inserted successfully!");
-        System.out.println("Users: 2, Vendors: 2, Admins: 2, Products: 6,");
+        System.out.println("Users: 2, Vendors: 2, Admins: 2, Products: 6, Variants: 19,");
         System.out.println("Carts: 2, CartItems: 4, Orders: 2, OrderItems: 4,");
         System.out.println("Outfits: 2, OutfitItems: 2, ReturnRequests: 2, ReturnItems: 2");
         System.out.println("======================================");
+    }
+
+    private ProductVariant variant(Product product, String color, String size,
+            int stock, String imagesJpg, String outfitPng, String status) {
+        ProductVariant v = new ProductVariant();
+        v.setProduct(product);
+        v.setColor(color);
+        v.setSize(size);
+        v.setStock(stock);
+        v.setImagesJpg(imagesJpg);
+        v.setOutfitPng(outfitPng);
+        v.setStatus(status);
+        return v;
     }
 }

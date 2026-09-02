@@ -142,7 +142,7 @@ public class UserController {
     }
 
     // =================
-    // 根據關鍵字查找會員
+    // 根據關鍵字查找會員（姓名 / Email / 電話 任一符合）
     // =================
     @GetMapping("/search")
     public ResponseEntity<List<UserResponse>> findUserByName(@RequestParam String keyword) {

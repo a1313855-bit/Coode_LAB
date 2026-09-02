@@ -1,64 +1,564 @@
 <script setup>
-import { RouterLink, RouterView, useRouter } from 'vue-router'
-import { useAuth, clearAuth } from '../composables/auth'
+import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
+import { RouterLink, RouterView, useRouter, useRoute } from 'vue-router'
+import { useAuth, clearAuth, currentUserId } from '../composables/auth'
+import { cartApi, cartItemApi } from '../api'
 
 const router = useRouter()
+const route = useRoute()
 const auth = useAuth()
+
+const menuOpen = ref(false)
+const cartCount = ref(0)
+
+const userMenuOpen = ref(false)
+function onDocClick() {
+  if (userMenuOpen.value) userMenuOpen.value = false
+}
+onMounted(() => {
+  document.addEventListener('click', onDocClick)
+  refreshCartCount()
+})
+onBeforeUnmount(() => document.removeEventListener('click', onDocClick))
 
 function logout() {
   clearAuth()
+  menuOpen.value = false
+  userMenuOpen.value = false
   router.push('/store')
 }
+
+function go(path) {
+  menuOpen.value = false
+  userMenuOpen.value = false
+  router.push(path)
+}
+
+async function refreshCartCount() {
+  if (!auth.value || auth.value.role !== 'user') {
+    cartCount.value = 0
+    return
+  }
+  try {
+    const cart = await cartApi.findByUserId(currentUserId())
+    const c = await cartItemApi.count(cart.cartId)
+    const n = c && typeof c === 'object' ? Number(c.count ?? c.total ?? 0) : Number(c ?? 0)
+    cartCount.value = Number.isFinite(n) && n > 0 ? n : 0
+  } catch (e) {
+    cartCount.value = 0
+  }
+}
+
+watch(() => route.fullPath, refreshCartCount)
 </script>
 
 <template>
-  <div>
-    <header class="topbar">
-      <div class="topbar-inner">
-        <div class="topbar-left">
-          <RouterLink to="/" class="brand">Coode LAB</RouterLink>
-          <nav>
-            <RouterLink to="/store">商城首頁</RouterLink>
-            <RouterLink to="/outfits" class="tryon-link">試衣間</RouterLink>
-            <RouterLink to="/orders">我的訂單</RouterLink>
-            <RouterLink to="/returns">退換貨</RouterLink>
-            <RouterLink to="/cart">購物車</RouterLink>
-          </nav>
-        </div>
-        <div class="topbar-right">
-          <template v-if="auth">
+  <div class="store-shell">
+    <!-- 黑色促銷條 -->
+    <div class="promo-strip">
+      <p>夏季系列全新登場 · 滿 NT$2,000 即享免運優惠</p>
+    </div>
+
+    <!-- 白色 sticky 導覽 -->
+    <header class="store-header">
+      <div class="header-inner">
+        <button class="burger" aria-label="選單" @click="menuOpen = !menuOpen">
+          <span></span><span></span><span></span>
+        </button>
+
+        <RouterLink to="/store" class="logo" @click="menuOpen = false">Coode LAB</RouterLink>
+
+        <nav class="store-nav">
+          <RouterLink to="/store" exact-active-class="is-active">首頁</RouterLink>
+          <RouterLink to="/store?go=products" class="nav-link">商品</RouterLink>
+          <RouterLink to="/store?new=1" class="nav-link">精選</RouterLink>
+        </nav>
+
+        <div class="header-right">
+          <template v-if="auth && auth.role === 'user'">
+            <div
+              class="user-menu"
+              @mouseenter="userMenuOpen = true"
+              @mouseleave="userMenuOpen = false"
+            >
+              <button
+                class="user-trigger"
+                :aria-expanded="userMenuOpen"
+                @click.stop="userMenuOpen = !userMenuOpen"
+              >
+                你好，{{ auth.name || auth.email }}
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M6 9l6 6 6-6" />
+                </svg>
+              </button>
+              <transition name="drop">
+                <div v-if="userMenuOpen" class="user-dropdown">
+                  <RouterLink to="/orders" class="drop-item" @click="userMenuOpen = false">
+                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6">
+                      <path d="M6 4h12v16H6zM9 4V2m6 2V2M9 12h6m-6 4h6" />
+                    </svg>
+                    我的訂單
+                  </RouterLink>
+                  <RouterLink to="/returns" class="drop-item" @click="userMenuOpen = false">
+                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6">
+                      <path d="M3 12a9 9 0 1 0 3-6.7L3 8" />
+                      <path d="M3 3v5h5" />
+                    </svg>
+                    退貨申請
+                  </RouterLink>
+                  <RouterLink to="/outfits" class="drop-item" @click="userMenuOpen = false">
+                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6">
+                      <path d="M6 3h4l1 3h7a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" />
+                      <path d="M9 10h6m-6 4h6" />
+                    </svg>
+                    穿搭
+                  </RouterLink>
+                  <RouterLink to="/account" class="drop-item" @click="userMenuOpen = false">
+                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6">
+                      <circle cx="12" cy="8" r="4" />
+                      <path d="M4 21c1.5-3.5 4.5-5 8-5s6.5 1.5 8 5" />
+                    </svg>
+                    會員資訊
+                  </RouterLink>
+                  <button class="drop-item drop-logout" @click="logout">
+                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6">
+                      <path d="M15 4H5v16h10M9 12h11m-3-3l3 3-3 3" />
+                    </svg>
+                    登出
+                  </button>
+                </div>
+              </transition>
+            </div>
+          </template>
+          <template v-else-if="auth">
             <span class="hello">你好，{{ auth.name || auth.email }}</span>
-            <RouterLink v-if="auth.role === 'vendor'" to="/vendor/dashboard" class="btn btn-sm">
-              前往廠商後台
-            </RouterLink>
-            <RouterLink v-else-if="auth.role === 'admin'" to="/admin/users" class="btn btn-sm">
-              前往管理員後台
-            </RouterLink>
-            <button class="btn btn-sm" @click="logout">登出</button>
+            <RouterLink v-if="auth.role === 'vendor'" to="/vendor/dashboard" class="link-small">廠商後台</RouterLink>
+            <RouterLink v-else-if="auth.role === 'admin'" to="/admin/users" class="link-small">管理員後台</RouterLink>
+            <button class="link-small link-btn" @click="logout">登出</button>
           </template>
           <template v-else>
-            <RouterLink to="/login" class="btn btn-sm btn-primary">登入</RouterLink>
-            <RouterLink to="/register" class="btn btn-sm">註冊</RouterLink>
+            <RouterLink to="/login" class="link-small">登入</RouterLink>
+            <RouterLink to="/register" class="link-small">註冊</RouterLink>
           </template>
+
+          <RouterLink to="/cart" class="cart-link" aria-label="購物車">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6">
+              <path d="M5 8h14l-1.2 11a2 2 0 0 1-2 1.8H8.2a2 2 0 0 1-2-1.8L5 8z" />
+              <path d="M8.5 10V6.5a3.5 3.5 0 0 1 7 0V10" />
+            </svg>
+            <span v-if="cartCount > 0" class="cart-badge">{{ cartCount }}</span>
+          </RouterLink>
         </div>
       </div>
+
+      <!-- 手機選單 -->
+      <transition name="drawer">
+        <nav v-if="menuOpen" class="mobile-nav">
+          <RouterLink to="/store" class="mobile-link" @click="menuOpen = false">首頁</RouterLink>
+          <RouterLink to="/store?go=products" class="mobile-link" @click="menuOpen = false">商品</RouterLink>
+          <RouterLink to="/store?new=1" class="mobile-link" @click="menuOpen = false">精選</RouterLink>
+          <RouterLink to="/cart" class="mobile-link" @click="menuOpen = false">購物車</RouterLink>
+          <template v-if="auth && auth.role === 'user'">
+            <RouterLink to="/orders" class="mobile-link" @click="menuOpen = false">我的訂單</RouterLink>
+            <RouterLink to="/returns" class="mobile-link" @click="menuOpen = false">退貨申請</RouterLink>
+            <RouterLink to="/outfits" class="mobile-link" @click="menuOpen = false">穿搭</RouterLink>
+            <RouterLink to="/account" class="mobile-link" @click="menuOpen = false">會員資訊</RouterLink>
+            <button class="mobile-link mobile-action" @click="logout">登出</button>
+          </template>
+          <template v-else-if="auth">
+            <RouterLink v-if="auth.role === 'vendor'" to="/vendor/dashboard" class="mobile-link" @click="menuOpen = false">廠商後台</RouterLink>
+            <RouterLink v-else-if="auth.role === 'admin'" to="/admin/users" class="mobile-link" @click="menuOpen = false">管理員後台</RouterLink>
+            <button class="mobile-link mobile-action" @click="logout">登出</button>
+          </template>
+          <template v-else>
+            <RouterLink to="/login" class="mobile-link" @click="menuOpen = false">登入</RouterLink>
+            <RouterLink to="/register" class="mobile-link" @click="menuOpen = false">註冊</RouterLink>
+          </template>
+        </nav>
+      </transition>
     </header>
-    <RouterView />
+
+    <main class="store-main">
+      <RouterView />
+    </main>
+
+    <!-- 黑底四欄 Footer -->
+    <footer class="store-footer">
+      <div class="footer-inner">
+        <div class="footer-col footer-brand">
+          <div class="footer-logo">Coode LAB</div>
+          <p>以簡約剪裁與低彩度質感，打造每一天的城市穿搭。</p>
+        </div>
+        <div class="footer-col">
+          <h4>購物指南</h4>
+          <button class="footer-link" @click="go('/store')">配送與運費</button>
+          <button class="footer-link" @click="go('/store')">尺寸說明</button>
+          <button class="footer-link" @click="go('/returns')">退換貨政策</button>
+        </div>
+        <div class="footer-col">
+          <h4>會員服務</h4>
+          <button class="footer-link" @click="go('/orders')">我的訂單</button>
+          <button class="footer-link" @click="go('/account')">會員資訊</button>
+          <button class="footer-link" @click="go('/returns')">退換貨申請</button>
+          <button class="footer-link" @click="go('/outfits')">穿搭試衣間</button>
+        </div>
+        <div class="footer-col">
+          <h4>聯絡我們</h4>
+          <p class="footer-line">service@coodelab.com</p>
+          <p class="footer-line">02-2345-6789</p>
+          <p class="footer-line">台北市信義區松高路 1 號 9 樓</p>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>© {{ new Date().getFullYear() }} Coode LAB · 僅供練習用途</p>
+      </div>
+    </footer>
   </div>
 </template>
 
 <style scoped>
-.topbar-left {
+.store-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: #fff;
+}
+
+/* ── 促銷條 ── */
+.promo-strip {
+  background: #111111;
+  color: #fff;
+  text-align: center;
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  padding: 9px 16px;
+}
+.promo-strip p {
+  margin: 0;
+}
+
+/* ── Header ── */
+.store-header {
+  position: sticky;
+  top: 0;
+  z-index: 60;
+  background: #fff;
+  border-bottom: 1px solid var(--line);
+}
+.header-inner {
+  max-width: 1240px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 24px;
+}
+.logo {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  color: var(--ink);
+  justify-self: start;
+}
+.logo:hover {
+  color: var(--ink);
+}
+.store-nav {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 30px;
+}
+.store-nav a {
+  font-size: 13px;
+  letter-spacing: 0.16em;
+  color: #3c3a37;
+  position: relative;
+  padding: 4px 0;
+}
+.store-nav a:hover {
+  color: var(--ink);
+}
+.store-nav a.is-active {
+  color: var(--ink);
+}
+.store-nav a.is-active::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -2px;
+  height: 2px;
+  background: var(--ink);
+}
+.nav-link:hover {
+  color: var(--ink);
+}
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  justify-self: end;
 }
 .hello {
-  font-size: 14px;
-  color: var(--c-text-light);
+  font-size: 13px;
+  color: var(--muted);
 }
-.tryon-link.router-link-active {
-  color: #db2777;
-  background: #fdf2f8;
+/* ── 會員下拉選單 ── */
+.user-menu {
+  position: relative;
+}
+.user-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  color: #3c3a37;
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  padding: 8px 2px;
+  cursor: pointer;
+  border-bottom: 1px solid transparent;
+  transition: color 0.15s ease;
+}
+.user-trigger:hover {
+  color: var(--ink);
+}
+.user-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 190px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-top: 2px solid var(--ink);
+  border-radius: 4px;
+  box-shadow: var(--shadow-soft);
+  padding: 6px 0;
+  z-index: 80;
+}
+.drop-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  padding: 11px 16px;
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  color: #3c3a37;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.drop-item:hover {
+  background: var(--paper-soft);
+  color: var(--ink);
+}
+.drop-logout {
+  color: var(--accent);
+}
+.drop-logout:hover {
+  background: #fdf3f2;
+  color: var(--accent);
+}
+.drop-enter-active,
+.drop-leave-active {
+  transition: opacity 0.16s ease, transform 0.16s ease;
+}
+.drop-enter-from,
+.drop-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+.link-small {
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  color: #3c3a37;
+  background: none;
+  border: none;
+  padding: 0;
+}
+.link-small:hover {
+  color: var(--ink);
+}
+.link-btn {
+  cursor: pointer;
+}
+.cart-link {
+  position: relative;
+  color: var(--ink);
+  display: flex;
+}
+.cart-badge {
+  position: absolute;
+  top: -7px;
+  right: -10px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.burger {
+  display: none;
+  flex-direction: column;
+  gap: 4px;
+  background: none;
+  border: none;
+  padding: 4px;
+}
+.burger span {
+  width: 20px;
+  height: 2px;
+  background: var(--ink);
+}
+
+/* 手機選單 */
+.mobile-nav {
+  display: none;
+  flex-direction: column;
+  border-top: 1px solid var(--line);
+  padding: 6px 24px 12px;
+  background: #fff;
+}
+.mobile-link {
+  padding: 12px 0;
+  font-size: 14px;
+  letter-spacing: 0.12em;
+  border-bottom: 1px solid #f1efec;
+  text-align: left;
+  background: none;
+  border-left: none;
+  border-right: none;
+  border-top: none;
+  cursor: pointer;
+}
+.mobile-link:last-child {
+  border-bottom: none;
+}
+.mobile-action {
+  color: var(--accent);
+}
+.drawer-enter-active,
+.drawer-leave-active {
+  transition: opacity 0.18s ease;
+}
+.drawer-enter-from,
+.drawer-leave-to {
+  opacity: 0;
+}
+
+/* ── Main ── */
+.store-main {
+  flex: 1;
+}
+
+/* ── Footer ── */
+.store-footer {
+  background: #161616;
+  color: #cfcfcf;
+}
+.footer-inner {
+  max-width: 1240px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr 1.2fr;
+  gap: 32px;
+  padding: 56px 24px 40px;
+}
+.footer-logo {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  color: #fff;
+  margin-bottom: 14px;
+}
+.footer-brand p {
+  font-size: 13px;
+  line-height: 1.8;
+  color: #a7a49f;
+  max-width: 260px;
+}
+.footer-col h4 {
+  color: #fff;
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  margin-bottom: 16px;
+  font-weight: 600;
+}
+.footer-link {
+  display: block;
+  background: none;
+  border: none;
+  color: #a7a49f;
+  font-size: 13px;
+  padding: 5px 0;
+  text-align: left;
+  cursor: pointer;
+}
+.footer-link:hover {
+  color: #fff;
+}
+.footer-line {
+  font-size: 13px;
+  color: #a7a49f;
+  margin: 6px 0;
+}
+.footer-bottom {
+  border-top: 1px solid #2c2c2c;
+  padding: 18px 24px;
+  text-align: center;
+}
+.footer-bottom p {
+  font-size: 12px;
+  color: #8f8d89;
+}
+
+/* ── RWD ── */
+@media (max-width: 900px) {
+  .header-inner {
+    grid-template-columns: auto 1fr auto;
+  }
+  .store-nav {
+    display: none;
+  }
+  .burger {
+    display: flex;
+  }
+  .hello {
+    display: none;
+  }
+  .user-menu {
+    display: none;
+  }
+  .link-small {
+    display: none;
+  }
+  .mobile-nav {
+    display: flex;
+  }
+  .footer-inner {
+    grid-template-columns: 1fr 1fr;
+    gap: 28px;
+  }
+}
+@media (max-width: 560px) {
+  .header-inner {
+    padding: 12px 16px;
+    grid-template-columns: auto 1fr auto;
+  }
+  .footer-inner {
+    grid-template-columns: 1fr;
+    padding: 40px 20px 28px;
+  }
 }
 </style>

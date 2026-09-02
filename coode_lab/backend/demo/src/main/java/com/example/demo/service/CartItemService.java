@@ -16,10 +16,10 @@ public interface CartItemService {
     // 查詢購物車全部商品 (固定每頁10筆,page 從 0 開始)
     SelectPartOfData.Result<CartItemResponse> findCartItemsByCartId(Long cartId, int page);
 
-    // 查詢購物車某商品
-    CartItemResponse findCartItemByCartIdAndProductId(
+    // 查詢購物車某規格
+    CartItemResponse findCartItemByCartIdAndVariantId(
             Long cartId,
-            Long productId);
+            Long variantId);
 
     // 計算購物車有幾種商品
     Long countDistinctProducts(Long cartId);
@@ -34,7 +34,7 @@ public interface CartItemService {
     // ║ 購物車商品 CREATE            ║
     // ╚══════════════════════════════╝
 
-    // 加入商品
+    // 加入商品（以規格為單位）
     CartItemResponse addCartItem(AddCartItemRequest request);
 
     // ╔══════════════════════════════╗
@@ -50,8 +50,8 @@ public interface CartItemService {
     // ║ 購物車商品 DELETE            ║
     // ╚══════════════════════════════╝
 
-    // 刪除購物車某商品
-    void deleteCartItem(Long cartId, Long productId);
+    // 刪除購物車某規格
+    void deleteCartItem(Long cartId, Long variantId);
 
     // 清空購物車
     void clearCart(Long cartId);

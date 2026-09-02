@@ -19,7 +19,6 @@ const nav = [
   { to: '/vendor/returns', label: '退換貨管理' },
   { to: '/vendor/reports', label: '銷售報表' },
   { to: '/vendor/account', label: '帳號資訊' },
-  { to: '/vendor/contract', label: '合約資訊' },
 ]
 
 function logout() {

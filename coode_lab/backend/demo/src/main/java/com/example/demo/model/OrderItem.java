@@ -75,10 +75,11 @@ public class OrderItem {
     @JsonIgnoreProperties("orderItem")
     private Vendor vendor;
 
-    // 多對一 : Many="OrderItem" To One="Product"
+    // 多對一 : Many="OrderItem" To One="ProductVariant"
+    // 訂單明細記錄會員實際購買的規格（顏色＋尺寸），退換貨也以規格為準
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "product_id", nullable = false)
-    @JsonIgnoreProperties("orderItem")
-    private Product product;
+    @JoinColumn(name = "variant_id", nullable = false)
+    @JsonIgnoreProperties("product")
+    private ProductVariant variant;
 
 }

@@ -17,6 +17,7 @@ import com.example.demo.model.OrderItem;
 import com.example.demo.model.User;
 import com.example.demo.model.Vendor;
 import com.example.demo.model.Product;
+import com.example.demo.model.ProductVariant;
 import com.example.demo.dto.returnrequest.CreateReturnRequestRequest;
 import com.example.demo.dto.returnrequest.UpdateReturnRequestStatusRequest;
 import com.example.demo.dto.returnrequest.ReturnRequestDTO;
@@ -66,7 +67,7 @@ public class ReturnRequestServiceImpl implements ReturnRequestService {
     // ╚══════════════════════════════════╝
 
     @Override
-    public ReturnRequest createReturnRequest(Long userId, Long orderId, CreateReturnRequestRequest request) {
+    public ReturnRequestDTO createReturnRequest(Long userId, Long orderId, CreateReturnRequestRequest request) {
         Optional<Order> optional = orderRepository.findById(orderId);
         if (optional.isEmpty()) {
             return null;
@@ -126,7 +127,8 @@ public class ReturnRequestServiceImpl implements ReturnRequestService {
         returnItem.setReturnRequest(returnRequest);
         returnRequest.setReturnItem(returnItem);
 
-        return returnRequestRepository.save(returnRequest);
+        ReturnRequest saved = returnRequestRepository.save(returnRequest);
+        return toReturnRequestDTO(saved);
     }
 
     @Override
@@ -163,14 +165,14 @@ public class ReturnRequestServiceImpl implements ReturnRequestService {
     }
 
     @Override
-    public ReturnRequest updateStatus(Long returnRequestId, UpdateReturnRequestStatusRequest request) {
+    public ReturnRequestDTO updateStatus(Long returnRequestId, UpdateReturnRequestStatusRequest request) {
         Optional<ReturnRequest> optional = returnRequestRepository.findById(returnRequestId);
         if (optional.isEmpty()) {
             return null;
         }
         ReturnRequest returnRequest = optional.get();
         returnRequest.setStatus(request.getStatus());
-        return returnRequestRepository.save(returnRequest);
+        return toReturnRequestDTO(returnRequestRepository.save(returnRequest));
     }
 
     // ╔══════════════════════════════════╗
@@ -212,12 +214,13 @@ public class ReturnRequestServiceImpl implements ReturnRequestService {
             itemInfo.setPicture(returnItem.getPicture());
             if (returnItem.getOrderItem() != null) {
                 itemInfo.setOrderItemId(returnItem.getOrderItem().getOrderItemId());
-                if (returnItem.getOrderItem().getProduct() != null) {
-                    Product product = returnItem.getOrderItem().getProduct();
+                ProductVariant variant = returnItem.getOrderItem().getVariant();
+                if (variant != null) {
+                    Product product = variant.getProduct();
                     itemInfo.setProductName(product.getName());
                     itemInfo.setCategoryType(product.getCategoryType());
-                    itemInfo.setColor(product.getColor());
-                    itemInfo.setSize(product.getSize());
+                    itemInfo.setColor(variant.getColor());
+                    itemInfo.setSize(variant.getSize());
                     itemInfo.setPattern(product.getPattern());
                 }
             }
@@ -231,7 +234,7 @@ public class ReturnRequestServiceImpl implements ReturnRequestService {
     // ╚══════════════════════════════════╝
 
     @Override
-    public ReturnItem addReturnItem(Long returnRequestId, CreateReturnItemRequest request) {
+    public ReturnItemDTO addReturnItem(Long returnRequestId, CreateReturnItemRequest request) {
         Optional<ReturnRequest> requestOptional = returnRequestRepository.findById(returnRequestId);
         if (requestOptional.isEmpty()) {
             return null;
@@ -253,7 +256,7 @@ public class ReturnRequestServiceImpl implements ReturnRequestService {
         returnItem.setOrderItem(orderItem);
         returnItem.setReturnRequest(returnRequest);
 
-        return returnItemRepository.save(returnItem);
+        return toReturnItemDTO(returnItemRepository.save(returnItem));
     }
 
     @Override
@@ -265,7 +268,7 @@ public class ReturnRequestServiceImpl implements ReturnRequestService {
     }
 
     @Override
-    public ReturnItem updateQuantity(Long returnItemId, UpdateReturnItemQuantityRequest request) {
+    public ReturnItemDTO updateQuantity(Long returnItemId, UpdateReturnItemQuantityRequest request) {
         Optional<ReturnItem> optional = returnItemRepository.findById(returnItemId);
         if (optional.isEmpty()) {
             return null;
@@ -292,12 +295,12 @@ public class ReturnRequestServiceImpl implements ReturnRequestService {
         returnItem.setRejectedQuantity(rejectedQuantity);
         returnItem.setStatus("PROCESSING");
 
-        return returnItemRepository.save(returnItem);
+        return toReturnItemDTO(returnItemRepository.save(returnItem));
     }
 
     // 廠商下決定時，一併將申請單狀態設為 REVIEWED（方案 C）
     @Override
-    public ReturnItem updateStatus(Long returnItemId, UpdateReturnItemStatusRequest request) {
+    public ReturnItemDTO updateStatus(Long returnItemId, UpdateReturnItemStatusRequest request) {
         Optional<ReturnItem> optional = returnItemRepository.findById(returnItemId);
         if (optional.isEmpty()) {
             return null;
@@ -308,7 +311,7 @@ public class ReturnRequestServiceImpl implements ReturnRequestService {
         ReturnRequest returnRequest = returnItem.getReturnRequest();
         returnRequest.setStatus("REVIEWED");
 
-        return returnItemRepository.save(returnItem);
+        return toReturnItemDTO(returnItemRepository.save(returnItem));
     }
 
     // ╔══════════════════════════════════╗
@@ -345,16 +348,17 @@ public class ReturnRequestServiceImpl implements ReturnRequestService {
         orderItemInfo.setProductQuantity(orderItem.getProductQuantity());
         orderItemInfo.setPrice(orderItem.getPrice());
 
-        if (orderItem.getProduct() != null) {
-            Product product = orderItem.getProduct();
+        if (orderItem.getVariant() != null) {
+            ProductVariant variant = orderItem.getVariant();
+            Product product = variant.getProduct();
             ReturnItemDTO.ProductInfo productInfo = new ReturnItemDTO.ProductInfo();
             productInfo.setProductId(product.getProductId());
             productInfo.setName(product.getName());
             productInfo.setPattern(product.getPattern());
             productInfo.setCategoryType(product.getCategoryType());
             productInfo.setStyle(product.getStyle());
-            productInfo.setColor(product.getColor());
-            productInfo.setSize(product.getSize());
+            productInfo.setColor(variant.getColor());
+            productInfo.setSize(variant.getSize());
             orderItemInfo.setProduct(productInfo);
         }
         return orderItemInfo;

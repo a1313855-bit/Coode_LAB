@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="800" viewBox="0 0 640 800">
+  <rect width="640" height="800" fill="#f2efea"/>
+  <g stroke="#c4bdb2" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <!-- 抽象外套線稿 -->
+    <path d="M180 260 h280 l52 92 -66 30 -30 -50 -46 150 v220 a18 18 0 0 1 -36 0 V482 l-46 -150 -30 50 -66 -30 z"/>
+    <path d="M212 268 l18 -34 a24 24 0 0 1 180 0 l18 34"/>
+  </g>
+  <text x="320" y="150" font-family="Helvetica, Arial, sans-serif" font-size="20" letter-spacing="8" text-anchor="middle" fill="#8f887d">COODE LAB</text>
+  <text x="320" y="700" font-family="Helvetica, Arial, sans-serif" font-size="16" letter-spacing="6" text-anchor="middle" fill="#8f887d">OUTER</text>
+</svg>

@@ -6,6 +6,9 @@ import java.time.LocalDateTime;
 import org.springframework.data.jpa.domain.Specification;
 
 import com.example.demo.model.Product;
+import com.example.demo.model.ProductVariant;
+
+import jakarta.persistence.criteria.Join;
 
 public class ProductSpecification {
 
@@ -70,7 +73,9 @@ public class ProductSpecification {
 
     // =====================================================
     // 5. 商品顏色
-    // 例如：白色、黑色、藍色
+    // 例如：白、黑、藍
+    // 顏色已拆到規格（ProductVariant）層級，
+    // 因此篩選「擁有某顏色規格的商品」。
     // =====================================================
     public static Specification<Product> hasColor(
             String color) {
@@ -81,8 +86,12 @@ public class ProductSpecification {
                 return criteriaBuilder.conjunction();
             }
 
+            query.distinct(true);
+
+            Join<Product, ProductVariant> variant = root.join("variants");
+
             return criteriaBuilder.equal(
-                    root.get("color"),
+                    variant.get("color"),
                     color);
         };
     }
@@ -90,6 +99,8 @@ public class ProductSpecification {
     // =====================================================
     // 6. 商品尺寸
     // 例如：S、M、L、XL
+    // 尺寸已拆到規格（ProductVariant）層級，
+    // 因此篩選「擁有某尺寸規格的商品」。
     // =====================================================
     public static Specification<Product> hasSize(
             String size) {
@@ -100,8 +111,12 @@ public class ProductSpecification {
                 return criteriaBuilder.conjunction();
             }
 
+            query.distinct(true);
+
+            Join<Product, ProductVariant> variant = root.join("variants");
+
             return criteriaBuilder.equal(
-                    root.get("size"),
+                    variant.get("size"),
                     size);
         };
     }
@@ -142,24 +157,6 @@ public class ProductSpecification {
             return criteriaBuilder.like(
                     root.get("name"),
                     "%" + keyword + "%");
-        };
-    }
-
-    // =====================================================
-    // 8-1. 商品性別
-    // 例如：MEN（男裝）、WOMEN（女裝）、KIDS（童裝）
-    // =====================================================
-    public static Specification<Product> hasGender(String gender) {
-
-        return (root, query, criteriaBuilder) -> {
-
-            if (gender == null || gender.isBlank()) {
-                return criteriaBuilder.conjunction();
-            }
-
-            return criteriaBuilder.equal(
-                    root.get("gender"),
-                    gender);
         };
     }
 
@@ -213,6 +210,21 @@ public class ProductSpecification {
             }
 
             return criteriaBuilder.equal(root.get("vendor").get("vendorId"), vendorId);
+        };
+    }
+
+    // 管理員後台按廠商名稱模糊搜尋 (利用商品名稱搜尋)
+    public static Specification<Product> hasVendorName(String vendorName) {
+        return (root, query, criteriaBuilder) -> {
+
+            // 沒傳廠商名稱,就不限制廠商
+            if (vendorName == null || vendorName.isBlank()) {
+                return criteriaBuilder.conjunction();
+            }
+
+            return criteriaBuilder.like(
+                    root.get("vendor").get("vendorName"),
+                    "%" + vendorName + "%");
         };
     }
 

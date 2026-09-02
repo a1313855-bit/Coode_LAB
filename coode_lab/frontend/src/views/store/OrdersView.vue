@@ -62,10 +62,11 @@ const toast = ref('')
 let toastTimer = null
 
 function openReturn(orderId, it) {
+  const product = it.variant && it.variant.product ? it.variant.product : {}
   returnModal.value = {
     orderId,
     itemId: it.orderItemId,
-    productName: it.product.name,
+    productName: product.name || '',
     available: it.productQuantity,
   }
   rForm.value = { requestType: 'RETURN', requestQuantity: 1, picture: '' }
@@ -184,8 +185,10 @@ onMounted(load)
           <div v-if="orderItems.length === 0" class="muted">無明細資料</div>
           <div v-for="it in orderItems" :key="it.orderItemId" class="item">
             <span>
-              {{ it.product.name }}
-              <span class="muted small">x{{ it.productQuantity }}</span>
+              {{ it.variant && it.variant.product ? it.variant.product.name : '' }}
+              <span class="muted small">
+                規格 {{ it.variant ? it.variant.color + ' / ' + it.variant.size : '' }} · x{{ it.productQuantity }}
+              </span>
             </span>
             <span>{{ formatMoney(it.priceTotal) }}</span>
             <button class="btn btn-sm" @click="openReturn(o.orderId, it)">
@@ -260,8 +263,9 @@ onMounted(load)
   font-size: 12px;
 }
 .sum {
-  font-weight: 700;
-  color: var(--c-danger);
+  font-weight: 800;
+  color: var(--ink);
+  font-size: 18px;
 }
 .recipient {
   margin-top: 8px;
@@ -278,7 +282,7 @@ onMounted(load)
   gap: 10px;
   padding: 6px 0;
   font-size: 14px;
-  border-bottom: 1px dashed var(--c-border);
+  border-bottom: 1px solid var(--line);
 }
 .item > span:first-child {
   flex: 1;
@@ -306,24 +310,29 @@ onMounted(load)
 }
 .modal {
   background: #fff;
-  border-radius: var(--radius);
-  padding: 24px;
+  border-radius: 4px;
+  padding: 26px;
   width: 420px;
   max-width: 90vw;
+  border: 1px solid var(--line);
 }
 .modal h3 {
   margin-bottom: 8px;
+  letter-spacing: 0.08em;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 12px;
 }
 .toast {
   position: fixed;
   bottom: 32px;
   left: 50%;
   transform: translateX(-50%);
-  background: #333;
+  background: #161616;
   color: #fff;
-  padding: 10px 18px;
-  border-radius: 8px;
+  padding: 12px 20px;
+  border-radius: 4px;
   font-size: 14px;
   z-index: 200;
+  letter-spacing: 0.04em;
 }
 </style>

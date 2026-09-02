@@ -18,6 +18,7 @@ import com.example.demo.model.Order;
 import com.example.demo.model.OrderItem;
 import com.example.demo.model.User;
 import com.example.demo.model.Product;
+import com.example.demo.model.ProductVariant;
 import com.example.demo.model.Vendor;
 import com.example.demo.model.CartItem;
 import com.example.demo.dto.order.CreateOrderRequest;
@@ -31,6 +32,7 @@ import com.example.demo.repository.OrderItemRepository;
 import com.example.demo.repository.UserRepository;
 import com.example.demo.repository.CartItemRepository;
 import com.example.demo.repository.ProductRepository;
+import com.example.demo.repository.ProductVariantRepository;
 import com.example.demo.repository.VendorRepository;
 import com.example.demo.service.OrderService;
 import com.example.demo.util.VendorStatusMapper;
@@ -48,6 +50,7 @@ public class OrderServiceImpl implements OrderService {
     private final UserRepository userRepository;
     private final CartItemRepository cartItemRepository;
     private final ProductRepository productRepository;
+    private final ProductVariantRepository productVariantRepository;
     private final VendorRepository vendorRepository;
 
     public OrderServiceImpl(OrderRepository orderRepository,
@@ -55,12 +58,14 @@ public class OrderServiceImpl implements OrderService {
             UserRepository userRepository,
             CartItemRepository cartItemRepository,
             ProductRepository productRepository,
+            ProductVariantRepository productVariantRepository,
             VendorRepository vendorRepository) {
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
         this.userRepository = userRepository;
         this.cartItemRepository = cartItemRepository;
         this.productRepository = productRepository;
+        this.productVariantRepository = productVariantRepository;
         this.vendorRepository = vendorRepository;
     }
 
@@ -107,26 +112,40 @@ public class OrderServiceImpl implements OrderService {
         BigDecimal sumTotal = BigDecimal.ZERO;
 
         for (CartItem cartItem : cartItems) {
-            Product product = cartItem.getProduct();
+            ProductVariant variant = cartItem.getVariant();
+            Product product = variant.getProduct();
             int qty = cartItem.getProductQuantity();
 
-            // 即時庫存檢查（與購物車加入/修改相同邏輯）
-            if (product.getStock() == null || product.getStock() <= 0) {
-                throw new IllegalArgumentException("商品「" + product.getName() + "」目前無庫存");
+            // 雙層狀態校驗：商品 ACTIVE 且 規格 ACTIVE 才能購買
+            if (product == null || !"ACTIVE".equals(product.getStatus())) {
+                throw new IllegalArgumentException("商品「" + product.getName() + "」目前已停售");
             }
-            if (qty > product.getStock()) {
+            if (!"ACTIVE".equals(variant.getStatus())) {
                 throw new IllegalArgumentException(
-                        "商品「" + product.getName() + "」庫存不足，目前僅剩 " + product.getStock() + " 件");
+                        "商品「" + product.getName() + "」的「" + variant.getColor() + " / " + variant.getSize()
+                                + "」規格已停售，無法結帳");
             }
 
-            // 更新商品庫存（扣掉購買數量）
-            product.setStock(product.getStock() - qty);
-            productRepository.save(product);
+            // 即時庫存檢查（與購物車加入/修改相同邏輯）
+            if (variant.getStock() == null || variant.getStock() <= 0) {
+                throw new IllegalArgumentException(
+                        "商品「" + product.getName() + "」的「" + variant.getColor() + " / " + variant.getSize()
+                                + "」目前無庫存");
+            }
+            if (qty > variant.getStock()) {
+                throw new IllegalArgumentException(
+                        "商品「" + product.getName() + "」的「" + variant.getColor() + " / " + variant.getSize()
+                                + "」庫存不足，目前僅剩 " + variant.getStock() + " 件");
+            }
+
+            // 更新規格庫存（扣掉購買數量）
+            variant.setStock(variant.getStock() - qty);
+            productVariantRepository.save(variant);
 
             // 建立訂單明細
             OrderItem orderItem = new OrderItem();
             orderItem.setOrder(savedOrder);
-            orderItem.setProduct(product);
+            orderItem.setVariant(variant);
             orderItem.setVendor(product.getVendor());
             orderItem.setProductQuantity(qty);
             orderItem.setPrice(product.getPrice());
@@ -246,8 +265,8 @@ public class OrderServiceImpl implements OrderService {
             vendorInfo.setVendorName(item.getVendor().getVendorName());
             dto.setVendor(vendorInfo);
         }
-        if (item.getProduct() != null) {
-            dto.setProduct(toOrderItemProductInfo(item.getProduct()));
+        if (item.getVariant() != null) {
+            dto.setVariant(toOrderItemVariantInfo(item.getVariant()));
         }
         return dto;
     }
@@ -274,19 +293,46 @@ public class OrderServiceImpl implements OrderService {
             vendorInfo.setVendorName(item.getVendor().getVendorName());
             dto.setVendor(vendorInfo);
         }
-        if (item.getProduct() != null) {
-            OrderItemVendorDTO.ProductInfo productInfo = new OrderItemVendorDTO.ProductInfo();
-            productInfo.setProductId(item.getProduct().getProductId());
-            productInfo.setName(item.getProduct().getName());
-            productInfo.setPattern(item.getProduct().getPattern());
-            productInfo.setCategoryType(item.getProduct().getCategoryType());
-            productInfo.setStyle(item.getProduct().getStyle());
-            productInfo.setColor(item.getProduct().getColor());
-            productInfo.setSize(item.getProduct().getSize());
-            productInfo.setPrice(item.getProduct().getPrice());
-            dto.setProduct(productInfo);
+        if (item.getVariant() != null) {
+            dto.setVariant(toOrderItemVariantInfoVendor(item.getVariant()));
         }
         return dto;
+    }
+
+    private OrderItemDTO.VariantInfo toOrderItemVariantInfo(ProductVariant variant) {
+        OrderItemDTO.VariantInfo info = new OrderItemDTO.VariantInfo();
+        info.setVariantId(variant.getVariantId());
+        info.setColor(variant.getColor());
+        info.setSize(variant.getSize());
+        info.setStock(variant.getStock());
+        info.setStatus(variant.getStatus());
+        info.setImagesJpg(variant.getImagesJpg());
+        if (variant.getProduct() != null) {
+            info.setProduct(toOrderItemProductInfo(variant.getProduct()));
+        }
+        return info;
+    }
+
+    private OrderItemVendorDTO.VariantInfo toOrderItemVariantInfoVendor(ProductVariant variant) {
+        OrderItemVendorDTO.VariantInfo info = new OrderItemVendorDTO.VariantInfo();
+        info.setVariantId(variant.getVariantId());
+        info.setColor(variant.getColor());
+        info.setSize(variant.getSize());
+        info.setStock(variant.getStock());
+        info.setStatus(variant.getStatus());
+        info.setImagesJpg(variant.getImagesJpg());
+        if (variant.getProduct() != null) {
+            OrderItemVendorDTO.ProductInfo productInfo = new OrderItemVendorDTO.ProductInfo();
+            Product p = variant.getProduct();
+            productInfo.setProductId(p.getProductId());
+            productInfo.setName(p.getName());
+            productInfo.setPattern(p.getPattern());
+            productInfo.setCategoryType(p.getCategoryType());
+            productInfo.setStyle(p.getStyle());
+            productInfo.setPrice(p.getPrice());
+            info.setProduct(productInfo);
+        }
+        return info;
     }
 
     private OrderItemDTO.ProductInfo toOrderItemProductInfo(Product product) {
@@ -296,8 +342,6 @@ public class OrderServiceImpl implements OrderService {
         productInfo.setPattern(product.getPattern());
         productInfo.setCategoryType(product.getCategoryType());
         productInfo.setStyle(product.getStyle());
-        productInfo.setColor(product.getColor());
-        productInfo.setSize(product.getSize());
         productInfo.setPrice(product.getPrice());
         return productInfo;
     }
@@ -314,10 +358,11 @@ public class OrderServiceImpl implements OrderService {
         }
         Order order = optional.get();
 
-        Product product = productRepository.findById(request.getProductId()).orElse(null);
-        if (product == null) {
+        ProductVariant variant = productVariantRepository.findById(request.getVariantId()).orElse(null);
+        if (variant == null) {
             return null;
         }
+        Product product = variant.getProduct();
 
         Vendor vendor = vendorRepository.findById(product.getVendor().getVendorId()).orElse(null);
         if (vendor == null) {
@@ -334,7 +379,7 @@ public class OrderServiceImpl implements OrderService {
         orderItem.setStatus("PENDING");
         orderItem.setOrder(order);
         orderItem.setVendor(vendor);
-        orderItem.setProduct(product);
+        orderItem.setVariant(variant);
 
         return orderItemRepository.save(orderItem);
     }

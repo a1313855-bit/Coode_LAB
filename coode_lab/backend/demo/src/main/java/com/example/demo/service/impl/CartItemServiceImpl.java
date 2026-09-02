@@ -12,31 +12,32 @@ import com.example.demo.dto.UpdateCartItemRequest;
 import com.example.demo.model.Cart;
 import com.example.demo.model.CartItem;
 import com.example.demo.model.Product;
+import com.example.demo.model.ProductVariant;
 import com.example.demo.repository.CartItemRepository;
 import com.example.demo.repository.CartRepository;
-import com.example.demo.repository.ProductRepository;
+import com.example.demo.repository.ProductVariantRepository;
 import com.example.demo.service.CartItemService;
 import com.example.demo.util.SelectPartOfData;
 
 @Service
 public class CartItemServiceImpl implements CartItemService {
 
-        // ╔═══════════════╗
-        // ║ 依賴注入 ║
-        // ╚═══════════════╝
+        // ╔═══════════════════╗
+        // ║ 依賴注入          ║
+        // ╚═══════════════════╝
 
         private final CartItemRepository cartItemRepository;
         private final CartRepository cartRepository;
-        private final ProductRepository productRepository;
+        private final ProductVariantRepository productVariantRepository;
 
         public CartItemServiceImpl(
                         CartItemRepository cartItemRepository,
                         CartRepository cartRepository,
-                        ProductRepository productRepository) {
+                        ProductVariantRepository productVariantRepository) {
 
                 this.cartItemRepository = cartItemRepository;
                 this.cartRepository = cartRepository;
-                this.productRepository = productRepository;
+                this.productVariantRepository = productVariantRepository;
         }
 
         // ╔═══════════════════════╗
@@ -56,18 +57,18 @@ public class CartItemServiceImpl implements CartItemService {
                 return SelectPartOfData.pageOf10(all, page);
         }
 
-        // 查詢購物車中的指定商品
+        // 查詢購物車中的指定規格
         @Override
-        public CartItemResponse findCartItemByCartIdAndProductId(
+        public CartItemResponse findCartItemByCartIdAndVariantId(
                         Long cartId,
-                        Long productId) {
+                        Long variantId) {
 
                 CartItem cartItem = cartItemRepository
-                                .findByCart_CartIdAndProduct_ProductId(
+                                .findByCart_CartIdAndVariant_VariantId(
                                                 cartId,
-                                                productId)
+                                                variantId)
                                 .orElseThrow(() -> new IllegalArgumentException(
-                                                "購物車內找不到此商品"));
+                                                "購物車內找不到此規格商品"));
 
                 return toCartItemResponse(cartItem);
         }
@@ -88,7 +89,7 @@ public class CartItemServiceImpl implements CartItemService {
                         int page) {
 
                 List<CartItemResponse> all = cartItemRepository
-                                .findByCart_CartIdAndProduct_NameContaining(
+                                .findByCart_CartIdAndVariant_Product_NameContaining(
                                                 cartId,
                                                 keyword)
                                 .stream()
@@ -120,17 +121,26 @@ public class CartItemServiceImpl implements CartItemService {
                                 .orElseThrow(() -> new IllegalArgumentException(
                                                 "找不到購物車"));
 
-                // 找 Product
-                Product product = productRepository
-                                .findById(request.getProductId())
+                // 找規格（決定顏色/尺寸/庫存/價格來源）
+                ProductVariant variant = productVariantRepository
+                                .findById(request.getVariantId())
                                 .orElseThrow(() -> new IllegalArgumentException(
-                                                "找不到商品"));
+                                                "找不到商品規格"));
 
-                // 查詢同一商品是否已經存在
+                // 商品與規格都必須可販售（雙層 status）
+                Product product = variant.getProduct();
+                if (!"ACTIVE".equals(product.getStatus())) {
+                        throw new IllegalArgumentException("商品目前已停售");
+                }
+                if (!"ACTIVE".equals(variant.getStatus())) {
+                        throw new IllegalArgumentException("此規格目前已停售");
+                }
+
+                // 查詢同一規格是否已經存在
                 CartItem cartItem = cartItemRepository
-                                .findByCart_CartIdAndProduct_ProductId(
+                                .findByCart_CartIdAndVariant_VariantId(
                                                 request.getCartId(),
-                                                request.getProductId())
+                                                request.getVariantId())
                                 .orElse(null);
 
                 if (cartItem != null) {
@@ -142,15 +152,15 @@ public class CartItemServiceImpl implements CartItemService {
                         int newQuantity = cartItem.getProductQuantity()
                                         + request.getProductQuantity();
                         // 若庫存為零，則不能加入購物車
-                        if (product.getStock() == null
-                                        || product.getStock() <= 0) {
-                                throw new IllegalArgumentException("商品目前無庫存");
+                        if (variant.getStock() == null
+                                        || variant.getStock() <= 0) {
+                                throw new IllegalArgumentException("此規格目前無庫存");
                         }
-                        // 即時檢查商品庫存
-                        if (newQuantity > product.getStock()) {
+                        // 即時檢查規格庫存
+                        if (newQuantity > variant.getStock()) {
                                 throw new IllegalArgumentException(
-                                                "加入數量超過目前商品庫存，現有庫存： "
-                                                                + product.getStock());
+                                                "加入數量超過目前庫存，現有庫存： "
+                                                                + variant.getStock());
                         }
                         // 抓即時價格
                         BigDecimal currentPrice = product.getPrice();
@@ -169,12 +179,15 @@ public class CartItemServiceImpl implements CartItemService {
 
                 } else {
                         // 第一次加入購物車
-                        if (request.getProductQuantity() > product.getStock()) {
+                        if (variant.getStock() == null || variant.getStock() <= 0) {
+                                throw new IllegalArgumentException("此規格目前無庫存");
+                        }
+                        if (request.getProductQuantity() > variant.getStock()) {
                                 throw new IllegalArgumentException("加入數量超過目前庫存，現有庫存： "
-                                                + product.getStock());
+                                                + variant.getStock());
                         }
                         // =========================
-                        // 不存在：新增一種商品
+                        // 不存在：新增一種規格商品
                         // =========================
 
                         BigDecimal currentPrice = product.getPrice();
@@ -182,7 +195,7 @@ public class CartItemServiceImpl implements CartItemService {
                         cartItem = new CartItem();
 
                         cartItem.setCart(cart);
-                        cartItem.setProduct(product);
+                        cartItem.setVariant(variant);
 
                         cartItem.setProductQuantity(
                                         request.getProductQuantity());
@@ -199,19 +212,9 @@ public class CartItemServiceImpl implements CartItemService {
 
                 CartItem savedItem = cartItemRepository.save(cartItem);
 
-                /*
-                 * 重新計算商品種類數。
-                 *
-                 * 如果原本已有相同商品：
-                 * CartItem 筆數不變，所以 totalQuantity 不變。
-                 *
-                 * 如果是新商品：
-                 * CartItem 多一筆，所以 totalQuantity + 1。
-                 */
                 updateCartTotalQuantity(cart);
 
                 return toCartItemResponse(savedItem);
-                // throw new UnsupportedOperationException("等ProductRepository合併後啟用加入購物車功能");
         }
 
         // ╔═════════════════════════╗
@@ -235,17 +238,26 @@ public class CartItemServiceImpl implements CartItemService {
                                 .findById(cartItemId)
                                 .orElseThrow(() -> new IllegalArgumentException(
                                                 "找不到購物車商品"));
-                Product product = existingItem.getProduct();
+                ProductVariant variant = existingItem.getVariant();
+                Product product = variant.getProduct();
 
-                // 即時庫存檢查
-                if (product.getStock() == null || product.getStock() <= 0) {
-                        throw new IllegalArgumentException(
-                                        "商品目前無庫存");
+                // 商品與規格停售檢查
+                if (!"ACTIVE".equals(product.getStatus())) {
+                        throw new IllegalArgumentException("商品目前已停售");
+                }
+                if (!"ACTIVE".equals(variant.getStatus())) {
+                        throw new IllegalArgumentException("此規格目前已停售");
                 }
 
-                if (request.getProductQuantity() > product.getStock()) {
+                // 即時庫存檢查
+                if (variant.getStock() == null || variant.getStock() <= 0) {
                         throw new IllegalArgumentException(
-                                        "商品數量超過目前庫存，現有庫存： " + product.getStock());
+                                        "此規格目前無庫存");
+                }
+
+                if (request.getProductQuantity() > variant.getStock()) {
+                        throw new IllegalArgumentException(
+                                        "商品數量超過目前庫存，現有庫存： " + variant.getStock());
                 }
 
                 // 取得 Product 最新價格
@@ -266,13 +278,6 @@ public class CartItemServiceImpl implements CartItemService {
 
                 CartItem savedItem = cartItemRepository.save(existingItem);
 
-                /*
-                 * 修改 2 件 → 10 件，
-                 * 商品種類仍然只有這一種，
-                 * totalQuantity 不會改變。
-                 *
-                 * 這裡仍同步一次，確保資料一致。
-                 */
                 updateCartTotalQuantity(
                                 existingItem.getCart());
 
@@ -283,12 +288,12 @@ public class CartItemServiceImpl implements CartItemService {
         // ║ 購物車商品 DELETE ║
         // ╚═════════════════════════╝
 
-        // 刪除指定商品
+        // 刪除指定規格
         @Override
         @Transactional
         public void deleteCartItem(
                         Long cartId,
-                        Long productId) {
+                        Long variantId) {
 
                 Cart cart = cartRepository
                                 .findById(cartId)
@@ -296,19 +301,14 @@ public class CartItemServiceImpl implements CartItemService {
                                                 "找不到購物車"));
 
                 CartItem existingItem = cartItemRepository
-                                .findByCart_CartIdAndProduct_ProductId(
+                                .findByCart_CartIdAndVariant_VariantId(
                                                 cartId,
-                                                productId)
+                                                variantId)
                                 .orElseThrow(() -> new IllegalArgumentException(
-                                                "購物車內找不到此商品"));
+                                                "購物車內找不到此規格商品"));
 
                 cartItemRepository.delete(existingItem);
 
-                /*
-                 * 刪除一整種商品後：
-                 * CartItem 筆數 - 1
-                 * totalQuantity 也會 - 1
-                 */
                 updateCartTotalQuantity(cart);
         }
 
@@ -337,15 +337,6 @@ public class CartItemServiceImpl implements CartItemService {
 
         private void updateCartTotalQuantity(Cart cart) {
 
-                /*
-                 * 注意：
-                 *
-                 * totalQuantity = 商品種類數
-                 * = CartItem 筆數
-                 *
-                 * 絕對不是 productQuantity 的總和。
-                 */
-
                 Long distinctProductCount = cartItemRepository
                                 .countByCart_CartId(
                                                 cart.getCartId());
@@ -364,7 +355,8 @@ public class CartItemServiceImpl implements CartItemService {
 
                 CartItemResponse response = new CartItemResponse();
 
-                Product product = cartItem.getProduct();
+                ProductVariant variant = cartItem.getVariant();
+                Product product = variant.getProduct();
 
                 // 抓商品(Product)目前即時價格
                 BigDecimal currentPrice = product.getPrice();
@@ -376,14 +368,24 @@ public class CartItemServiceImpl implements CartItemService {
 
                 response.setCartId(cartItem.getCart().getCartId());
 
+                response.setVariantId(variant.getVariantId());
+
+                response.setColor(variant.getColor());
+
+                response.setSize(variant.getSize());
+
                 response.setProductId(product.getProductId());
 
                 response.setProductName(product.getName());
 
+                response.setProductStatus(product.getStatus());
+
+                response.setVariantStatus(variant.getStatus());
+
                 response.setProductQuantity(cartItem.getProductQuantity());
 
                 // 即時庫存，供前端連動庫存檢查
-                response.setStock(product.getStock());
+                response.setStock(variant.getStock());
 
                 // 不再直接使用 CartItem 舊價格
                 response.setPrice(currentPrice);

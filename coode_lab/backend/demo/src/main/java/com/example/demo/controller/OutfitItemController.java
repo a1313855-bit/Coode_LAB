@@ -19,7 +19,9 @@ import org.springframework.web.bind.annotation.RestController;
 import jakarta.validation.Valid;
 
 // ========== DTO ==========
+import com.example.demo.dto.OutfitItemResponse;
 import com.example.demo.dto.OutfitItemSlotRequest;
+import com.example.demo.dto.OutfitItemRequest;
 
 // ========== Model ==========
 import com.example.demo.model.OutfitItem;
@@ -63,33 +65,34 @@ public class OutfitItemController {
     /**
      * 將商品加入指定穿搭。
      *
-     * 前端只需要提供 outfitId 與 productId，
+     * 前端只需要提供 outfitId、productId 與 variantId，
      * 不需要自行指定 slotType。
      *
      * 商品位置由後端依 Product.categoryType 自動判斷。
-     *
-     * 如果該位置已有商品，
-     * 則直接替換原本商品。
+     * variantId 記錄會員挑選的顏色，決定試穿圖。
      *
      * POST
-     * /api/outfit-items/outfits/{outfitId}/products/{productId}
+     * /api/outfit-items/outfits/{outfitId}/products/{productId}/variants/{variantId}
      *
      * @param outfitId 穿搭 ID
      * @param productId 商品 ID
+     * @param variantId 規格 ID（顏色）
      * @return 新增或替換完成的 OutfitItem
      */
     @PostMapping(
-            "/outfits/{outfitId}/products/{productId}"
+            "/outfits/{outfitId}/products/{productId}/variants/{variantId}"
     )
     public ResponseEntity<OutfitItem> addItem(
             @PathVariable Long outfitId,
-            @PathVariable Long productId) {
+            @PathVariable Long productId,
+            @PathVariable Long variantId) {
 
         OutfitItem outfitItem =
                 outfitItemService
                         .addItem(
                                 outfitId,
-                                productId
+                                productId,
+                                variantId
                         );
 
         /*
@@ -120,11 +123,12 @@ public class OutfitItemController {
      * Request：
      * {
      *     "productId": 10,
+     *     "variantId": 12,
      *     "slotType": "TOP"
      * }
      *
      * @param outfitId 穿搭 ID
-     * @param request  商品 ID 與穿搭位置
+     * @param request  商品 ID、規格 ID 與穿搭位置
      * @return 新增或替換完成的 OutfitItem
      */
     @PostMapping(
@@ -139,6 +143,7 @@ public class OutfitItemController {
                         .addItemWithSlot(
                                 outfitId,
                                 request.getProductId(),
+                                request.getVariantId(),
                                 request.getSlotType());
 
         return ResponseEntity
@@ -157,16 +162,16 @@ public class OutfitItemController {
      * /api/outfit-items/outfits/{outfitId}
      *
      * @param outfitId 穿搭 ID
-     * @return OutfitItem 清單
+     * @return 穿搭商品（含規格顏色/試穿圖）分頁結果
      */
     @GetMapping(
             "/outfits/{outfitId}"
     )
-    public ResponseEntity<SelectPartOfData.Result<OutfitItem>> findByOutfitId(
+    public ResponseEntity<SelectPartOfData.Result<OutfitItemResponse>> findByOutfitId(
             @PathVariable Long outfitId,
             @RequestParam(defaultValue = "0") int page) {
 
-        SelectPartOfData.Result<OutfitItem> outfitItems =
+        SelectPartOfData.Result<OutfitItemResponse> outfitItems =
                 outfitItemService
                         .findByOutfitId(outfitId, page);
 
@@ -186,24 +191,27 @@ public class OutfitItemController {
      * Product.categoryType 自動判斷。
      *
      * PUT
-     * /api/outfit-items/outfits/{outfitId}/products/{productId}
+     * /api/outfit-items/outfits/{outfitId}/products/{productId}/variants/{variantId}
      *
      * @param outfitId 穿搭 ID
      * @param productId 新商品 ID
+     * @param variantId 新規格 ID（顏色）
      * @return 替換完成的 OutfitItem
      */
     @PutMapping(
-            "/outfits/{outfitId}/products/{productId}"
+            "/outfits/{outfitId}/products/{productId}/variants/{variantId}"
     )
     public ResponseEntity<OutfitItem> replaceItem(
             @PathVariable Long outfitId,
-            @PathVariable Long productId) {
+            @PathVariable Long productId,
+            @PathVariable Long variantId) {
 
         OutfitItem outfitItem =
                 outfitItemService
                         .replaceItem(
                                 outfitId,
-                                productId
+                                productId,
+                                variantId
                         );
 
         return ResponseEntity

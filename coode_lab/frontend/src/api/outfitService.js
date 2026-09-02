@@ -8,25 +8,32 @@
 import { productApi, outfitApi, outfitItemApi } from './index'
 
 // 穿搭位置（左右欄、Canvas 共用同一份順序）
-export const SLOTS = ['TOP', 'OUTER', 'BOTTOM', 'SHOES', 'ACCESSORY']
+export const SLOTS = ['HEADWEAR', 'UPPER_BODY', 'BOTTOM', 'FULL_BODY']
 
 // 位置中文名稱
 export const SLOT_LABELS = {
-  TOP: '上衣',
-  OUTER: '外套',
+  HEADWEAR: '帽子/頭飾',
+  UPPER_BODY: '上衣/外套',
   BOTTOM: '下身',
-  SHOES: '鞋子',
-  ACCESSORY: '配件',
+  FULL_BODY: '洋裝',
 }
 
 // 商品分類 → 穿搭位置
+// UPPER_BODY 共用：TOP / OUTER / OUTERWEAR
+// BOTTOM 共用：BOTTOM / PANTS / SKIRT
+// FULL_BODY：DRESS
+// HEADWEAR 共用：HEADWEAR / HAT
+// ACCESSORY / SHOES 不支援試衣間
 export const CATEGORY_TO_SLOT = {
-  TOP: 'TOP',
-  OUTER: 'OUTER',
-  OUTERWEAR: 'OUTER',
+  TOP: 'UPPER_BODY',
+  OUTER: 'UPPER_BODY',
+  OUTERWEAR: 'UPPER_BODY',
   BOTTOM: 'BOTTOM',
-  SHOES: 'SHOES',
-  ACCESSORY: 'ACCESSORY',
+  PANTS: 'BOTTOM',
+  SKIRT: 'BOTTOM',
+  DRESS: 'FULL_BODY',
+  HEADWEAR: 'HEADWEAR',
+  HAT: 'HEADWEAR',
 }
 
 // 依商品分類取得穿搭位置；不支援時回傳 null
@@ -35,9 +42,9 @@ export function categoryToSlot(categoryType) {
   return CATEGORY_TO_SLOT[c] || null
 }
 
-// 全新的空穿搭（五個固定 Slot）
+// 全新的空穿搭（三個固定 Slot）
 export function emptyLook() {
-  return { TOP: null, OUTER: null, BOTTOM: null, SHOES: null, ACCESSORY: null }
+  return { HEADWEAR: null, UPPER_BODY: null, BOTTOM: null, FULL_BODY: null }
 }
 
 // 計算一套穿搭的總價（只算有商品的 Slot）
@@ -75,6 +82,42 @@ export function fetchProductById(productId) {
 }
 
 // ============================================================
+// 規格（顏色 × 尺寸）輔助
+// ============================================================
+
+// 商品的預設規格：第一個「可販售」的規格；沒有則第一個
+export function defaultVariant(product) {
+  if (!product || !Array.isArray(product.variants) || product.variants.length === 0) return null
+  return product.variants.find((v) => v.status === 'ACTIVE') || product.variants[0]
+}
+
+// 目前選定的規格（會試穿時選擇的顏色/尺寸）
+export function chosenVariantOf(product) {
+  if (!product) return null
+  return product.chosenVariant || defaultVariant(product)
+}
+
+// 商品的所有顏色（依規格去重）
+export function variantColors(product) {
+  if (!product || !Array.isArray(product.variants)) return []
+  const seen = new Set()
+  const list = []
+  for (const v of product.variants) {
+    if (!seen.has(v.color)) {
+      seen.add(v.color)
+      list.push(v.color)
+    }
+  }
+  return list
+}
+
+// 指定顏色下的所有尺寸規格
+export function variantsByColor(product, color) {
+  if (!product || !Array.isArray(product.variants)) return []
+  return product.variants.filter((v) => v.color === color)
+}
+
+// ============================================================
 // 穿搭 (Outfit) / 穿搭商品 (OutfitItem)
 // ============================================================
 
@@ -102,8 +145,8 @@ export async function loadOutfit(outfitId) {
   const itemBySlot = {}
   const ids = []
   for (const it of outfit.items || []) {
-    // 相容舊資料：UPPER_BODY 視為 TOP
-    const slot = it.slotType === 'UPPER_BODY' ? 'TOP' : it.slotType
+    const slot = it.slotType
+    // 只回填目前的 4 個合法 Slot；SHOES / ACCESSORY 等舊資料直接忽略
     if (slot in look) {
       itemBySlot[slot] = it
       ids.push(it.productId)
@@ -123,7 +166,12 @@ export async function loadOutfit(outfitId) {
 
   for (const [slot, item] of Object.entries(itemBySlot)) {
     const product = detailById[item.productId]
-    if (product) look[slot] = product
+    if (product) {
+      // 記錄該筆穿搭原本指定的規格（顏色），供試穿圖還原
+      const target = (product.variants || []).find((v) => v.variantId === item.variantId)
+      if (target) product.chosenVariant = target
+      look[slot] = product
+    }
   }
 
   return {
@@ -152,10 +200,10 @@ export async function saveLook(userId, name, look, editingOutfitId) {
   for (const slot of SLOTS) {
     const product = look[slot]
     if (!product) continue
-    await outfitItemApi.addSlot(outfitId, {
-      productId: product.productId,
-      slotType: slot,
-    })
+    const variant = chosenVariantOf(product)
+    if (!variant) continue
+    // 由後端根據 Product.categoryType 決定 slot（避免前端自由指定 slotType 造成 405 / 不一致）
+    await outfitItemApi.add(outfitId, product.productId, variant.variantId)
   }
 
   return outfitId

@@ -77,8 +77,8 @@ public interface ReportRepository extends JpaRepository<OrderItem, Long> {
     // ╚══════════════════════════════════════╝
 
     @Query(value = """
-            select oi.product.productId as productId,
-                   oi.product.name as productName,
+            select oi.variant.product.productId as productId,
+                   oi.variant.product.name as productName,
                    coalesce(sum(oi.productQuantity), 0) as quantity,
                    coalesce(sum(oi.priceTotal), 0) as amount
             from OrderItem oi
@@ -87,7 +87,7 @@ public interface ReportRepository extends JpaRepository<OrderItem, Long> {
               and o.createdAt >= :start
               and o.createdAt < :end
               and oi.status <> 'CANCELLED'
-            group by oi.product.productId, oi.product.name
+            group by oi.variant.product.productId, oi.variant.product.name
             """)
     List<ProductRank> findTopProducts(@Param("vendorId") Long vendorId,
                                       @Param("start") LocalDateTime start,

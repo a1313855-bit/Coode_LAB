@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="800" viewBox="0 0 640 800">
+  <rect width="640" height="800" fill="#f2efea"/>
+  <g stroke="#c4bdb2" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <!-- 抽象長褲線稿 -->
+    <path d="M250 240 h140 v200 l60 330 a20 20 0 0 1 -38 12 l-74 -270 -74 270 a20 20 0 0 1 -38 -12 z"/>
+  </g>
+  <text x="320" y="150" font-family="Helvetica, Arial, sans-serif" font-size="20" letter-spacing="8" text-anchor="middle" fill="#8f887d">COODE LAB</text>
+  <text x="320" y="700" font-family="Helvetica, Arial, sans-serif" font-size="16" letter-spacing="6" text-anchor="middle" fill="#8f887d">BOTTOM</text>
+</svg>

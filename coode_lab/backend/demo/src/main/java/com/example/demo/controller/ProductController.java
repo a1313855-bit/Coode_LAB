@@ -9,7 +9,10 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.demo.dto.BatchProductRequest;
 import com.example.demo.dto.ProductRequest;
 import com.example.demo.dto.ProductResponse;
+import com.example.demo.dto.ProductVariantResponse;
 import com.example.demo.dto.StockRequest;
+import com.example.demo.dto.VariantBatchStatusRequest;
+import com.example.demo.dto.VariantStatusRequest;
 import com.example.demo.service.ProductService;
 import com.example.demo.util.SelectPartOfData;
 
@@ -73,7 +76,6 @@ public class ProductController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String categoryType,
-            @RequestParam(required = false) String gender,
             @RequestParam(required = false) String style,
             @RequestParam(required = false) String color,
             @RequestParam(required = false) String size,
@@ -86,7 +88,6 @@ public class ProductController {
                 page,
                 keyword,
                 categoryType,
-                gender,
                 style,
                 color,
                 size,
@@ -102,7 +103,6 @@ public class ProductController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String categoryType,
-            @RequestParam(required = false) String gender,
             @RequestParam(required = false) String style,
             @RequestParam(required = false) String color,
             @RequestParam(required = false) String size,
@@ -110,13 +110,12 @@ public class ProductController {
             @RequestParam(required = false) BigDecimal minPrice,
             @RequestParam(required = false) BigDecimal maxPrice,
             @RequestParam(required = false) String status,
-            @RequestParam(required = false) Long vendorId) {
+            @RequestParam(required = false) String vendorName) {
 
         return productService.adminSearchProducts(
                 page,
                 keyword,
                 categoryType,
-                gender,
                 style,
                 color,
                 size,
@@ -124,7 +123,15 @@ public class ProductController {
                 minPrice,
                 maxPrice,
                 status,
-                vendorId);
+                vendorName);
+    }
+
+    // 管理員修改商品基本資料（不動規格）
+    @PutMapping("/admin/{productId}")
+    public ProductResponse adminUpdateProduct(
+            @PathVariable Long productId,
+            @Valid @RequestBody ProductRequest request) {
+        return productService.adminUpdateProduct(productId, request);
     }
 
     // 廠商後台搜尋自己的商品 (固定每頁10筆,page 從 0 開始)
@@ -134,7 +141,6 @@ public class ProductController {
             @RequestParam Long vendorId,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String categoryType,
-            @RequestParam(required = false) String gender,
             @RequestParam(required = false) String style,
             @RequestParam(required = false) String color,
             @RequestParam(required = false) String size,
@@ -148,7 +154,6 @@ public class ProductController {
                 vendorId,
                 keyword,
                 categoryType,
-                gender,
                 style,
                 color,
                 size,
@@ -172,11 +177,27 @@ public class ProductController {
         return productService.updateProduct(vendorId, productId, request);
     }
 
-    // 廠商修改自己商品庫存
-    @PatchMapping("/vendor/{vendorId}/{productId}/stock")
-    public ProductResponse updateStock(@PathVariable Long vendorId, @PathVariable Long productId,
+    // 廠商修改自己商品的單一規格庫存
+    @PatchMapping("/vendor/{vendorId}/variants/{variantId}/stock")
+    public ProductVariantResponse updateVariantStock(@PathVariable Long vendorId, @PathVariable Long variantId,
             @Valid @RequestBody StockRequest request) {
-        return productService.updateStock(vendorId, productId, request);
+        return productService.updateVariantStock(vendorId, variantId, request);
+    }
+
+    // 廠商停售/恢復單一規格
+    @PatchMapping("/vendor/{vendorId}/variants/{variantId}/status")
+    public ProductVariantResponse updateVariantStatus(@PathVariable Long vendorId, @PathVariable Long variantId,
+            @Valid @RequestBody VariantStatusRequest request) {
+        return productService.updateVariantStatus(vendorId, variantId, request.getStatus());
+    }
+
+    // 廠商整批停售/恢復某商品的「某顏色」或「某尺寸」
+    @PatchMapping("/vendor/{vendorId}/products/{productId}/variants/batch-status")
+    public List<ProductVariantResponse> batchUpdateVariantStatus(@PathVariable Long vendorId,
+            @PathVariable Long productId,
+            @Valid @RequestBody VariantBatchStatusRequest request) {
+        return productService.batchUpdateVariantStatus(vendorId, productId,
+                request.getColor(), request.getSize(), request.getStatus());
     }
 
     //低庫存管理 (固定每頁10筆,page 從 0 開始)

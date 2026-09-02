@@ -19,10 +19,10 @@ const emit = defineEmits([
 const categories = [
   { key: 'ALL', label: '全部' },
   { key: 'TOP', label: '上衣' },
-  { key: 'BOTTOM', label: '下身' },
   { key: 'OUTER', label: '外套' },
-  { key: 'SHOES', label: '鞋子' },
-  { key: 'ACCESSORY', label: '配件' },
+  { key: 'BOTTOM', label: '下身' },
+  { key: 'DRESS', label: '洋裝' },
+  { key: 'HEADWEAR', label: '帽子/頭飾' },
 ]
 </script>
 
@@ -92,7 +92,7 @@ const categories = [
 }
 .browser-head p {
   margin-top: 4px;
-  color: var(--c-text-light);
+  color: var(--muted);
   font-size: 13px;
 }
 .controls {
@@ -108,29 +108,29 @@ const categories = [
   flex-wrap: wrap;
 }
 .chip {
-  border: 1px solid var(--c-border);
-  background: #fff;
-  color: var(--c-text);
+  border: 1px solid var(--line);
+  background: var(--paper);
+  color: var(--ink);
   border-radius: 999px;
   padding: 5px 14px;
   font-size: 13px;
+  transition: all 0.15s ease;
 }
 .chip:hover {
-  border-color: #f9a8d4;
-  color: #db2777;
+  border-color: var(--ink);
 }
 .chip.active {
-  background: #ec4899;
-  border-color: #ec4899;
-  color: #fff;
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--paper);
   font-weight: 600;
 }
 .sort {
   margin-left: auto;
-  border: 1px solid var(--c-border);
-  border-radius: 8px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
   padding: 5px 8px;
-  background: #fff;
+  background: var(--paper);
   font-size: 13px;
 }
 .grid {

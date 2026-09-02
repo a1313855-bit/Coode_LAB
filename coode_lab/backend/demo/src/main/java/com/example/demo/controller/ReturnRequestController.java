@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import com.example.demo.dto.returnrequest.CreateReturnRequestRequest;
 import com.example.demo.dto.returnrequest.UpdateReturnRequestStatusRequest;
 import com.example.demo.dto.returnrequest.ReturnRequestDTO;
-import com.example.demo.model.ReturnRequest;
 import com.example.demo.service.ReturnRequestService;
 import com.example.demo.util.SelectPartOfData;
 
@@ -40,11 +39,11 @@ public class ReturnRequestController {
     // ╚══════════════════════════════╝
 
     @PostMapping("/user/{userId}/order/{orderId}")
-    public ResponseEntity<ReturnRequest> createReturnRequest(
+    public ResponseEntity<ReturnRequestDTO> createReturnRequest(
             @PathVariable Long userId,
             @PathVariable Long orderId,
             @Valid @RequestBody CreateReturnRequestRequest request) {
-        ReturnRequest returnRequest = returnRequestService.createReturnRequest(userId, orderId, request);
+        ReturnRequestDTO returnRequest = returnRequestService.createReturnRequest(userId, orderId, request);
         if (returnRequest != null) {
             return ResponseEntity.status(HttpStatus.CREATED).body(returnRequest);
         } else {
@@ -95,10 +94,10 @@ public class ReturnRequestController {
     }
 
     @PutMapping("/{id}/status")
-    public ResponseEntity<ReturnRequest> updateStatus(
+    public ResponseEntity<ReturnRequestDTO> updateStatus(
             @PathVariable Long id,
             @Valid @RequestBody UpdateReturnRequestStatusRequest request) {
-        ReturnRequest returnRequest = returnRequestService.updateStatus(id, request);
+        ReturnRequestDTO returnRequest = returnRequestService.updateStatus(id, request);
         if (returnRequest != null) {
             return ResponseEntity.ok(returnRequest);
         } else {

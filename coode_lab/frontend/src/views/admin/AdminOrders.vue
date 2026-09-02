@@ -75,23 +75,27 @@ onMounted(load)
             </tr>
           </thead>
           <tbody>
-            <tr v-for="o in orders" :key="o.orderId">
-              <td>#{{ o.orderId }}</td>
-              <td>{{ o.user.name }}</td>
-              <td>{{ o.recipientName }}</td>
-              <td>{{ o.recipientPhone }}</td>
-              <td>{{ formatMoney(o.sumTotal) }}</td>
-              <td>{{ formatDate(o.createdAt) }}</td>
-              <td><button class="btn btn-sm" @click="toggleItems(o.orderId)">明細</button></td>
-            </tr>
-            <tr v-if="expandedId === o.orderId">
-              <td colspan="7">
-                <div v-if="orderItems.length === 0" class="muted">無明細</div>
-                <div v-for="it in orderItems" :key="it.orderItemId" class="item">
-                  {{ it.product.name }} × {{ it.productQuantity }} — {{ formatMoney(it.priceTotal) }}
-                </div>
-              </td>
-            </tr>
+            <template v-for="o in orders" :key="o.orderId">
+              <tr>
+                <td>#{{ o.orderId }}</td>
+                <td>{{ o.user.name }}</td>
+                <td>{{ o.recipientName }}</td>
+                <td>{{ o.recipientPhone }}</td>
+                <td>{{ formatMoney(o.sumTotal) }}</td>
+                <td>{{ formatDate(o.createdAt) }}</td>
+                <td><button class="btn btn-sm" @click="toggleItems(o.orderId)">明細</button></td>
+              </tr>
+              <tr v-if="expandedId === o.orderId">
+                <td colspan="7">
+                  <div v-if="orderItems.length === 0" class="muted">無明細</div>
+                  <div v-for="it in orderItems" :key="it.orderItemId" class="item">
+                    {{ (it.variant && it.variant.product && it.variant.product.name) || '-' }}
+                    <span class="muted small" v-if="it.variant">（{{ it.variant.color }} / {{ it.variant.size }}）</span>
+                    × {{ it.productQuantity }} — {{ formatMoney(it.priceTotal) }}
+                  </div>
+                </td>
+              </tr>
+            </template>
           </tbody>
         </table>
       </div>

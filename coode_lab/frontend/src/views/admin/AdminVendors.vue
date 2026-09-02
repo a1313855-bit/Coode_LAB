@@ -20,6 +20,10 @@ const showContract = ref(false)
 const contractVendor = ref(null)
 const contractDate = ref('')
 
+const showRenew = ref(false)
+const renewVendor = ref(null)
+const renewDate = ref('')
+
 async function load() {
   loading.value = true
   error.value = ''
@@ -112,13 +116,23 @@ async function reactivate(v) {
   }
 }
 
-async function renewContract(v, baseDate) {
-  const date = prompt('續約到期日 (yyyy-MM-dd)', baseDate || new Date(Date.now() + 365 * 24 * 3600 * 1000).toISOString().slice(0, 10))
-  if (!date) return
+async function renewContract(v) {
+  renewVendor.value = v
+  const base = v.contractExpiresAt || new Date(Date.now() + 365 * 24 * 3600 * 1000).toISOString()
+  renewDate.value = String(base).slice(0, 10)
+  showRenew.value = true
+}
+
+async function confirmRenew() {
+  if (!renewDate.value) {
+    error.value = '請選擇續約到期日'
+    return
+  }
   try {
-    await vendorApi.renewContract(v.vendorId, {
-      contractExpiresAt: new Date(date + 'T00:00:00').toISOString(),
+    await vendorApi.renewContract(renewVendor.value.vendorId, {
+      contractExpiresAt: new Date(renewDate.value + 'T00:00:00').toISOString(),
     })
+    showRenew.value = false
     await load()
   } catch (e) {
     error.value = e.message
@@ -160,7 +174,7 @@ onMounted(load)
               <th>廠商名稱</th>
               <th>Email</th>
               <th>狀態</th>
-              <th>啟用時間</th>
+              <th>合約啟用</th>
               <th>合約到期</th>
               <th>操作</th>
             </tr>
@@ -179,7 +193,7 @@ onMounted(load)
                   <button v-if="v.status !== 'ACTIVE'" class="btn btn-sm btn-success" @click="activate(v)">啟用</button>
                   <button v-if="v.status === 'SUSPENDED'" class="btn btn-sm" @click="reactivate(v)">恢復</button>
                   <button v-if="v.status === 'ACTIVE'" class="btn btn-sm btn-danger" @click="suspend(v)">停權</button>
-                  <button v-if="v.status === 'ACTIVE'" class="btn btn-sm" @click="renewContract(v, v.contractExpiresAt)">續約</button>
+                  <button v-if="v.status === 'ACTIVE'" class="btn btn-sm" @click="renewContract(v)">續約</button>
                 </div>
               </td>
             </tr>
@@ -209,6 +223,17 @@ onMounted(load)
         <div class="flex">
           <button class="btn btn-primary" @click="confirmActivate">確認啟用</button>
           <button class="btn" @click="showContract = false">取消</button>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="showRenew" class="modal-mask">
+      <div class="modal">
+        <h3>續約廠商「{{ renewVendor.vendorName }}」</h3>
+        <div class="form-field"><label>續約到期日</label><input v-model="renewDate" type="date" /></div>
+        <div class="flex">
+          <button class="btn btn-primary" @click="confirmRenew">確認續約</button>
+          <button class="btn" @click="showRenew = false">取消</button>
         </div>
       </div>
     </div>

@@ -47,6 +47,25 @@ function returnStatusLabel(s) {
   return returnStatusLabelMap[String(s || '').toUpperCase()] || statusLabel(s)
 }
 
+const returnNextStatusMap = {
+  PENDING_REVIEW: { status: 'PROCESSING', label: '開始處理' },
+  PROCESSING: { status: 'PROCESSED', label: '已處理' },
+  PROCESSED: { status: 'ARRIVED', label: '已到貨' },
+  ARRIVED: { status: 'COMPLETED', label: '完成退款' },
+}
+function getNextReturnStatus(status) {
+  return returnNextStatusMap[status] || null
+}
+
+async function advanceReturnStatus(r) {
+  if (!r.returnItem) return
+  const next = getNextReturnStatus(r.returnItem.status)
+  if (!next) return
+  if (!window.confirm(`確定要將此退貨商品狀態改為「${returnStatusLabel(next.status)}」嗎？`)) return
+  r.returnItem.status = next.status
+  await changeStatus(r)
+}
+
 const filteredItems = computed(() => {
   const tab = tabs.find((t) => t.key === activeTab.value)
   if (!tab.statuses.length) return allReturns.value
@@ -178,6 +197,13 @@ onMounted(loadAll)
                   >
                     <option v-for="s in returnItemStatuses" :key="s" :value="s">{{ returnStatusLabel(s) }}</option>
                   </select>
+                  <button
+                    v-if="getNextReturnStatus(r.returnItem.status)"
+                    class="btn btn-sm btn-next"
+                    @click="advanceReturnStatus(r)"
+                  >
+                    {{ getNextReturnStatus(r.returnItem.status).label }} →
+                  </button>
                 </div>
                 <span v-else class="muted small">-</span>
               </td>
@@ -232,6 +258,18 @@ onMounted(loadAll)
   padding: 6px 8px;
   border: 1px solid var(--c-border);
   border-radius: 6px;
+}
+.btn-next {
+  border-color: #bfdbfe;
+  color: #1d4ed8;
+  white-space: nowrap;
+}
+.btn-next:hover {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+.status-cell {
+  flex-wrap: wrap;
 }
 .small {
   font-size: 12px;

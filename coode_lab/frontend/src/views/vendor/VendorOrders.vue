@@ -24,6 +24,23 @@ const error = ref('')
 
 const statusOptions = ['PENDING', 'PROCESSING', 'SHIPPED', 'ARRIVED', 'RECEIVED', 'COMPLETED', 'CANCELLED']
 
+const nextStatusMap = {
+  PENDING: { status: 'SHIPPED', label: '開始出貨' },
+  SHIPPED: { status: 'ARRIVED', label: '已到貨' },
+  ARRIVED: { status: 'RECEIVED', label: '已收貨' },
+}
+function getNextStatus(status) {
+  return nextStatusMap[status] || null
+}
+
+async function advanceStatus(it) {
+  const next = getNextStatus(it.status)
+  if (!next) return
+  if (!window.confirm(`確定要將此訂單商品狀態改為「${statusLabel(next.status)}」嗎？`)) return
+  it.status = next.status
+  await changeStatus(it)
+}
+
 const filteredItems = computed(() => {
   const tab = tabs.find((t) => t.key === activeTab.value)
   if (!tab.statuses.length) return allItems.value
@@ -131,8 +148,10 @@ onMounted(loadAll)
             <tr v-for="it in clientRows" :key="it.orderItemId">
               <td>{{ it.orderItemId }}</td>
               <td>
-                {{ it.product.name }}
-                <div class="muted small">{{ categoryLabel(it.product.categoryType) }} {{ it.product.size }}</div>
+                {{ (it.variant && it.variant.product && it.variant.product.name) || '-' }}
+                <div class="muted small">
+                  {{ it.variant ? categoryLabel(it.variant.product.categoryType) + ' · ' + it.variant.color + ' / ' + it.variant.size : '-' }}
+                </div>
               </td>
               <td>#{{ it.order.orderId }}</td>
               <td>{{ it.productQuantity }}</td>
@@ -143,6 +162,13 @@ onMounted(loadAll)
                   <select :value="it.status" class="status-select" @change="(e) => { it.status = e.target.value; changeStatus(it) }">
                     <option v-for="s in statusOptions" :key="s" :value="s">{{ statusLabel(s) }}</option>
                   </select>
+                  <button
+                    v-if="getNextStatus(it.status)"
+                    class="btn btn-sm btn-next"
+                    @click="advanceStatus(it)"
+                  >
+                    {{ getNextStatus(it.status).label }} →
+                  </button>
                 </div>
               </td>
             </tr>
@@ -196,6 +222,18 @@ onMounted(loadAll)
   padding: 6px 8px;
   border: 1px solid var(--c-border);
   border-radius: 6px;
+}
+.btn-next {
+  border-color: #bfdbfe;
+  color: #1d4ed8;
+  white-space: nowrap;
+}
+.btn-next:hover {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+.status-cell {
+  flex-wrap: wrap;
 }
 .small {
   font-size: 12px;

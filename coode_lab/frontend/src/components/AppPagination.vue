@@ -8,12 +8,22 @@ const emit = defineEmits(['change'])
 
 <template>
   <div v-if="totalPages > 1" class="pagination">
-    <button class="btn btn-sm" :disabled="page <= 0" @click="emit('change', page - 1)">
-      ‹ 上一頁
+    <button
+      class="page-btn"
+      :disabled="page <= 0"
+      aria-label="上一頁"
+      @click="emit('change', page - 1)"
+    >
+      ←
     </button>
     <span class="page-info">第 {{ page + 1 }} / {{ totalPages }} 頁</span>
-    <button class="btn btn-sm" :disabled="page >= totalPages - 1" @click="emit('change', page + 1)">
-      下一頁 ›
+    <button
+      class="page-btn"
+      :disabled="page >= totalPages - 1"
+      aria-label="下一頁"
+      @click="emit('change', page + 1)"
+    >
+      →
     </button>
   </div>
 </template>
@@ -23,11 +33,35 @@ const emit = defineEmits(['change'])
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 14px;
-  margin: 20px 0;
+  gap: 16px;
+  margin: 28px 0 8px;
+}
+.page-btn {
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--ink);
+  font-size: 15px;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+}
+.page-btn:hover:not(:disabled) {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: #fff;
+}
+.page-btn:disabled {
+  color: #cfccc7;
+  cursor: not-allowed;
+  background: #fff;
 }
 .page-info {
-  font-size: 14px;
-  color: var(--c-text-light);
+  font-size: 13px;
+  color: var(--muted);
+  letter-spacing: 0.06em;
 }
 </style>

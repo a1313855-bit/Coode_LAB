@@ -5,8 +5,6 @@ import java.util.List;
 import java.util.Optional;
 
 // ========== Project ==========
-import com.example.demo.model.ReturnRequest;
-import com.example.demo.model.ReturnItem;
 import com.example.demo.dto.returnrequest.CreateReturnRequestRequest;
 import com.example.demo.dto.returnrequest.UpdateReturnRequestStatusRequest;
 import com.example.demo.dto.returnrequest.ReturnRequestDTO;
@@ -23,7 +21,7 @@ public interface ReturnRequestService {
     // ╚══════════════════════════════════╝
 
     // 建立退貨或換貨申請
-    ReturnRequest createReturnRequest(Long userId, Long orderId, CreateReturnRequestRequest request);
+    ReturnRequestDTO createReturnRequest(Long userId, Long orderId, CreateReturnRequestRequest request);
 
     // 查詢單一申請
     Optional<ReturnRequestDTO> findById(Long returnRequestId);
@@ -38,21 +36,21 @@ public interface ReturnRequestService {
     SelectPartOfData.Result<ReturnRequestDTO> findByVendorId(Long vendorId, int page);
 
     // 更新申請狀態
-    ReturnRequest updateStatus(Long returnRequestId, UpdateReturnRequestStatusRequest request);
+    ReturnRequestDTO updateStatus(Long returnRequestId, UpdateReturnRequestStatusRequest request);
 
     // ╔══════════════════════════════════╗
     // ║ ReturnItem（退換貨商品明細）    ║
     // ╚══════════════════════════════════╝
 
     // 新增退換貨商品明細
-    ReturnItem addReturnItem(Long returnRequestId, CreateReturnItemRequest request);
+    ReturnItemDTO addReturnItem(Long returnRequestId, CreateReturnItemRequest request);
 
     // 一對一後，查詢申請對應的單一 ReturnItem
     Optional<ReturnItemDTO> findItemByReturnRequestId(Long returnRequestId);
 
     // 設定核准/拒絕數量
-    ReturnItem updateQuantity(Long returnItemId, UpdateReturnItemQuantityRequest request);
+    ReturnItemDTO updateQuantity(Long returnItemId, UpdateReturnItemQuantityRequest request);
 
     // 更新退換貨明細狀態（線性推進），廠商下決定時一併將申請單設為 REVIEWED
-    ReturnItem updateStatus(Long returnItemId, UpdateReturnItemStatusRequest request);
+    ReturnItemDTO updateStatus(Long returnItemId, UpdateReturnItemStatusRequest request);
 }

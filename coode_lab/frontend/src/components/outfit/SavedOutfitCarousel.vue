@@ -91,14 +91,13 @@ function scroll(direction) {
 .arrow {
   width: 30px;
   height: 30px;
-  border: 1px solid var(--c-border);
+  border: 1px solid var(--line);
   border-radius: 50%;
-  background: #fff;
-  color: var(--c-text);
+  background: var(--paper);
+  color: var(--ink);
 }
 .arrow:hover {
-  border-color: #f9a8d4;
-  color: #db2777;
+  border-color: var(--ink);
 }
 .track {
   display: flex;
@@ -118,16 +117,16 @@ function scroll(direction) {
   scroll-snap-align: start;
   min-width: 200px;
   width: 200px;
-  border: 1px solid var(--c-border);
-  border-radius: 12px;
-  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--paper);
   padding: 10px;
   cursor: pointer;
   transition: 0.15s ease;
 }
 .save-card:hover {
-  border-color: #f9a8d4;
-  box-shadow: 0 4px 12px rgba(236, 72, 153, 0.08);
+  border-color: var(--ink);
+  box-shadow: var(--shadow-hair);
 }
 .mini-preview {
   height: 150px;
@@ -167,15 +166,15 @@ function scroll(direction) {
   border: none;
   background: none;
   font-size: 16px;
-  color: var(--c-text-light);
+  color: var(--muted);
 }
 .menu {
   position: absolute;
   right: 0;
   bottom: 22px;
-  background: #fff;
-  border: 1px solid var(--c-border);
-  border-radius: 8px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 4px;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
   min-width: 110px;
   z-index: 10;
@@ -191,10 +190,10 @@ function scroll(direction) {
   font-size: 13px;
 }
 .menu button:hover {
-  background: #fdf2f8;
+  background: #f4f4f2;
 }
 .menu button.danger {
-  color: #ef4444;
+  color: var(--accent);
 }
 .new-card {
   display: flex;
@@ -202,11 +201,11 @@ function scroll(direction) {
   align-items: center;
   justify-content: center;
   border-style: dashed;
-  color: var(--c-text-light);
+  color: var(--muted);
 }
 .new-card:hover {
-  border-color: #ec4899;
-  color: #ec4899;
+  border-color: var(--ink);
+  color: var(--ink);
 }
 .plus {
   font-size: 30px;
@@ -218,11 +217,12 @@ function scroll(direction) {
 }
 .btn-primary-outline {
   margin-top: 12px;
-  border: 1px solid #f9a8d4;
-  color: #db2777;
-  background: #fff;
+  border: 1px solid var(--ink);
+  color: var(--ink);
+  background: var(--paper);
 }
 .btn-primary-outline:hover {
-  background: #fdf2f8;
+  background: var(--ink);
+  color: var(--paper);
 }
 </style>

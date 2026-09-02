@@ -8,6 +8,7 @@ import CartView from '../views/store/CartView.vue'
 import OrdersView from '../views/store/OrdersView.vue'
 import ReturnsView from '../views/store/ReturnsView.vue'
 import OutfitsView from '../views/store/OutfitsView.vue'
+import AccountView from '../views/store/AccountView.vue'
 import LoginView from '../views/LoginView.vue'
 import RegisterView from '../views/RegisterView.vue'
 
@@ -19,7 +20,6 @@ import VendorOrders from '../views/vendor/VendorOrders.vue'
 import VendorReturns from '../views/vendor/VendorReturns.vue'
 import VendorDashboard from '../views/vendor/VendorDashboard.vue'
 import VendorAccount from '../views/vendor/VendorAccount.vue'
-import VendorContract from '../views/vendor/VendorContract.vue'
 
 // 管理員後台
 import AdminLayout from '../layouts/AdminLayout.vue'
@@ -46,6 +46,7 @@ const router = createRouter({
         { path: 'cart', name: 'cart', component: CartView, meta: { auth: 'user' } },
         { path: 'orders', name: 'orders', component: OrdersView, meta: { auth: 'user' } },
         { path: 'returns', name: 'returns', component: ReturnsView, meta: { auth: 'user' } },
+        { path: 'account', name: 'account', component: AccountView, meta: { auth: 'user' } },
         { path: 'outfits', name: 'outfits', component: OutfitsView, meta: { auth: 'user' } },
         { path: 'login', name: 'login', component: LoginView },
         { path: 'register', name: 'register', component: RegisterView },
@@ -64,7 +65,6 @@ const router = createRouter({
         { path: 'returns', name: 'vendor-returns', component: VendorReturns, meta: { title: '退換貨管理' } },
         { path: 'reports', name: 'vendor-reports', component: VendorDashboard, meta: { title: '銷售報表' } },
         { path: 'account', name: 'vendor-account', component: VendorAccount, meta: { title: '帳號資訊' } },
-        { path: 'contract', name: 'vendor-contract', component: VendorContract, meta: { title: '合約資訊' } },
       ],
     },
     // ═══ 管理員後台（需 admin 登入）═══

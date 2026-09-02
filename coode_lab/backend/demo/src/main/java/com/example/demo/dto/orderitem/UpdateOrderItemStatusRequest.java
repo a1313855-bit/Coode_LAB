@@ -16,7 +16,7 @@ public class UpdateOrderItemStatusRequest {
     // ║ Field ║
     // ╚═══════╝
     @NotBlank
-    @Pattern(regexp = "PENDING|SHIPPED|ARRIVED|RECEIVED|CANCELLED",
-             message = "狀態只能是 PENDING, SHIPPED, ARRIVED, RECEIVED, CANCELLED")
+    @Pattern(regexp = "PENDING|PROCESSING|SHIPPED|ARRIVED|RECEIVED|CANCELLED",
+             message = "狀態只能是 PENDING, PROCESSING, SHIPPED, ARRIVED, RECEIVED, CANCELLED")
     private String status;
 }

@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from 'vue'
 import { categoryLabel, formatMoney } from '../../utils/format'
+import { variantColors } from '../../api/outfitService'
 
 const props = defineProps({
   product: { type: Object, required: true },
@@ -37,7 +38,7 @@ const imgFailed = ref(false)
       <div class="name" :title="product.name" @click="emit('detail', product.productId)">
         {{ product.name }}
       </div>
-      <div class="meta muted">{{ product.color || '-' }}</div>
+      <div class="meta muted">{{ variantColors(product).join(' / ') || '-' }}</div>
       <div class="bottom">
         <span class="price">{{ formatMoney(product.price) }}</span>
         <button class="tryon" @click="emit('try-on', product)">試穿</button>
@@ -81,8 +82,8 @@ const imgFailed = ref(false)
   width: 30px;
   height: 30px;
   border-radius: 50%;
-  border: 1px solid var(--c-border);
-  background: #fff;
+  border: 1px solid var(--line);
+  background: var(--paper);
   color: #aaa;
   font-size: 16px;
   line-height: 1;
@@ -91,12 +92,12 @@ const imgFailed = ref(false)
   justify-content: center;
 }
 .heart:hover {
-  color: #ec4899;
-  border-color: #ec4899;
+  color: var(--accent);
+  border-color: var(--accent);
 }
 .heart.active {
-  color: #ec4899;
-  border-color: #ec4899;
+  color: var(--accent);
+  border-color: var(--accent);
 }
 .info {
   padding: 10px 12px 12px;
@@ -113,7 +114,7 @@ const imgFailed = ref(false)
   text-overflow: ellipsis;
 }
 .name:hover {
-  color: #db2777;
+  color: var(--ink);
 }
 .meta {
   font-size: 12px;
@@ -126,21 +127,22 @@ const imgFailed = ref(false)
 }
 .price {
   font-weight: 800;
-  color: #ec4899;
+  color: var(--ink);
   font-size: 15px;
 }
 .tryon {
-  border: 1px solid #f9a8d4;
-  background: #fdf2f8;
-  color: #db2777;
+  border: 1px solid var(--ink);
+  background: var(--paper);
+  color: var(--ink);
   border-radius: 999px;
   padding: 5px 16px;
   font-size: 13px;
   font-weight: 600;
+  transition: all 0.15s ease;
 }
 .tryon:hover {
-  background: #ec4899;
-  color: #fff;
-  border-color: #ec4899;
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
 }
 </style>

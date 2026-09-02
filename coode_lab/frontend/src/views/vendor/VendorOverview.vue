@@ -38,6 +38,11 @@ const storeStatusText = computed(() => {
   return map[storeStatus.value]
 })
 
+// 總庫存 = 所有規格庫存加總
+function totalStock(p) {
+  return (p.variants || []).reduce((s, v) => s + Number(v.stock || 0), 0)
+}
+
 async function load() {
   loading.value = true
   error.value = ''
@@ -151,9 +156,9 @@ onMounted(load)
               <tr v-for="p in lowProducts" :key="p.productId">
                 <td>{{ p.name }}</td>
                 <td>{{ categoryLabel(p.categoryType) }}</td>
-                <td :class="{ 'low-cell': p.stock <= 5 }">{{ p.stock }}</td>
+                <td :class="{ 'low-cell': totalStock(p) <= 5 }">{{ totalStock(p) }}</td>
                 <td>
-                  <span v-if="p.stock === 0" class="badge badge-danger">缺貨</span>
+                  <span v-if="totalStock(p) === 0" class="badge badge-danger">缺貨</span>
                   <span v-else class="badge badge-warning">低庫存</span>
                 </td>
               </tr>

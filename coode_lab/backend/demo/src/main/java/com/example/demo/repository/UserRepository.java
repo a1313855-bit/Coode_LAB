@@ -20,4 +20,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     //4.依關鍵字查詢會員(依姓名模糊搜尋)<--供管理員查詢
     List<User> findByNameContaining(String keyword);
+
+    //5.依關鍵字查詢會員（姓名 / Email / 電話 任一符合）<--供管理員查詢
+    List<User> findByNameContainingOrEmailContainingOrPhoneContaining(
+            String name, String email, String phone);
 }

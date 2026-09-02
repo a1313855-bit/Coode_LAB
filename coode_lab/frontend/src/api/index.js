@@ -88,12 +88,12 @@ export const cartApi = {
 // ============================================================
 export const cartItemApi = {
   list: (cartId, page) => get('/api/cart-items/cart/' + cartId, { page }),
-  findOne: (cartId, productId) => get(`/api/cart-items/cart/${cartId}/product/${productId}`),
+  findOne: (cartId, variantId) => get(`/api/cart-items/cart/${cartId}/variant/${variantId}`),
   count: (cartId) => get(`/api/cart-items/cart/${cartId}/count`),
   search: (cartId, keyword, page) => get(`/api/cart-items/cart/${cartId}/search`, { keyword, page }),
   add: (body) => post('/api/cart-items', body),
   update: (cartItemId, body) => patch(`/api/cart-items/${cartItemId}`, body),
-  remove: (cartId, productId) => del(`/api/cart-items/cart/${cartId}/product/${productId}`),
+  remove: (cartId, variantId) => del(`/api/cart-items/cart/${cartId}/variant/${variantId}`),
 }
 
 // ============================================================
@@ -107,12 +107,17 @@ export const productApi = {
   lowStock: (vendorId, page) => get(`/coode_lab/products/vendor/${vendorId}/low-stock`, { page }),
   filter: (p) => get('/coode_lab/products/filter', p),
   adminFilter: (p) => get('/coode_lab/products/admin/filter', p),
+  adminUpdate: (productId, body) => put(`/coode_lab/products/admin/${productId}`, body),
   vendorFilter: (p) => get('/coode_lab/products/vendor/filter', p),
   create: (vendorId, body) => post(`/coode_lab/products/vendor/${vendorId}`, body),
   update: (vendorId, productId, body) =>
     put(`/coode_lab/products/vendor/${vendorId}/${productId}`, body),
-  updateStock: (vendorId, productId, body) =>
-    patch(`/coode_lab/products/vendor/${vendorId}/${productId}/stock`, body),
+  updateVariantStock: (vendorId, variantId, body) =>
+    patch(`/coode_lab/products/vendor/${vendorId}/variants/${variantId}/stock`, body),
+  updateVariantStatus: (vendorId, variantId, body) =>
+    patch(`/coode_lab/products/vendor/${vendorId}/variants/${variantId}/status`, body),
+  batchVariantStatus: (vendorId, productId, body) =>
+    patch(`/coode_lab/products/vendor/${vendorId}/products/${productId}/variants/batch-status`, body),
   activate: (vendorId, productId) =>
     patch(`/coode_lab/products/vendor/${vendorId}/${productId}/activate`),
   deactivate: (vendorId, productId) =>
@@ -173,7 +178,7 @@ export const orderItemApi = {
   byOrder: (orderId, page) => get(`/orders/${orderId}/items`, { page }),
   updateStatus: (orderItemId, body) => put(`/orders/${orderItemId}/status`, body),
   byVendor: (vendorId, page, status) =>
-    get(`/orders/${vendorId}/items/vendor/${vendorId}`, { page, status }),
+    get(`/orders/-/items/vendor/${vendorId}`, { page, status }),
 }
 
 // ============================================================
@@ -189,11 +194,11 @@ export const outfitApi = {
 
 export const outfitItemApi = {
   items: (outfitId, page) => get(`/api/outfit-items/outfits/${outfitId}`, { page }),
-  add: (outfitId, productId) =>
-    post(`/api/outfit-items/outfits/${outfitId}/products/${productId}`),
+  add: (outfitId, productId, variantId) =>
+    post(`/api/outfit-items/outfits/${outfitId}/products/${productId}/variants/${variantId}`),
   addSlot: (outfitId, body) => post(`/api/outfit-items/outfits/${outfitId}`, body),
-  replace: (outfitId, productId) =>
-    put(`/api/outfit-items/outfits/${outfitId}/products/${productId}`),
+  replace: (outfitId, productId, variantId) =>
+    put(`/api/outfit-items/outfits/${outfitId}/products/${productId}/variants/${variantId}`),
   remove: (outfitItemId) => del(`/api/outfit-items/${outfitItemId}`),
   clear: (outfitId) => del(`/api/outfit-items/outfits/${outfitId}`),
 }

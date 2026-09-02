@@ -72,10 +72,11 @@ function pickName(role, data) {
 </script>
 
 <template>
-  <div class="container narrow">
-    <div class="card auth-card">
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <p class="brand">Coode LAB</p>
       <h1>登入</h1>
-      <p class="muted">登入後依帳號身份前往對應後台</p>
+      <p class="sub">登入後依帳號身份前往對應後台</p>
 
       <div v-if="error" class="alert alert-error">{{ error }}</div>
 
@@ -101,15 +102,45 @@ function pickName(role, data) {
 </template>
 
 <style scoped>
+.auth-wrap {
+  min-height: 78vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 20px;
+  background: var(--paper-soft);
+}
 .auth-card {
-  padding: 28px;
+  width: 100%;
+  max-width: 420px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 40px 34px;
+  box-shadow: var(--shadow-soft);
+}
+.brand {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 0.24em;
+  text-align: center;
+  margin-bottom: 20px;
 }
 .auth-card h1 {
-  font-size: 24px;
-  margin-bottom: 6px;
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-align: center;
+}
+.sub {
+  text-align: center;
+  color: var(--muted);
+  font-size: 13px;
+  margin: 6px 0 24px;
 }
 .center {
   text-align: center;
-  margin-top: 14px;
+  margin-top: 16px;
+  font-size: 13px;
 }
 </style>

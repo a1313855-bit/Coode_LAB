@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="800" viewBox="0 0 640 800">
+  <rect width="640" height="800" fill="#f2efea"/>
+  <g stroke="#c4bdb2" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <!-- 抽象托特包線稿 -->
+    <path d="M220 400 h200 l-10 180 a26 26 0 0 1 -26 24 h-128 a26 26 0 0 1 -26 -24 z"/>
+    <path d="M260 400 v-40 a60 60 0 0 1 120 0 v40"/>
+  </g>
+  <text x="320" y="150" font-family="Helvetica, Arial, sans-serif" font-size="20" letter-spacing="8" text-anchor="middle" fill="#8f887d">COODE LAB</text>
+  <text x="320" y="700" font-family="Helvetica, Arial, sans-serif" font-size="16" letter-spacing="6" text-anchor="middle" fill="#8f887d">BAG</text>
+</svg>

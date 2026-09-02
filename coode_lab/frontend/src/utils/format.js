@@ -40,6 +40,8 @@ export function statusLabel(status) {
     MALE: '男',
     FEMALE: '女',
     KIDS: '童裝',
+    MEN: '男裝',
+    WOMEN: '女裝',
   }
   if (status == null) return '-'
   return map[String(status).toUpperCase()] || String(status)
@@ -83,18 +85,19 @@ export function categoryLabel(type) {
     OUTER: '外套',
     OUTERWEAR: '外套',
     BOTTOM: '褲子',
-    SHOES: '鞋子',
-    ACCESSORY: '配件',
+    DRESS: '洋裝',
+    HEADWEAR: '帽子/頭飾',
+    HAT: '帽子/頭飾',
   }
   return map[String(type || '').toUpperCase()] || type || '-'
 }
 
 export function slotLabel(slot) {
   const map = {
+    HEADWEAR: '帽子/頭飾',
     UPPER_BODY: '上半身',
     BOTTOM: '下半身',
-    SHOES: '鞋子',
-    ACCESSORY: '配件',
+    FULL_BODY: '洋裝',
   }
   return map[String(slot || '').toUpperCase()] || slot || '-'
 }
@@ -104,5 +107,16 @@ export function productImage(product, fallbackText) {
   if (product && product.imagesJpg) {
     return product.imagesJpg
   }
+  return null
+}
+
+// 商品圖 URL 解析：
+// - data URI / http(s) / 絕對路徑 → 直接顯示（後端提供的真實圖片）
+// - 其他（如檔名 "xxx.jpg"）→ 回傳 null，介面改用本地 placeholder
+export function productImageUrl(product) {
+  if (!product || !product.imagesJpg) return null
+  const src = String(product.imagesJpg).trim()
+  if (!src) return null
+  if (/^(data:|https?:|\/)/i.test(src)) return src
   return null
 }

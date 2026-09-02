@@ -47,10 +47,10 @@ public class UserServiceImpl implements UserService {
         }
         // 2.根據 Email 查詢會員
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("會員帳號不存在"));
+                .orElseThrow(() -> new IllegalArgumentException("Email 或密碼錯誤"));
         // 3.檢查密碼是否正確（資料庫存的是 BCrypt 加密）
         if (!passwordEncoder.matches(password, user.getPassword())) {
-            throw new IllegalArgumentException("密碼錯誤");
+            throw new IllegalArgumentException("Email 或密碼錯誤");
         }
         // 4.檢查帳號是否啟用
         if (!"ACTIVE".equals(user.getStatus())) {
@@ -192,11 +192,15 @@ public class UserServiceImpl implements UserService {
         return userRepository.findByStatus(status).stream().map(this::toUserResponse).toList();
     }
 
-    // READ-依關鍵字查詢會員(依姓名模糊搜尋)
+    // READ-依關鍵字查詢會員(依姓名 / Email / 電話 任一模糊搜尋)
     @Override
     public List<UserResponse> findUsersByName(String keyword) {
         // TODO Auto-generated method stub
-        return userRepository.findByNameContaining(keyword).stream().map(this::toUserResponse).toList();
+        return userRepository
+                .findByNameContainingOrEmailContainingOrPhoneContaining(keyword, keyword, keyword)
+                .stream()
+                .map(this::toUserResponse)
+                .toList();
     }
 
     // UPDATE-會員變更密碼

@@ -16,7 +16,7 @@ public class CreateOrderItemRequest {
     // ║ Field ║
     // ╚═══════╝
     @NotNull
-    private Long productId;
+    private Long variantId;
 
     @NotNull
     @Min(1)

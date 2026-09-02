@@ -1,6 +1,6 @@
 <script setup>
 import { reactive } from 'vue'
-import { SLOT_LABELS, lookTotal } from '../../api/outfitService'
+import { SLOT_LABELS, lookTotal, chosenVariantOf } from '../../api/outfitService'
 import { formatMoney } from '../../utils/format'
 
 const props = defineProps({
@@ -14,15 +14,17 @@ const BASE_W = 340
 const BASE_H = 430
 
 // Canvas 圖層順序（由下而上）
-const Z = { BOTTOM: 10, SHOES: 20, TOP: 20, OUTER: 30, ACCESSORY: 40 }
+const Z = { BOTTOM: 10, UPPER_BODY: 20, FULL_BODY: 30, HEADWEAR: 40 }
 
 // 圖片讀取失敗時改用佔位，避免 broken image
 const broken = reactive({})
 
 function outfitSrc(slot, product) {
-  if (!product || !product.outfitPng) return null
+  if (!product) return null
+  const variant = chosenVariantOf(product)
   if (broken[`${slot}:${product.productId}`]) return null
-  return product.outfitPng
+  // 依所選規格顯示對應試穿圖；無規格圖則退回商品層級圖
+  return variant && variant.outfitPng ? variant.outfitPng : (product.outfitPng || null)
 }
 
 function onImgError(slot, product) {
@@ -48,45 +50,31 @@ const stageHeight = () => BASE_H * props.scale
 
     <div class="stage" :style="{ width: stageWidth() + 'px', height: stageHeight() + 'px' }">
       <div class="canvas" :style="{ transform: `scale(${scale})` }">
-        <div v-if="look.ACCESSORY" class="c-slot slot-accessory" :style="{ zIndex: Z.ACCESSORY }">
-          <img :src="outfitSrc('ACCESSORY', look.ACCESSORY)" alt="配件" @error="onImgError('ACCESSORY', look.ACCESSORY)" />
-          <div v-if="!outfitSrc('ACCESSORY', look.ACCESSORY)" class="no-png">暫不支援試穿</div>
-        </div>
-        <div v-else class="c-slot slot-accessory empty-slot" :style="{ zIndex: Z.ACCESSORY }">
-          {{ SLOT_LABELS.ACCESSORY }}
+        <!-- HEADWEAR（帽子/頭飾） -->
+        <div v-if="look.HEADWEAR" class="c-slot slot-headwear" :style="{ zIndex: Z.HEADWEAR }">
+          <img :src="outfitSrc('HEADWEAR', look.HEADWEAR)" alt="帽子/頭飾" @error="onImgError('HEADWEAR', look.HEADWEAR)" />
+          <div v-if="!outfitSrc('HEADWEAR', look.HEADWEAR)" class="no-png">{{ SLOT_LABELS.HEADWEAR }}</div>
         </div>
 
-        <div v-if="look.OUTER" class="c-slot slot-outer" :style="{ zIndex: Z.OUTER }">
-          <img :src="outfitSrc('OUTER', look.OUTER)" alt="外套" @error="onImgError('OUTER', look.OUTER)" />
-          <div v-if="!outfitSrc('OUTER', look.OUTER)" class="no-png">暫不支援試穿</div>
-        </div>
-        <div v-else class="c-slot slot-outer empty-slot" :style="{ zIndex: Z.OUTER }">
-          {{ SLOT_LABELS.OUTER }}
+        <!-- FULL_BODY（洋裝）：佔據上半身 + 下半身 -->
+        <div v-if="look.FULL_BODY" class="c-slot slot-full-body" :style="{ zIndex: Z.FULL_BODY }">
+          <img :src="outfitSrc('FULL_BODY', look.FULL_BODY)" alt="洋裝" @error="onImgError('FULL_BODY', look.FULL_BODY)" />
+          <div v-if="!outfitSrc('FULL_BODY', look.FULL_BODY)" class="no-png">暫不支援試穿</div>
         </div>
 
-        <div v-if="look.TOP" class="c-slot slot-top" :style="{ zIndex: Z.TOP }">
-          <img :src="outfitSrc('TOP', look.TOP)" alt="上衣" @error="onImgError('TOP', look.TOP)" />
-          <div v-if="!outfitSrc('TOP', look.TOP)" class="no-png">暫不支援試穿</div>
-        </div>
-        <div v-else class="c-slot slot-top empty-slot" :style="{ zIndex: Z.TOP }">
-          {{ SLOT_LABELS.TOP }}
-        </div>
+        <!-- UPPER_BODY（上衣/外套）：FULL_BODY 存在時隱藏 -->
+        <template v-if="!look.FULL_BODY">
+          <div v-if="look.UPPER_BODY" class="c-slot slot-upper" :style="{ zIndex: Z.UPPER_BODY }">
+            <img :src="outfitSrc('UPPER_BODY', look.UPPER_BODY)" alt="上衣/外套" @error="onImgError('UPPER_BODY', look.UPPER_BODY)" />
+            <div v-if="!outfitSrc('UPPER_BODY', look.UPPER_BODY)" class="no-png">暫不支援試穿</div>
+          </div>
 
-        <div v-if="look.BOTTOM" class="c-slot slot-bottom" :style="{ zIndex: Z.BOTTOM }">
-          <img :src="outfitSrc('BOTTOM', look.BOTTOM)" alt="下身" @error="onImgError('BOTTOM', look.BOTTOM)" />
-          <div v-if="!outfitSrc('BOTTOM', look.BOTTOM)" class="no-png">暫不支援試穿</div>
-        </div>
-        <div v-else class="c-slot slot-bottom empty-slot" :style="{ zIndex: Z.BOTTOM }">
-          {{ SLOT_LABELS.BOTTOM }}
-        </div>
-
-        <div v-if="look.SHOES" class="c-slot slot-shoes" :style="{ zIndex: Z.SHOES }">
-          <img :src="outfitSrc('SHOES', look.SHOES)" alt="鞋子" @error="onImgError('SHOES', look.SHOES)" />
-          <div v-if="!outfitSrc('SHOES', look.SHOES)" class="no-png">暫不支援試穿</div>
-        </div>
-        <div v-else class="c-slot slot-shoes empty-slot" :style="{ zIndex: Z.SHOES }">
-          {{ SLOT_LABELS.SHOES }}
-        </div>
+          <!-- BOTTOM（下身）：FULL_BODY 存在時隱藏 -->
+          <div v-if="look.BOTTOM" class="c-slot slot-bottom" :style="{ zIndex: Z.BOTTOM }">
+            <img :src="outfitSrc('BOTTOM', look.BOTTOM)" alt="下身" @error="onImgError('BOTTOM', look.BOTTOM)" />
+            <div v-if="!outfitSrc('BOTTOM', look.BOTTOM)" class="no-png">暫不支援試穿</div>
+          </div>
+        </template>
       </div>
     </div>
 
@@ -113,14 +101,15 @@ const stageHeight = () => BASE_H * props.scale
 }
 .canvas-head h2 {
   font-size: 18px;
+  letter-spacing: 0.04em;
 }
 .total {
   margin-top: 2px;
   font-size: 13px;
-  color: var(--c-text-light);
+  color: var(--muted);
 }
 .total b {
-  color: #ec4899;
+  color: var(--ink);
   font-size: 16px;
 }
 .actions {
@@ -130,8 +119,8 @@ const stageHeight = () => BASE_H * props.scale
 .stage {
   align-self: center;
   overflow: hidden;
-  border: 1px solid #f0f0f0;
-  border-radius: 12px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
   background: #fbfbfb;
   position: relative;
   touch-action: pan-y;
@@ -156,30 +145,23 @@ const stageHeight = () => BASE_H * props.scale
   object-fit: contain;
   pointer-events: none;
 }
-.empty-slot {
-  border: 1px dashed #e3e3e3;
-  border-radius: 10px;
-  color: #c2bebe;
-  font-size: 12px;
-  background: #f7f7f7;
-}
 .no-png {
-  color: #c2bebe;
+  color: #b8b4af;
   font-size: 11px;
 }
-.slot-accessory {
-  top: 26px;
-  right: 4px;
-  width: 74px;
-  height: 92px;
+.slot-headwear {
+  top: 4px;
+  left: 122px;
+  width: 96px;
+  height: 60px;
 }
-.slot-outer {
-  top: 14px;
+.slot-full-body {
+  top: 60px;
   left: 96px;
-  width: 172px;
-  height: 244px;
+  width: 168px;
+  height: 330px;
 }
-.slot-top {
+.slot-upper {
   top: 66px;
   left: 108px;
   width: 132px;
@@ -191,12 +173,6 @@ const stageHeight = () => BASE_H * props.scale
   width: 160px;
   height: 182px;
 }
-.slot-shoes {
-  bottom: 2px;
-  left: 106px;
-  width: 128px;
-  height: 72px;
-}
 .zoom {
   margin-top: 14px;
   display: flex;
@@ -207,6 +183,6 @@ const stageHeight = () => BASE_H * props.scale
   min-width: 48px;
   text-align: center;
   font-size: 13px;
-  color: var(--c-text-light);
+  color: var(--muted);
 }
 </style>

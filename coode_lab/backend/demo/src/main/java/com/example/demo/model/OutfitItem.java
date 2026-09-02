@@ -46,10 +46,18 @@ public class OutfitItem {
     // ╚═════════════╝
 
     // 多對一 : Many="OutfitItem" To One="Product"
+    // 保留 product 方便讀取商品名稱、價格、分類
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id", nullable = false)
     @JsonIgnoreProperties("outfitItem")
     private Product product;
+
+    // 多對一 : Many="OutfitItem" To One="ProductVariant"
+    // 儲存穿搭時記住「哪件商品、哪個顏色」，試穿圖依此規格顯示
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "variant_id", nullable = false)
+    @JsonIgnoreProperties("product")
+    private ProductVariant variant;
 
     // 多對一 : Many="OutfitItem" To One="Outfit"
     @ManyToOne(fetch = FetchType.LAZY)

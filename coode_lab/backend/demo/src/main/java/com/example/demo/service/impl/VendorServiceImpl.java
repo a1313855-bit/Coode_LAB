@@ -74,38 +74,38 @@ public class VendorServiceImpl implements VendorService {
 
         if (request.getEmail() == null
                 || request.getEmail().isBlank()) {
-            throw new RuntimeException("Email不能為空");
+            throw new IllegalArgumentException("Email不能為空");
         }
 
         if (request.getPassword() == null
                 || request.getPassword().isBlank()) {
-            throw new RuntimeException("密碼不能為空");
+            throw new IllegalArgumentException("密碼不能為空");
         }
 
         // 根據email查詢廠商
         Vendor vendor = vendorRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("廠商 Email帳號不存在"));
+                .orElseThrow(() -> new IllegalArgumentException("此廠商帳號不存在"));
         // 檢查密碼是否正確（資料庫可能是 BCrypt 加密或明文）
         String stored = vendor.getPassword();
         boolean passwordOk = stored != null
                 && (passwordEncoder.matches(request.getPassword(), stored)
                     || stored.equals(request.getPassword()));
         if (!passwordOk) {
-            throw new RuntimeException("密碼錯誤");
+            throw new IllegalArgumentException("密碼錯誤");
         }
 
         // 檢查帳號是否啟用
         if (!"ACTIVE".equals(vendor.getStatus())) {
-            throw new RuntimeException("廠商帳號未啟用或已停權");
+            throw new IllegalArgumentException("廠商帳號未啟用或已停權");
         }
 
         // 檢查合約是否到期
         if (vendor.getContractExpiresAt() == null) {
-            throw new RuntimeException("廠商尚未設定合約到期日");
+            throw new IllegalArgumentException("廠商尚未設定合約到期日");
         }
 
         if (!vendor.getContractExpiresAt().isAfter(LocalDateTime.now())) {
-            throw new RuntimeException("廠商合約已到期");
+            throw new IllegalArgumentException("廠商合約已到期");
         }
 
         return toResponse(vendor);

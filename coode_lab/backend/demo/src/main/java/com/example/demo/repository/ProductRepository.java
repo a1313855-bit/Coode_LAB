@@ -12,7 +12,4 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
     // 根據廠商ID查詢廠商的所有商品
     // 廠商後台可顯示我的產品
     List<Product> findByVendorVendorId(Long vendorId);
-
-    //低庫存查詢
-    List<Product> findByVendorVendorIdAndStockLessThanEqual(Long vendorId,Integer stock);
 }

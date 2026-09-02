@@ -13,6 +13,8 @@ import {
   saveLook,
   renameOutfit,
   deleteOutfit,
+  defaultVariant,
+  chosenVariantOf,
 } from '../../api/outfitService'
 import { currentUserId } from '../../composables/auth'
 import ProductBrowser from '../../components/outfit/ProductBrowser.vue'
@@ -95,15 +97,30 @@ const displayedProducts = computed(() => {
 const currentTotal = computed(() => lookTotal(look))
 
 // 點「試穿」：依商品分類自動放進對應 Slot；同類商品直接替換
+// FULL_BODY（洋裝）與 UPPER_BODY / BOTTOM 互斥
 function tryOn(product) {
   const slot = categoryToSlot(product.categoryType)
   if (!slot) {
     showToast('此分類不支援試穿')
     return
   }
+  if (!product.chosenVariant) product.chosenVariant = defaultVariant(product)
+  if (slot === 'FULL_BODY') {
+    look.UPPER_BODY = null
+    look.BOTTOM = null
+  } else if (slot === 'UPPER_BODY' || slot === 'BOTTOM') {
+    look.FULL_BODY = null
+  }
   look[slot] = product
   selectedProduct.value = product
   showToast(`已將「${product.name}」放入${SLOT_LABELS[slot]}`)
+}
+
+// 使用者切換某套商品所選的規格（顏色/尺寸）
+function changeVariant(product, variant) {
+  product.chosenVariant = variant
+  selectedProduct.value = product
+  showToast(`已切換至 ${variant.color} / ${variant.size}`)
 }
 
 // 移除單一 Slot
@@ -121,22 +138,28 @@ function clearCurrentLook() {
   showToast('已清空目前穿搭')
 }
 
-// 隨機搭配：TOP / BOTTOM / SHOES 必選，OUTER / ACCESSORY 隨機
+// 隨機搭配：UPPER_BODY / BOTTOM 必選，HEADWEAR / FULL_BODY 隨機
 function randomizeOutfit() {
   const bySlot = (slot) =>
     products.value.filter((p) => categoryToSlot(p.categoryType) === slot)
 
   const pick = (list) => {
     if (!list.length) return null
-    return list[Math.floor(Math.random() * list.length)]
+    const p = list[Math.floor(Math.random() * list.length)]
+    p.chosenVariant = p.chosenVariant || defaultVariant(p)
+    return p
   }
 
   const next = emptyLook()
-  next.TOP = pick(bySlot('TOP'))
+  next.UPPER_BODY = pick(bySlot('UPPER_BODY'))
   next.BOTTOM = pick(bySlot('BOTTOM'))
-  next.SHOES = pick(bySlot('SHOES'))
-  if (Math.random() < 0.6) next.OUTER = pick(bySlot('OUTER'))
-  if (Math.random() < 0.5) next.ACCESSORY = pick(bySlot('ACCESSORY'))
+  if (Math.random() < 0.5) next.HEADWEAR = pick(bySlot('HEADWEAR'))
+  if (Math.random() < 0.3) next.FULL_BODY = pick(bySlot('FULL_BODY'))
+  // FULL_BODY 存在時，UPPER_BODY / BOTTOM 互斥
+  if (next.FULL_BODY) {
+    next.UPPER_BODY = null
+    next.BOTTOM = null
+  }
 
   Object.assign(look, next)
   selectedProduct.value = null
@@ -160,8 +183,16 @@ function openProductDetail(product) {
 }
 
 // 右側「選擇商品」：切換左側分類並捲回商品區
+// 這裡收到的 slot 是 UPPER_BODY / BOTTOM / HEADWEAR / FULL_BODY，
+// 要轉成左側的實際商品分類。
 function chooseSlot(slot) {
-  activeCategory.value = slot
+  const map = {
+    UPPER_BODY: 'TOP',
+    BOTTOM: 'BOTTOM',
+    HEADWEAR: 'HEADWEAR',
+    FULL_BODY: 'DRESS',
+  }
+  activeCategory.value = map[slot] || 'ALL'
   browserCol.value && browserCol.value.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
@@ -188,17 +219,17 @@ async function fetchSavedOutfitsData() {
   }
 }
 
-// 把 OutfitResponse.items（只有 productId + slotType）加上商品縮圖，供下方 Carousel 預覽
+// 把 OutfitResponse.items（含規格資訊）加上試穿縮圖，供下方 Carousel 預覽
 function augmentOutfit(outfit) {
   const mini = []
   for (const it of outfit.items || []) {
-    const slot = it.slotType === 'UPPER_BODY' ? 'TOP' : it.slotType
+    const slot = it.slotType
     if (!SLOT_LABELS[slot]) continue
-    const product = productMap.value.get(it.productId)
+    const png = it.variantOutfitPng || (it.productName && productMap.value.get(it.productId)?.outfitPng) || null
     mini.push({
       slot,
       label: SLOT_LABELS[slot],
-      png: (product && product.outfitPng) || null,
+      png,
     })
   }
   return { ...outfit, mini }
@@ -208,7 +239,13 @@ function augmentOutfit(outfit) {
 async function loadOutfit(outfit) {
   try {
     const data = await loadOutfitData(outfit.outfitId)
-    Object.assign(look, data.look)
+    const loaded = { ...data.look }
+    // 互斥規則：洋裝存在時，脫下上衣與下身（防舊資料不一致）
+    if (loaded.FULL_BODY) {
+      loaded.UPPER_BODY = null
+      loaded.BOTTOM = null
+    }
+    Object.assign(look, loaded)
     editingOutfitId.value = data.outfitId
     editingOutfitName.value = data.name
     selectedProduct.value = null
@@ -352,6 +389,7 @@ onBeforeUnmount(() => {
             @choose-slot="chooseSlot"
             @view-product="openProductDetail"
             @preview="(p) => (selectedProduct = p)"
+            @change-variant="changeVariant"
             @save="openSaveModal"
           />
         </aside>
@@ -432,13 +470,14 @@ onBeforeUnmount(() => {
   top: 70px;
   left: 50%;
   transform: translateX(-50%);
-  background: #312e2e;
+  background: #161616;
   color: #fff;
-  padding: 8px 18px;
-  border-radius: 999px;
+  padding: 10px 18px;
+  border-radius: 4px;
   font-size: 13px;
   z-index: 200;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  letter-spacing: 0.04em;
 }
 .fade-enter-active,
 .fade-leave-active {

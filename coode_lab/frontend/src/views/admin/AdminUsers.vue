@@ -108,7 +108,7 @@ onMounted(load)
     </div>
 
     <div class="card filter-bar">
-      <input v-model="keyword" placeholder="搜尋會員名稱" @keyup.enter="applySearch" />
+      <input v-model="keyword" placeholder="搜尋姓名 / Email / 電話" @keyup.enter="applySearch" />
       <select v-model="status">
         <option value="">全部狀態</option>
         <option value="ACTIVE">啟用中</option>

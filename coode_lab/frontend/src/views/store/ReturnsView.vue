@@ -100,8 +100,9 @@ onMounted(load)
   width: 44px;
   height: 44px;
   object-fit: cover;
-  border-radius: 6px;
-  border: 1px solid var(--c-border);
+  border-radius: 4px;
+  border: 1px solid var(--line);
+  background: #f2efea;
 }
 .small {
   font-size: 12px;

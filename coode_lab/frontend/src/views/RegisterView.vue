@@ -54,37 +54,38 @@ async function submit() {
 </script>
 
 <template>
-  <div class="container narrow">
-    <div class="card auth-card">
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <p class="brand">Coode LAB</p>
       <h1>註冊</h1>
-      <p class="muted">建立會員帳號，開始購物</p>
+      <p class="sub">建立會員帳號，開始購物</p>
 
       <div v-if="error" class="alert alert-error">{{ error }}</div>
 
-      <div class="form-field">
-        <label>姓名</label>
-        <input v-model="form.name" placeholder="請輸入姓名" />
+      <div class="form-row">
+        <div class="form-field">
+          <label>姓名</label>
+          <input v-model="form.name" placeholder="姓名" />
+        </div>
+        <div class="form-field">
+          <label>電話</label>
+          <input v-model="form.phone" placeholder="09xxxxxxxx" />
+        </div>
       </div>
       <div class="form-field">
         <label>Email</label>
         <input v-model="form.email" type="email" placeholder="example@coode.com" />
       </div>
       <div class="form-field">
-        <label>電話</label>
-        <input v-model="form.phone" placeholder="09xxxxxxxx" />
+        <label>性別</label>
+        <select v-model="form.gender">
+          <option value="MALE">男</option>
+          <option value="FEMALE">女</option>
+        </select>
       </div>
-      <div class="form-row">
-        <div class="form-field">
-          <label>性別</label>
-          <select v-model="form.gender">
-            <option value="MALE">男</option>
-            <option value="FEMALE">女</option>
-          </select>
-        </div>
-        <div class="form-field">
-          <label>生日</label>
-          <input v-model="form.birthday" type="date" />
-        </div>
+      <div class="form-field">
+        <label>生日</label>
+        <input v-model="form.birthday" type="date" />
       </div>
       <div class="form-field">
         <label>密碼</label>
@@ -108,15 +109,45 @@ async function submit() {
 </template>
 
 <style scoped>
+.auth-wrap {
+  min-height: 78vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 20px;
+  background: var(--paper-soft);
+}
 .auth-card {
-  padding: 28px;
+  width: 100%;
+  max-width: 460px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 40px 34px;
+  box-shadow: var(--shadow-soft);
+}
+.brand {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 0.24em;
+  text-align: center;
+  margin-bottom: 20px;
 }
 .auth-card h1 {
-  font-size: 24px;
-  margin-bottom: 6px;
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-align: center;
+}
+.sub {
+  text-align: center;
+  color: var(--muted);
+  font-size: 13px;
+  margin: 6px 0 24px;
 }
 .center {
   text-align: center;
-  margin-top: 14px;
+  margin-top: 16px;
+  font-size: 13px;
 }
 </style>

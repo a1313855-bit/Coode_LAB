@@ -19,10 +19,10 @@ import com.example.demo.model.OutfitItem;
  *
  * 目前試衣間的穿搭位置規則：
  *
- * TOP / OUTER → UPPER_BODY
- * BOTTOM      → BOTTOM
- * SHOES       → SHOES
- * ACCESSORY   → ACCESSORY
+ * TOP / OUTER / OUTERWEAR → UPPER_BODY
+ * BOTTOM / PANTS / SKIRT → BOTTOM
+ * DRESS → FULL_BODY
+ * HEADWEAR / HAT → HEADWEAR
  *
  * 同一套 Outfit 的同一個 slotType
  * 最多只允許存在一筆 OutfitItem。
@@ -39,7 +39,7 @@ public interface OutfitItemRepository
      *
      * UPPER_BODY → 白色 T-shirt
      * BOTTOM     → 牛仔褲
-     * SHOES      → 白色球鞋
+     * FULL_BODY  → 黑色連身洋裝
      *
      * @param outfit 要查詢的 Outfit
      * @return 此穿搭中的所有 OutfitItem
@@ -71,6 +71,22 @@ public interface OutfitItemRepository
      * @return 該位置的 OutfitItem；不存在時回傳 Optional.empty()
      */
     Optional<OutfitItem> findByOutfitAndSlotType(
+            Outfit outfit,
+            String slotType
+    );
+
+
+    /**
+     * 刪除指定穿搭中的指定位置的 OutfitItem。
+     *
+     * 用於處理互斥規則：
+     * 加入 FULL_BODY（洋裝）時，清除 UPPER_BODY / BOTTOM；
+     * 加入 UPPER_BODY 或 BOTTOM 時，清除 FULL_BODY。
+     *
+     * @param outfit 穿搭
+     * @param slotType 要被清除的穿搭位置
+     */
+    void deleteByOutfitAndSlotType(
             Outfit outfit,
             String slotType
     );

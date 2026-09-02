@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="800" viewBox="0 0 640 800">
+  <rect width="640" height="800" fill="#f2efea"/>
+  <g stroke="#c4bdb2" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <!-- 抽象球鞋線稿 -->
+    <path d="M170 600 h250 l30 -70 c10 -24 -4 -40 -30 -40 h-40 l20 -70 c8 -26 -10 -40 -34 -40 h-60 c-22 0 -40 16 -46 38 l-44 130 z"/>
+    <path d="M240 560 l16 -60 M300 560 l16 -60 M360 560 l16 -60"/>
+  </g>
+  <text x="320" y="150" font-family="Helvetica, Arial, sans-serif" font-size="20" letter-spacing="8" text-anchor="middle" fill="#8f887d">COODE LAB</text>
+  <text x="320" y="700" font-family="Helvetica, Arial, sans-serif" font-size="16" letter-spacing="6" text-anchor="middle" fill="#8f887d">SHOES</text>
+</svg>

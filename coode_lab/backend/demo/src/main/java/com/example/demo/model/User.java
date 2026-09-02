@@ -21,6 +21,7 @@ import jakarta.persistence.FetchType;
 // ========== Jakarta Validation ==========
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 
 // ========== hibernate ==========
 import org.hibernate.annotations.CreationTimestamp;
@@ -64,6 +65,7 @@ public class User {
 	private String name;
 
 	@Column(name = "phone", length = 50)
+	@Pattern(regexp = "^$|^09\\d{8}$", message = "電話格式須為 09 開頭共 10 碼")
 	private String phone;
 
 	@Column(name = "creditcard", length = 50)

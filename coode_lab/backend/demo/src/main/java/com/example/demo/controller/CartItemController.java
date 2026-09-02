@@ -50,19 +50,19 @@ public class CartItemController {
     }
 
     // =========================
-    // 查詢購物車指定商品
+    // 查詢購物車指定規格
     // =========================
-    @GetMapping("/cart/{cartId}/product/{productId}")
+    @GetMapping("/cart/{cartId}/variant/{variantId}")
     public ResponseEntity<CartItemResponse>
-            findCartItemByCartIdAndProductId(
+            findCartItemByCartIdAndVariantId(
                     @PathVariable Long cartId,
-                    @PathVariable Long productId) {
+                    @PathVariable Long variantId) {
 
         CartItemResponse item =
                 cartItemService
-                        .findCartItemByCartIdAndProductId(
+                        .findCartItemByCartIdAndVariantId(
                                 cartId,
-                                productId);
+                                variantId);
 
         return ResponseEntity.ok(item);
     }
@@ -133,16 +133,16 @@ public class CartItemController {
     }
 
     // =========================
-    // 刪除一種商品
+    // 刪除一種規格商品
     // =========================
-    @DeleteMapping("/cart/{cartId}/product/{productId}")
+    @DeleteMapping("/cart/{cartId}/variant/{variantId}")
     public ResponseEntity<Void> deleteCartItem(
             @PathVariable Long cartId,
-            @PathVariable Long productId) {
+            @PathVariable Long variantId) {
 
         cartItemService.deleteCartItem(
                 cartId,
-                productId);
+                variantId);
 
         return ResponseEntity.noContent().build();
     }

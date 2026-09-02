@@ -16,7 +16,6 @@ import com.example.demo.dto.returnitem.CreateReturnItemRequest;
 import com.example.demo.dto.returnitem.UpdateReturnItemQuantityRequest;
 import com.example.demo.dto.returnitem.UpdateReturnItemStatusRequest;
 import com.example.demo.dto.returnitem.ReturnItemDTO;
-import com.example.demo.model.ReturnItem;
 import com.example.demo.service.ReturnRequestService;
 
 import jakarta.validation.Valid;
@@ -39,10 +38,10 @@ public class ReturnItemController {
     // ╚══════════════════╝
 
     @PostMapping
-    public ResponseEntity<ReturnItem> addReturnItem(
+    public ResponseEntity<ReturnItemDTO> addReturnItem(
             @PathVariable Long returnRequestId,
             @Valid @RequestBody CreateReturnItemRequest request) {
-        ReturnItem returnItem = returnRequestService.addReturnItem(returnRequestId, request);
+        ReturnItemDTO returnItem = returnRequestService.addReturnItem(returnRequestId, request);
         if (returnItem != null) {
             return ResponseEntity.status(HttpStatus.CREATED).body(returnItem);
         } else {
@@ -58,10 +57,10 @@ public class ReturnItemController {
     }
 
     @PutMapping("/{returnItemId}/quantity")
-    public ResponseEntity<ReturnItem> updateQuantity(
+    public ResponseEntity<ReturnItemDTO> updateQuantity(
             @PathVariable Long returnItemId,
             @Valid @RequestBody UpdateReturnItemQuantityRequest request) {
-        ReturnItem returnItem = returnRequestService.updateQuantity(returnItemId, request);
+        ReturnItemDTO returnItem = returnRequestService.updateQuantity(returnItemId, request);
         if (returnItem != null) {
             return ResponseEntity.ok(returnItem);
         } else {
@@ -70,10 +69,10 @@ public class ReturnItemController {
     }
 
     @PutMapping("/{returnItemId}/status")
-    public ResponseEntity<ReturnItem> updateStatus(
+    public ResponseEntity<ReturnItemDTO> updateStatus(
             @PathVariable Long returnItemId,
             @Valid @RequestBody UpdateReturnItemStatusRequest request) {
-        ReturnItem returnItem = returnRequestService.updateStatus(returnItemId, request);
+        ReturnItemDTO returnItem = returnRequestService.updateStatus(returnItemId, request);
         if (returnItem != null) {
             return ResponseEntity.ok(returnItem);
         } else {

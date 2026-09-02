@@ -24,7 +24,11 @@ public class OutfitItemRequest {
     @NotNull(message = "商品 ID 不能為空")
     private Long productId;
 
-    // 穿搭位置，例如 TOP、BOTTOM、SHOES
+    // 規格 ID（記錄「哪件商品、哪個顏色」，用來顯示對應試穿圖）
+    @NotNull(message = "規格 ID 不能為空")
+    private Long variantId;
+
+    // 穿搭位置，例如 UPPER_BODY、BOTTOM、FULL_BODY
     @NotBlank(message = "穿搭位置不能為空")
     private String slotType;
 }
