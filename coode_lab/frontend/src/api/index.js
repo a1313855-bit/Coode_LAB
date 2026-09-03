@@ -71,6 +71,7 @@ export const userApi = {
   update: (userId, body) => patch(`/api/users/${userId}`, body),
   toggleStatus: (userId) => patch(`/api/users/${userId}/deactivate`),
   changePassword: (userId, body) => patch(`/api/users/${userId}/password`, body),
+  resetPassword: (body) => patch('/api/users/password/reset', body),
 }
 
 // ============================================================
@@ -114,6 +115,8 @@ export const productApi = {
     put(`/coode_lab/products/vendor/${vendorId}/${productId}`, body),
   updateVariantStock: (vendorId, variantId, body) =>
     patch(`/coode_lab/products/vendor/${vendorId}/variants/${variantId}/stock`, body),
+  replenishVariant: (vendorId, variantId, body) =>
+    patch(`/coode_lab/products/vendor/${vendorId}/variants/${variantId}/replenish`, body),
   updateVariantStatus: (vendorId, variantId, body) =>
     patch(`/coode_lab/products/vendor/${vendorId}/variants/${variantId}/status`, body),
   batchVariantStatus: (vendorId, productId, body) =>
@@ -139,6 +142,8 @@ export const vendorApi = {
   login: (body) => post('/coode_lab/vendors/login', body),
   create: (body) => post('/coode_lab/vendors', body),
   update: (vendorId, body) => put(`/coode_lab/vendors/${vendorId}`, body),
+  changePassword: (vendorId, body) =>
+    patch(`/coode_lab/vendors/${vendorId}/password`, body),
   activate: (vendorId, body) => put(`/coode_lab/vendors/${vendorId}/activate`, body),
   suspend: (vendorId) => put(`/coode_lab/vendors/${vendorId}/suspend`),
   reactivate: (vendorId) => put(`/coode_lab/vendors/${vendorId}/reactivate`),
@@ -166,7 +171,7 @@ export const orderApi = {
   create: (body) => post('/orders', body),
   byUser: (userId, page) => get('/orders/user', { userId, page }),
   byId: (id) => get(`/orders/${id}`),
-  all: (page) => get('/orders/all', { page }),
+  all: (page, keyword) => get('/orders/all', { page, keyword }),
   updateRecipient: (id, body) => put(`/orders/${id}/recipient`, body),
 }
 
@@ -176,9 +181,19 @@ export const orderApi = {
 export const orderItemApi = {
   create: (orderId, body) => post(`/orders/${orderId}/items`, body),
   byOrder: (orderId, page) => get(`/orders/${orderId}/items`, { page }),
-  updateStatus: (orderItemId, body) => put(`/orders/${orderItemId}/status`, body),
+  updateStatus: (orderId, orderItemId, body) =>
+    put(`/orders/${orderId}/items/${orderItemId}/status`, body),
+  update: (orderId, orderItemId, body) => put(`/orders/${orderId}/items/${orderItemId}`, body),
   byVendor: (vendorId, page, status) =>
     get(`/orders/-/items/vendor/${vendorId}`, { page, status }),
+  advance: (orderItemId, vendorId) =>
+    put(`/orders/-/items/${orderItemId}/advance?vendorId=${vendorId}`),
+  confirmReceived: (orderItemId, userId) =>
+    put(`/orders/-/items/${orderItemId}/confirm-received?userId=${userId}`),
+  vendorStatus: (orderItemId, vendorId, body) =>
+    put(`/orders/-/items/${orderItemId}/vendor-status?vendorId=${vendorId}`, body),
+  adminStatus: (orderItemId, body) =>
+    put(`/orders/-/items/${orderItemId}/admin-status`, body),
 }
 
 // ============================================================
@@ -214,6 +229,8 @@ export const returnRequestApi = {
   byUser: (userId, page) => get(`/return-requests/user/${userId}`, { page }),
   byVendor: (vendorId, page) => get(`/return-requests/vendor/${vendorId}`, { page }),
   updateStatus: (id, body) => put(`/return-requests/${id}/status`, body),
+  cancel: (id, userId) =>
+    put(`/return-requests/${id}/cancel?userId=${userId}`),
 }
 
 // ReturnItem 綁在 /return-requests/{returnRequestId}/items
@@ -228,6 +245,18 @@ export const returnItemApi = {
     put(`/return-requests/-/items/${returnItemId}/quantity`, body),
   updateStatus: (returnItemId, body) =>
     put(`/return-requests/-/items/${returnItemId}/status`, body),
+  review: (returnItemId, vendorId, decision) =>
+    put(`/return-requests/-/items/${returnItemId}/review?vendorId=${vendorId}&decision=${decision}`),
+  vendorAdvance: (returnItemId, vendorId) =>
+    put(`/return-requests/-/items/${returnItemId}/advance?vendorId=${vendorId}`),
+  vendorStatus: (returnItemId, vendorId, body) =>
+    put(`/return-requests/-/items/${returnItemId}/vendor-status?vendorId=${vendorId}`, body),
+  memberShippedBack: (returnItemId, userId) =>
+    put(`/return-requests/-/items/${returnItemId}/member-shipped-back?userId=${userId}`),
+  memberExchangeReceived: (returnItemId, userId) =>
+    put(`/return-requests/-/items/${returnItemId}/member-exchange-received?userId=${userId}`),
+  adminStatus: (returnItemId, body) =>
+    put(`/return-requests/-/items/${returnItemId}/admin-status`, body),
 }
 
 // ============================================================

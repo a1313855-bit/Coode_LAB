@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 // ========== Project ==========
 import com.example.demo.dto.orderitem.CreateOrderItemRequest;
+import com.example.demo.dto.orderitem.UpdateOrderItemRequest;
 import com.example.demo.dto.orderitem.UpdateOrderItemStatusRequest;
 import com.example.demo.dto.orderitem.VendorOrderItemQuery;
 import com.example.demo.dto.orderitem.OrderItemDTO;
@@ -75,6 +76,55 @@ public class OrderItemController {
         } else {
             return ResponseEntity.notFound().build();
         }
+    }
+
+    @PutMapping("/{orderItemId}")
+    public ResponseEntity<OrderItem> updateOrderItem(
+            @PathVariable Long orderItemId,
+            @Valid @RequestBody UpdateOrderItemRequest request) {
+        OrderItem orderItem = orderService.updateOrderItem(orderItemId, request);
+        if (orderItem != null) {
+            return ResponseEntity.ok(orderItem);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    // 廠商推進訂單明細到下一階段（開始處理 / 確認出貨）
+    @PutMapping("/{orderItemId}/advance")
+    public ResponseEntity<OrderItem> advanceOrderItem(
+            @PathVariable Long orderItemId,
+            @RequestParam Long vendorId) {
+        OrderItem orderItem = orderService.advanceVendorStatus(orderItemId, vendorId);
+        return ResponseEntity.ok(orderItem);
+    }
+
+    // 會員確認收貨（SHIPPED→RECEIVED）
+    @PutMapping("/{orderItemId}/confirm-received")
+    public ResponseEntity<OrderItem> confirmReceived(
+            @PathVariable Long orderItemId,
+            @RequestParam Long userId) {
+        OrderItem orderItem = orderService.confirmReceived(orderItemId, userId);
+        return ResponseEntity.ok(orderItem);
+    }
+
+    // 廠商修改訂單明細狀態（異常修正用，僅限廠商權限內狀態）
+    @PutMapping("/{orderItemId}/vendor-status")
+    public ResponseEntity<OrderItem> vendorStatus(
+            @PathVariable Long orderItemId,
+            @RequestParam Long vendorId,
+            @Valid @RequestBody UpdateOrderItemStatusRequest request) {
+        OrderItem orderItem = orderService.vendorManualStatus(orderItemId, vendorId, request.getStatus());
+        return ResponseEntity.ok(orderItem);
+    }
+
+    // 管理員修改訂單明細狀態（人工修正用）
+    @PutMapping("/{orderItemId}/admin-status")
+    public ResponseEntity<OrderItem> adminStatus(
+            @PathVariable Long orderItemId,
+            @Valid @RequestBody UpdateOrderItemStatusRequest request) {
+        OrderItem orderItem = orderService.adminUpdateStatus(orderItemId, request.getStatus());
+        return ResponseEntity.ok(orderItem);
     }
 
     @GetMapping("/vendor/{vendorId}")

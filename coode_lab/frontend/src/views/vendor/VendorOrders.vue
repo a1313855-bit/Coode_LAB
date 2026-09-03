@@ -10,7 +10,8 @@ const vendorId = currentVendorId()
 const tabs = [
   { key: 'all', label: '全部訂單', statuses: [] },
   { key: 'pending', label: '待處理', statuses: ['PENDING'] },
-  { key: 'processing', label: '處理中', statuses: ['SHIPPED', 'ARRIVED'] },
+  { key: 'processing', label: '處理中', statuses: ['PROCESSING'] },
+  { key: 'shipped', label: '已出貨', statuses: ['SHIPPED'] },
   { key: 'completed', label: '已完成', statuses: ['RECEIVED'] },
   { key: 'cancelled', label: '已取消', statuses: ['CANCELLED'] },
 ]
@@ -22,23 +23,31 @@ const pageSize = 10
 const loading = ref(false)
 const error = ref('')
 
-const statusOptions = ['PENDING', 'PROCESSING', 'SHIPPED', 'ARRIVED', 'RECEIVED', 'COMPLETED', 'CANCELLED']
+const orderStatusLabel = { PENDING: '待處理', PROCESSING: '處理中', SHIPPED: '已出貨', RECEIVED: '已完成', CANCELLED: '已取消' }
 
-const nextStatusMap = {
-  PENDING: { status: 'SHIPPED', label: '開始出貨' },
-  SHIPPED: { status: 'ARRIVED', label: '已到貨' },
-  ARRIVED: { status: 'RECEIVED', label: '已收貨' },
-}
-function getNextStatus(status) {
-  return nextStatusMap[status] || null
+const manualStatusOptions = ['PENDING', 'PROCESSING', 'SHIPPED', 'CANCELLED']
+
+const advanceButtonLabel = { PENDING: '開始處理', PROCESSING: '確認出貨' }
+
+async function advanceAction(item) {
+  try {
+    await orderItemApi.advance(item.orderItemId, vendorId)
+    error.value = ''
+    await loadAll()
+  } catch (e) {
+    error.value = e.message
+  }
 }
 
-async function advanceStatus(it) {
-  const next = getNextStatus(it.status)
-  if (!next) return
-  if (!window.confirm(`確定要將此訂單商品狀態改為「${statusLabel(next.status)}」嗎？`)) return
-  it.status = next.status
-  await changeStatus(it)
+async function manualStatusAction(item, newStatus) {
+  if (!window.confirm(`確定要將狀態改為「${orderStatusLabel[newStatus]}」嗎？`)) return
+  try {
+    await orderItemApi.vendorStatus(item.orderItemId, vendorId, { status: newStatus })
+    error.value = ''
+    await loadAll()
+  } catch (e) {
+    error.value = e.message
+  }
 }
 
 const filteredItems = computed(() => {
@@ -97,16 +106,6 @@ function changePage(p) {
   clientPage.value = p
 }
 
-async function changeStatus(it) {
-  error.value = ''
-  try {
-    await orderItemApi.updateStatus(it.orderItemId, { status: it.status })
-    await loadAll()
-  } catch (e) {
-    error.value = e.message
-  }
-}
-
 onMounted(loadAll)
 </script>
 
@@ -158,17 +157,23 @@ onMounted(loadAll)
               <td>{{ formatMoney(it.priceTotal) }}</td>
               <td>
                 <div class="status-cell">
-                  <span :class="['badge', statusBadgeClass(it.status)]">{{ statusLabel(it.status) }}</span>
-                  <select :value="it.status" class="status-select" @change="(e) => { it.status = e.target.value; changeStatus(it) }">
-                    <option v-for="s in statusOptions" :key="s" :value="s">{{ statusLabel(s) }}</option>
-                  </select>
+                  <span :class="['badge', statusBadgeClass(it.status)]">{{ orderStatusLabel[it.status] || it.status }}</span>
                   <button
-                    v-if="getNextStatus(it.status)"
-                    class="btn btn-sm btn-next"
-                    @click="advanceStatus(it)"
+                    v-if="advanceButtonLabel[it.status]"
+                    class="btn btn-sm btn-primary"
+                    @click="advanceAction(it)"
                   >
-                    {{ getNextStatus(it.status).label }} →
+                    {{ advanceButtonLabel[it.status] }}
                   </button>
+                  <span v-if="it.status === 'SHIPPED'" class="text-muted">等待買家確認收貨</span>
+                  <select
+                    class="status-select"
+                    :value="it.status"
+                    @change="(e) => manualStatusAction(it, e.target.value)"
+                  >
+                    <option disabled value="">修改狀態</option>
+                    <option v-for="s in manualStatusOptions" :key="s" :value="s">{{ orderStatusLabel[s] }}</option>
+                  </select>
                 </div>
               </td>
             </tr>
@@ -223,14 +228,20 @@ onMounted(loadAll)
   border: 1px solid var(--c-border);
   border-radius: 6px;
 }
-.btn-next {
-  border-color: #bfdbfe;
-  color: #1d4ed8;
+.btn-primary {
+  background: #db2777;
+  color: #fff;
+  border: none;
   white-space: nowrap;
+  cursor: pointer;
 }
-.btn-next:hover {
-  background: #eff6ff;
-  color: #1d4ed8;
+.btn-primary:hover {
+  background: #be185d;
+}
+.text-muted {
+  color: #9ca3af;
+  font-size: 13px;
+  white-space: nowrap;
 }
 .status-cell {
   flex-wrap: wrap;

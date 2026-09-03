@@ -3,6 +3,7 @@ package com.example.demo.controller;
 import jakarta.validation.Valid;
 
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.demo.dto.VendorActivateRequest;
 import com.example.demo.dto.VendorContractRequest;
 import com.example.demo.dto.VendorLoginRequest;
+import com.example.demo.dto.VendorPasswordRequest;
 import com.example.demo.dto.VendorRequest;
 import com.example.demo.dto.VendorResponse;
 import com.example.demo.dto.VendorUpdateRequest;
@@ -69,6 +71,12 @@ public class VendorController {
     @PutMapping("/{vendorId}")
     public VendorResponse updateVendor(@PathVariable Long vendorId, @Valid @RequestBody VendorUpdateRequest request) {
         return vendorService.updateVendor(vendorId, request);
+    }
+
+    // 廠商修改自己的密碼
+    @PatchMapping("/{vendorId}/password")
+    public VendorResponse changePassword(@PathVariable Long vendorId, @Valid @RequestBody VendorPasswordRequest request) {
+        return vendorService.changePassword(vendorId, request);
     }
 
     // 管理員啟用廠商

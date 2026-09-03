@@ -6,6 +6,7 @@ import java.util.List;
 import com.example.demo.dto.ProductRequest;
 import com.example.demo.dto.ProductResponse;
 import com.example.demo.dto.ProductVariantResponse;
+import com.example.demo.dto.ReplenishRequest;
 import com.example.demo.dto.StockRequest;
 import com.example.demo.util.SelectPartOfData;
 
@@ -40,6 +41,9 @@ public interface ProductService {
     // 補貨或調整庫存
     // 只能修自己商品的規格
     ProductVariantResponse updateVariantStock(Long vendorId, Long variantId, StockRequest request);
+
+    // 補貨：原庫存 + 本次補貨數量（不可為 0 / 負數，只能補自己的規格）
+    ProductVariantResponse replenishVariantStock(Long vendorId, Long variantId, ReplenishRequest request);
 
     // 修改單一規格販售狀態（停售/恢復單一規格）
     ProductVariantResponse updateVariantStatus(Long vendorId, Long variantId, String status);

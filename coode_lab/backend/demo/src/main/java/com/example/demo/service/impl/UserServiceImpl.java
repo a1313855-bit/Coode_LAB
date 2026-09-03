@@ -224,6 +224,26 @@ public class UserServiceImpl implements UserService {
         return toUserResponse(savedUser);
     }
 
+    // UPDATE-忘記密碼重設（依 Email，不需原密碼）
+    @Override
+    @Transactional
+    public UserResponse resetPassword(String email, String newPassword) {
+        if (email == null || email.isBlank()) {
+            throw new IllegalArgumentException("Email不能為空");
+        }
+        if (newPassword == null || newPassword.isBlank()) {
+            throw new IllegalArgumentException("新密碼不能為空");
+        }
+        User existingUser = userRepository.findByEmail(email.trim())
+                .orElseThrow(() -> new IllegalArgumentException("查無此會員 Email"));
+
+        existingUser.setPassword(passwordEncoder.encode(newPassword));
+
+        User savedUser = userRepository.save(existingUser);
+
+        return toUserResponse(savedUser);
+    }
+
     // 回應前端
     private UserResponse toUserResponse(User user) {
 

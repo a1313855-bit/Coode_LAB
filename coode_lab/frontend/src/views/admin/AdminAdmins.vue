@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { adminApi } from '../../api'
+import { useAuth } from '../../composables/auth'
 import AppPagination from '../../components/AppPagination.vue'
 
 const admins = ref([])
@@ -12,6 +13,12 @@ const error = ref('')
 const showForm = ref(false)
 const editing = ref(null)
 const form = ref({ email: '', password: '' })
+
+const auth = useAuth().value
+
+function isSelf(a) {
+  return auth && a.email === auth.email
+}
 
 async function load() {
   loading.value = true
@@ -70,6 +77,10 @@ async function changePassword(a) {
 }
 
 async function remove(a) {
+  if (isSelf(a)) {
+    alert('不能刪除自己的帳號')
+    return
+  }
   if (!confirm(`確定刪除管理員 ${a.email}？`)) return
   try {
     await adminApi.remove(a.adminId)
@@ -112,7 +123,7 @@ onMounted(load)
                 <div class="flex">
                   <button class="btn btn-sm" @click="openEdit(a)">編輯</button>
                   <button class="btn btn-sm" @click="changePassword(a)">改密碼</button>
-                  <button class="btn btn-sm btn-danger" @click="remove(a)">刪除</button>
+                  <button class="btn btn-sm btn-danger" :disabled="isSelf(a)" :title="isSelf(a) ? '不能刪除自己的帳號' : ''" @click="remove(a)">刪除</button>
                 </div>
               </td>
             </tr>

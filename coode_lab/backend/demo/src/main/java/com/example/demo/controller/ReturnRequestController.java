@@ -104,4 +104,13 @@ public class ReturnRequestController {
             return ResponseEntity.notFound().build();
         }
     }
+
+    // 會員取消退換貨申請（尚未進入不可取消階段）
+    @PutMapping("/{id}/cancel")
+    public ResponseEntity<ReturnRequestDTO> cancel(
+            @PathVariable Long id,
+            @RequestParam Long userId) {
+        ReturnRequestDTO returnRequest = returnRequestService.memberCancel(id, userId);
+        return ResponseEntity.ok(returnRequest);
+    }
 }

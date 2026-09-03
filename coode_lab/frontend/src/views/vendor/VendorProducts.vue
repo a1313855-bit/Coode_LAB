@@ -2,7 +2,7 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { productApi } from '../../api'
 import { currentVendorId } from '../../composables/auth'
-import { formatMoney, statusBadgeClass, statusLabel, categoryLabel } from '../../utils/format'
+import { formatMoney, statusBadgeClass, statusLabel, categoryLabel, productStatusLabel } from '../../utils/format'
 import AppPagination from '../../components/AppPagination.vue'
 
 const vendorId = currentVendorId()
@@ -395,9 +395,9 @@ onMounted(() => {
       <input v-model.number="filters.maxPrice" type="number" placeholder="最高價" class="price" />
       <select v-if="activeTab === 'all'" v-model="filters.status">
         <option value="">全部狀態</option>
-        <option value="ACTIVE">啟用中</option>
-        <option value="DRAFT">草稿</option>
-        <option value="INACTIVE">未啟用</option>
+        <option value="ACTIVE">上架</option>
+        <option value="DRAFT">待上架</option>
+        <option value="INACTIVE">下架</option>
       </select>
       <button class="btn btn-sm btn-primary" @click="applySearch">搜尋</button>
       <span class="spacer"></span>
@@ -445,7 +445,7 @@ onMounted(() => {
                   <span v-else-if="totalStock(p) <= 5" class="badge badge-warning">低庫存</span>
                 </td>
                 <td>{{ formatMoney(p.price) }}</td>
-                <td><span :class="['badge', statusBadgeClass(p.status)]">{{ statusLabel(p.status) }}</span></td>
+                <td><span :class="['badge', statusBadgeClass(p.status)]">{{ productStatusLabel(p.status) }}</span></td>
                 <td>
                   <div class="flex">
                     <button class="btn btn-sm" @click="openEdit(p)">編輯</button>

@@ -1,5 +1,13 @@
 <script setup>
-import { RouterLink, RouterView } from 'vue-router'
+import { RouterLink, RouterView, useRouter } from 'vue-router'
+import { clearAuth } from '../composables/auth'
+
+const router = useRouter()
+
+function logout() {
+  clearAuth()
+  router.push('/store')
+}
 </script>
 
 <template>
@@ -12,11 +20,29 @@ import { RouterLink, RouterView } from 'vue-router'
       <RouterLink to="/admin/admins">管理員</RouterLink>
       <RouterLink to="/admin/products">商品管理</RouterLink>
       <RouterLink to="/admin/orders">訂單管理</RouterLink>
-      <div class="side-label">返回商城</div>
-      <RouterLink to="/store">← 回到商城</RouterLink>
+      <div class="side-label">帳號</div>
+      <button class="logout-btn" @click="logout">← 登出</button>
     </aside>
     <main class="admin-main">
       <RouterView />
     </main>
   </div>
 </template>
+
+<style scoped>
+.logout-btn {
+  background: none;
+  border: none;
+  color: inherit;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  padding: 8px 12px;
+  display: block;
+  width: 100%;
+  text-decoration: none;
+}
+.logout-btn:hover {
+  opacity: 0.8;
+}
+</style>

@@ -11,6 +11,7 @@ import OutfitsView from '../views/store/OutfitsView.vue'
 import AccountView from '../views/store/AccountView.vue'
 import LoginView from '../views/LoginView.vue'
 import RegisterView from '../views/RegisterView.vue'
+import ForgetPasswordView from '../views/ForgetPasswordView.vue'
 
 // 廠商後台
 import VendorLayout from '../layouts/VendorLayout.vue'
@@ -20,6 +21,7 @@ import VendorOrders from '../views/vendor/VendorOrders.vue'
 import VendorReturns from '../views/vendor/VendorReturns.vue'
 import VendorDashboard from '../views/vendor/VendorDashboard.vue'
 import VendorAccount from '../views/vendor/VendorAccount.vue'
+import VendorLowStock from '../views/vendor/VendorLowStock.vue'
 
 // 管理員後台
 import AdminLayout from '../layouts/AdminLayout.vue'
@@ -50,6 +52,7 @@ const router = createRouter({
         { path: 'outfits', name: 'outfits', component: OutfitsView, meta: { auth: 'user' } },
         { path: 'login', name: 'login', component: LoginView },
         { path: 'register', name: 'register', component: RegisterView },
+        { path: 'forgot-password', name: 'forgot-password', component: ForgetPasswordView },
       ],
     },
     // ═══ 廠商後台（需 vendor 登入）═══
@@ -64,6 +67,7 @@ const router = createRouter({
         { path: 'orders', name: 'vendor-orders', component: VendorOrders, meta: { title: '訂單管理' } },
         { path: 'returns', name: 'vendor-returns', component: VendorReturns, meta: { title: '退換貨管理' } },
         { path: 'reports', name: 'vendor-reports', component: VendorDashboard, meta: { title: '銷售報表' } },
+        { path: 'low-stock', name: 'vendor-low-stock', component: VendorLowStock, meta: { title: '低庫存管理' } },
         { path: 'account', name: 'vendor-account', component: VendorAccount, meta: { title: '帳號資訊' } },
       ],
     },

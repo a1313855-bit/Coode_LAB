@@ -49,6 +49,11 @@ function applySearch() {
   page.value = 0
   load()
 }
+function clearKeyword() {
+  keyword.value = ''
+  page.value = 0
+  load()
+}
 
 function openEdit(u) {
   editing.value = u
@@ -108,14 +113,16 @@ onMounted(load)
     </div>
 
     <div class="card filter-bar">
-      <input v-model="keyword" placeholder="搜尋姓名 / Email / 電話" @keyup.enter="applySearch" />
+      <div class="search-wrap">
+        <input v-model="keyword" class="search-input" placeholder="搜尋姓名 / Email / 電話" @keyup.enter="applySearch" />
+        <button v-if="keyword" type="button" class="clear-keyword" aria-label="清空搜尋文字" @click="clearKeyword">×</button>
+      </div>
       <select v-model="status">
         <option value="">全部狀態</option>
         <option value="ACTIVE">啟用中</option>
         <option value="INACTIVE">未啟用</option>
       </select>
       <button class="btn btn-primary" @click="applySearch">搜尋</button>
-      <button class="btn" @click="keyword=''; status=''; applySearch()">清空</button>
     </div>
 
     <div v-if="error" class="alert alert-error">{{ error }}</div>
@@ -189,6 +196,37 @@ onMounted(load)
   align-items: center;
   flex-wrap: wrap;
   margin-bottom: 16px;
+}
+.search-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 200px;
+}
+.search-input {
+  width: 100%;
+  padding-right: 32px !important;
+}
+.clear-keyword {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: #d3cfc9;
+  color: #fff;
+  font-size: 14px;
+  line-height: 1;
+  padding: 0;
+  cursor: pointer;
+}
+.clear-keyword:hover {
+  background: var(--ink);
 }
 .filter-bar input {
   padding: 8px 10px;

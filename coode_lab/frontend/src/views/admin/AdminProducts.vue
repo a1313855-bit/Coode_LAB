@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { productApi } from '../../api'
-import { formatMoney, statusBadgeClass, statusLabel, categoryLabel } from '../../utils/format'
+import { formatMoney, statusBadgeClass, categoryLabel } from '../../utils/format'
 import AppPagination from '../../components/AppPagination.vue'
 
 const products = ref([])
@@ -39,9 +39,19 @@ function applySearch() {
   page.value = 0
   load()
 }
+function clearKeyword() {
+  filters.value.keyword = ''
+  page.value = 0
+  load()
+}
 
 function totalStock(p) {
   return (p.variants || []).reduce((s, v) => s + Number(v.stock || 0), 0)
+}
+
+function productStatusLabel(status) {
+  const map = { ACTIVE: '上架', DRAFT: '待上架', INACTIVE: '下架' }
+  return map[String(status || '').toUpperCase()] || status || '-'
 }
 
 function openEdit(p) {
@@ -52,7 +62,7 @@ function openEdit(p) {
     price: p.price,
     categoryType: p.categoryType,
     style: p.style || '',
-    pattern: p.pattern || '',
+    pattern: p.pattern || 'MEN',
     status: p.status,
   }
 }
@@ -85,7 +95,10 @@ onMounted(load)
     </div>
 
     <div class="card filter-bar">
-      <input v-model="filters.keyword" placeholder="搜尋商品名稱" @keyup.enter="applySearch" />
+      <div class="search-wrap">
+        <input v-model="filters.keyword" class="search-input" placeholder="搜尋商品名稱" @keyup.enter="applySearch" />
+        <button v-if="filters.keyword" type="button" class="clear-keyword" aria-label="清空搜尋文字" @click="clearKeyword">×</button>
+      </div>
       <select v-model="filters.categoryType">
         <option value="">全部分類</option>
         <option value="TOP">上衣</option>
@@ -96,13 +109,12 @@ onMounted(load)
       </select>
       <select v-model="filters.status">
         <option value="">全部狀態</option>
-        <option value="ACTIVE">啟用中</option>
-        <option value="DRAFT">草稿</option>
-        <option value="INACTIVE">未啟用</option>
+        <option value="ACTIVE">上架</option>
+        <option value="DRAFT">待上架</option>
+        <option value="INACTIVE">下架</option>
       </select>
       <input v-model="filters.vendorName" placeholder="廠商名稱" class="vendor" />
       <button class="btn btn-primary" @click="applySearch">搜尋</button>
-      <button class="btn" @click="filters={keyword:'',status:'',vendorName:'',categoryType:''}; applySearch()">清空</button>
     </div>
 
     <div v-if="success" class="alert alert-success">{{ success }}</div>
@@ -131,7 +143,7 @@ onMounted(load)
               <td>{{ p.vendorName }} <span class="muted">(#{{ p.vendorId }})</span></td>
               <td :class="{ 'low-cell': totalStock(p) <= 10 }">{{ totalStock(p) }}</td>
               <td>{{ formatMoney(p.price) }}</td>
-              <td><span :class="['badge', statusBadgeClass(p.status)]">{{ statusLabel(p.status) }}</span></td>
+              <td><span :class="['badge', statusBadgeClass(p.status)]">{{ productStatusLabel(p.status) }}</span></td>
               <td><button class="btn btn-sm" @click="openEdit(p)">編輯</button></td>
             </tr>
           </tbody>
@@ -159,13 +171,19 @@ onMounted(load)
         </div>
         <div class="form-row">
           <div class="form-field"><label>風格</label><input v-model="form.style" placeholder="韓系 / 休閒 / 正式" /></div>
-          <div class="form-field"><label>圖案</label><input v-model="form.pattern" placeholder="素色 / 條紋" /></div>
+          <div class="form-field"><label>版型</label>
+            <select v-model="form.pattern">
+              <option value="MEN">男裝</option>
+              <option value="WOMEN">女裝</option>
+              <option value="KIDS">童裝</option>
+            </select>
+          </div>
         </div>
         <div class="form-field"><label>狀態</label>
           <select v-model="form.status">
-            <option value="ACTIVE">啟用中</option>
-            <option value="INACTIVE">未啟用</option>
-            <option value="DRAFT">草稿</option>
+            <option value="ACTIVE">上架</option>
+            <option value="DRAFT">待上架</option>
+            <option value="INACTIVE">下架</option>
           </select>
         </div>
         <div class="modal-actions">
@@ -184,6 +202,37 @@ onMounted(load)
   align-items: center;
   flex-wrap: wrap;
   margin-bottom: 16px;
+}
+.search-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 200px;
+}
+.search-input {
+  width: 100%;
+  padding-right: 32px !important;
+}
+.clear-keyword {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: #d3cfc9;
+  color: #fff;
+  font-size: 14px;
+  line-height: 1;
+  padding: 0;
+  cursor: pointer;
+}
+.clear-keyword:hover {
+  background: var(--ink);
 }
 .filter-bar input {
   padding: 8px 10px;

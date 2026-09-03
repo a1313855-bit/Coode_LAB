@@ -55,6 +55,9 @@ public interface UserService {
     // 會員變更密碼
     UserResponse changePassword(Long userId, ChangePasswordRequest request);
 
+    // 忘記密碼：依 Email 直接重設密碼（不需原密碼）
+    UserResponse resetPassword(String email, String newPassword);
+
     // ╔═══════════════════════════════════════╗
     // ║ 軟刪除會員資料  DELETE                  ║
     // ╚═══════════════════════════════════════╝

@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { orderApi, orderItemApi, returnRequestApi } from '../../api'
-import { formatMoney, formatDate } from '../../utils/format'
+import { formatMoney, formatDate, statusBadgeClass } from '../../utils/format'
 import AppPagination from '../../components/AppPagination.vue'
 import { currentUserId } from '../../composables/auth'
 
@@ -150,6 +150,27 @@ function showToast(text) {
   }, 2600)
 }
 
+const orderItemStatusLocal = {
+  PENDING: '待處理',
+  PROCESSING: '處理中',
+  SHIPPED: '已出貨',
+  RECEIVED: '已完成',
+  CANCELLED: '已取消',
+}
+
+async function confirmReceived(item) {
+  try {
+    await orderItemApi.confirmReceived(item.orderItemId, userId)
+    showToast('已確認收貨')
+    if (expandedId.value) {
+      const res = await orderItemApi.byOrder(expandedId.value, 0)
+      orderItems.value = res.content || []
+    }
+  } catch (e) {
+    showToast('操作失敗：' + e.message)
+  }
+}
+
 onMounted(load)
 </script>
 
@@ -190,7 +211,13 @@ onMounted(load)
                 規格 {{ it.variant ? it.variant.color + ' / ' + it.variant.size : '' }} · x{{ it.productQuantity }}
               </span>
             </span>
+            <span :class="['badge', statusBadgeClass(it.status)]">
+              {{ orderItemStatusLocal[it.status] || it.status }}
+            </span>
             <span>{{ formatMoney(it.priceTotal) }}</span>
+            <button v-if="it.status === 'SHIPPED'" class="btn btn-sm btn-primary" @click="confirmReceived(it)">
+              確認收貨
+            </button>
             <button class="btn btn-sm" @click="openReturn(o.orderId, it)">
               退換貨
             </button>
@@ -321,6 +348,14 @@ onMounted(load)
   letter-spacing: 0.08em;
   border-bottom: 1px solid var(--line);
   padding-bottom: 12px;
+}
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
 }
 .toast {
   position: fixed;

@@ -5,6 +5,7 @@ import java.util.List;
 import com.example.demo.dto.VendorActivateRequest;
 import com.example.demo.dto.VendorContractRequest;
 import com.example.demo.dto.VendorLoginRequest;
+import com.example.demo.dto.VendorPasswordRequest;
 import com.example.demo.dto.VendorRequest;
 import com.example.demo.dto.VendorResponse;
 import com.example.demo.dto.VendorUpdateRequest;
@@ -39,7 +40,10 @@ public interface VendorService {
 	// 新增廠商
 	VendorResponse createVendor(VendorRequest request);
 
-	// 修改廠商基本資料
-	VendorResponse updateVendor(Long vendorId, VendorUpdateRequest request);
+    // 修改廠商基本資料
+    VendorResponse updateVendor(Long vendorId, VendorUpdateRequest request);
+
+    // 廠商修改自己的密碼（需驗證目前密碼）
+    VendorResponse changePassword(Long vendorId, VendorPasswordRequest request);
 
 }

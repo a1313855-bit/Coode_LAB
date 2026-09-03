@@ -15,6 +15,7 @@ import com.example.demo.dto.ProductRequest;
 import com.example.demo.dto.ProductResponse;
 import com.example.demo.dto.ProductVariantRequest;
 import com.example.demo.dto.ProductVariantResponse;
+import com.example.demo.dto.ReplenishRequest;
 import com.example.demo.dto.StockRequest;
 import com.example.demo.exception.ProductSpecification;
 import com.example.demo.model.Product;
@@ -385,6 +386,29 @@ public class ProductServiceImpl implements ProductService {
         ProductVariant saved = productVariantRepository.save(variant);
 
         return toVariantResponse(saved);
+    }
+
+    // 補貨：原庫存 + 本次補貨數量（只能補自己的規格）
+    @Override
+    @Transactional
+    public ProductVariantResponse replenishVariantStock(Long vendorId, Long variantId, ReplenishRequest request) {
+        ProductVariant variant = productVariantRepository.findById(variantId)
+                .orElseThrow(() -> new RuntimeException("找不到規格 ID:" + variantId));
+
+        // 確認規格屬於這個廠商
+        if (!variant.getProduct().getVendor().getVendorId().equals(vendorId)) {
+            throw new RuntimeException("你沒有權限補貨其他廠商的商品規格");
+        }
+
+        Integer quantity = request.getQuantity();
+        if (quantity == null || quantity < 1) {
+            throw new RuntimeException("本次補貨數量必須為大於 0 的整數");
+        }
+
+        int current = variant.getStock() == null ? 0 : variant.getStock();
+        variant.setStock(current + quantity);
+
+        return toVariantResponse(productVariantRepository.save(variant));
     }
 
     // 修改單一規格販售狀態（停售/恢復單一規格）

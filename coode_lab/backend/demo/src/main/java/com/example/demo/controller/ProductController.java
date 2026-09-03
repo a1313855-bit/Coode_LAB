@@ -10,6 +10,7 @@ import com.example.demo.dto.BatchProductRequest;
 import com.example.demo.dto.ProductRequest;
 import com.example.demo.dto.ProductResponse;
 import com.example.demo.dto.ProductVariantResponse;
+import com.example.demo.dto.ReplenishRequest;
 import com.example.demo.dto.StockRequest;
 import com.example.demo.dto.VariantBatchStatusRequest;
 import com.example.demo.dto.VariantStatusRequest;
@@ -182,6 +183,13 @@ public class ProductController {
     public ProductVariantResponse updateVariantStock(@PathVariable Long vendorId, @PathVariable Long variantId,
             @Valid @RequestBody StockRequest request) {
         return productService.updateVariantStock(vendorId, variantId, request);
+    }
+
+    // 廠商低庫存補貨：原庫存 + 本次數量
+    @PatchMapping("/vendor/{vendorId}/variants/{variantId}/replenish")
+    public ProductVariantResponse replenishVariantStock(@PathVariable Long vendorId, @PathVariable Long variantId,
+            @Valid @RequestBody ReplenishRequest request) {
+        return productService.replenishVariantStock(vendorId, variantId, request);
     }
 
     // 廠商停售/恢復單一規格

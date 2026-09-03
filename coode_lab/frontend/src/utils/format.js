@@ -34,6 +34,13 @@ export function statusLabel(status) {
     PROCESSED: '已處理',
     COMPLETED: '已完成',
     CANCELLED: '已取消',
+    AWAITING_SHIPBACK: '待寄回',
+    SHIPPED_BACK: '已寄回',
+    REFUNDING: '退款中',
+    REFUNDED: '退款完成',
+    EXCHANGING: '換貨中',
+    EXCHANGE_SHIPPED: '換貨商品已出貨',
+    EXCHANGED: '換貨完成',
     RETURN: '退貨',
     EXCHANGE: '換貨',
     LOW_STOCK: '庫存不足',
@@ -42,6 +49,17 @@ export function statusLabel(status) {
     KIDS: '童裝',
     MEN: '男裝',
     WOMEN: '女裝',
+  }
+  if (status == null) return '-'
+  return map[String(status).toUpperCase()] || String(status)
+}
+
+// 商品狀態文案（上架 / 待上架 / 下架）
+export function productStatusLabel(status) {
+  const map = {
+    ACTIVE: '上架',
+    DRAFT: '待上架',
+    INACTIVE: '下架',
   }
   if (status == null) return '-'
   return map[String(status).toUpperCase()] || String(status)
@@ -68,6 +86,14 @@ export function statusBadgeClass(status) {
     SHIPPED: 'badge-info',
     ARRIVED: 'badge-info',
     PROCESSED: 'badge-info',
+    CANCELLED: 'badge-muted',
+    AWAITING_SHIPBACK: 'badge-info',
+    SHIPPED_BACK: 'badge-info',
+    REFUNDING: 'badge-warning',
+    REFUNDED: 'badge-success',
+    EXCHANGING: 'badge-info',
+    EXCHANGE_SHIPPED: 'badge-info',
+    EXCHANGED: 'badge-success',
     RETURN: 'badge-warning',
     EXCHANGE: 'badge-info',
     MALE: 'badge-info',

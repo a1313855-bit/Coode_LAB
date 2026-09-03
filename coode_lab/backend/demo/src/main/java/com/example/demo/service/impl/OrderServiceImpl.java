@@ -24,6 +24,7 @@ import com.example.demo.model.CartItem;
 import com.example.demo.dto.order.CreateOrderRequest;
 import com.example.demo.dto.order.UpdateRecipientRequest;
 import com.example.demo.dto.orderitem.CreateOrderItemRequest;
+import com.example.demo.dto.orderitem.UpdateOrderItemRequest;
 import com.example.demo.dto.order.OrderDTO;
 import com.example.demo.dto.orderitem.OrderItemDTO;
 import com.example.demo.dto.orderitem.OrderItemVendorDTO;
@@ -203,6 +204,37 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional(readOnly = true)
+    public SelectPartOfData.Result<OrderDTO> findAllSearch(String keyword, int page) {
+        List<OrderDTO> all = orderRepository.findAll().stream()
+                .map(this::toOrderDTO)
+                .filter(o -> matches(o, keyword))
+                .toList();
+        return SelectPartOfData.pageOf10(all, page);
+    }
+
+    private boolean matches(OrderDTO o, String keyword) {
+        if (keyword == null || keyword.isBlank()) {
+            return true;
+        }
+        String k = keyword.trim().toLowerCase();
+        if (String.valueOf(o.getOrderId()).equals(k)) {
+            return true;
+        }
+        if (o.getUser() != null && o.getUser().getName() != null
+                && o.getUser().getName().toLowerCase().contains(k)) {
+            return true;
+        }
+        if (o.getUser() != null && o.getUser().getEmail() != null) {
+            String email = o.getUser().getEmail();
+            if (email != null && email.toLowerCase().contains(k)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public Optional<OrderDTO> findById(Long orderId) {
         return orderRepository.findById(orderId).map(this::toOrderDTO);
     }
@@ -241,6 +273,7 @@ public class OrderServiceImpl implements OrderService {
             OrderDTO.UserInfo userInfo = new OrderDTO.UserInfo();
             userInfo.setUserId(user.getUserId());
             userInfo.setName(user.getName());
+            userInfo.setEmail(user.getEmail());
             dto.setUser(userInfo);
         }
         return dto;
@@ -420,6 +453,118 @@ public class OrderServiceImpl implements OrderService {
         }
         OrderItem orderItem = optional.get();
         orderItem.setStatus(status);
+        return orderItemRepository.save(orderItem);
+    }
+
+    // ╔══════════════════════════════╗
+    // ║ 訂單明細狀態流程（角色權限驗證） ║
+    // ╚══════════════════════════════╝
+
+    // 規範的訂單狀態常數
+    private static final String S_PENDING = "PENDING";
+    private static final String S_PROCESSING = "PROCESSING";
+    private static final String S_SHIPPED = "SHIPPED";
+    private static final String S_RECEIVED = "RECEIVED";
+    private static final String S_CANCELLED = "CANCELLED";
+
+    @Override
+    @Transactional
+    public OrderItem advanceVendorStatus(Long orderItemId, Long vendorId) {
+        OrderItem item = orderItemRepository.findById(orderItemId)
+                .orElseThrow(() -> new IllegalArgumentException("查無此訂單明細"));
+        // 權限：僅限該明細所屬廠商
+        if (item.getVendor() == null || !item.getVendor().getVendorId().equals(vendorId)) {
+            throw new IllegalArgumentException("僅能操作自己廠商的訂單明細");
+        }
+        String cur = item.getStatus();
+        String next;
+        if (S_PENDING.equals(cur)) {
+            next = S_PROCESSING;
+        } else if (S_PROCESSING.equals(cur)) {
+            next = S_SHIPPED;
+        } else {
+            throw new IllegalArgumentException("目前狀態無法由廠商推進");
+        }
+        item.setStatus(next);
+        return orderItemRepository.save(item);
+    }
+
+    @Override
+    @Transactional
+    public OrderItem confirmReceived(Long orderItemId, Long userId) {
+        OrderItem item = orderItemRepository.findById(orderItemId)
+                .orElseThrow(() -> new IllegalArgumentException("查無此訂單明細"));
+        // 權限：僅限該明細訂單所屬會員
+        if (item.getOrder() == null || item.getOrder().getUser() == null
+                || !item.getOrder().getUser().getUserId().equals(userId)) {
+            throw new IllegalArgumentException("僅能確認自己訂單的收貨");
+        }
+        String cur = item.getStatus();
+        if (!S_SHIPPED.equals(cur)) {
+            throw new IllegalArgumentException("唯有已出貨的訂單才能確認收貨");
+        }
+        item.setStatus(S_RECEIVED);
+        return orderItemRepository.save(item);
+    }
+
+    @Override
+    @Transactional
+    public OrderItem vendorManualStatus(Long orderItemId, Long vendorId, String status) {
+        OrderItem item = orderItemRepository.findById(orderItemId)
+                .orElseThrow(() -> new IllegalArgumentException("查無此訂單明細"));
+        // 權限：僅限該明細所屬廠商
+        if (item.getVendor() == null || !item.getVendor().getVendorId().equals(vendorId)) {
+            throw new IllegalArgumentException("僅能操作自己廠商的訂單明細");
+        }
+        // 廠商不可直接設定會員才能確認的 RECEIVED
+        if (S_RECEIVED.equals(status)) {
+            throw new IllegalArgumentException("「已確認收貨」僅能由會員確認，廠商不可直接設定");
+        }
+        // 廠商僅能設定自己權限範圍內的狀態
+        if (!S_PENDING.equals(status) && !S_PROCESSING.equals(status)
+                && !S_SHIPPED.equals(status) && !S_CANCELLED.equals(status)) {
+            throw new IllegalArgumentException("非廠商可設定的狀態");
+        }
+        item.setStatus(status);
+        return orderItemRepository.save(item);
+    }
+
+    @Override
+    @Transactional
+    public OrderItem adminUpdateStatus(Long orderItemId, String status) {
+        OrderItem item = orderItemRepository.findById(orderItemId)
+                .orElseThrow(() -> new IllegalArgumentException("查無此訂單明細"));
+        if (!S_PENDING.equals(status) && !S_PROCESSING.equals(status)
+                && !S_SHIPPED.equals(status) && !S_RECEIVED.equals(status)
+                && !S_CANCELLED.equals(status)) {
+            throw new IllegalArgumentException("非有效的訂單狀態");
+        }
+        item.setStatus(status);
+        return orderItemRepository.save(item);
+    }
+
+    @Override
+    @Transactional
+    public OrderItem updateOrderItem(Long orderItemId, UpdateOrderItemRequest request) {
+        Optional<OrderItem> optional = orderItemRepository.findById(orderItemId);
+        if (optional.isEmpty()) {
+            return null;
+        }
+        OrderItem orderItem = optional.get();
+
+        if (request.getProductQuantity() != null && request.getProductQuantity() >= 1) {
+            orderItem.setProductQuantity(request.getProductQuantity());
+            // 價格 = 單價 × 數量
+            if (orderItem.getPrice() != null) {
+                orderItem.setPriceTotal(orderItem.getPrice()
+                        .multiply(java.math.BigDecimal.valueOf(request.getProductQuantity())));
+            }
+        }
+
+        if (request.getStatus() != null && !request.getStatus().isBlank()) {
+            orderItem.setStatus(request.getStatus());
+        }
+
         return orderItemRepository.save(orderItem);
     }
 

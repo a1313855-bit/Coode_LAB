@@ -2,7 +2,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { productApi, cartItemApi, cartApi } from '../../api'
-import { categoryLabel, formatMoney, productImageUrl } from '../../utils/format'
+import { categoryLabel, formatMoney, productImageUrl, statusLabel } from '../../utils/format'
 import { currentUserId } from '../../composables/auth'
 import productPlaceholder from '../../assets/coode-fashion/product-placeholder.svg'
 
@@ -126,7 +126,7 @@ onMounted(load)
           <div class="price">{{ formatMoney(product.price) }}</div>
 
           <div class="fields">
-            <div class="field-item"><span>樣式</span><b>{{ product.pattern || '-' }}</b></div>
+            <div class="field-item"><span>版型</span><b>{{ product.pattern ? statusLabel(product.pattern) : '-' }}</b></div>
             <div class="field-item"><span>風格</span><b>{{ product.style || '-' }}</b></div>
             <div class="field-item"><span>分類</span><b>{{ categoryLabel(product.categoryType) }}</b></div>
             <div class="field-item"><span>廠商</span><b>{{ product.vendorName || '-' }}</b></div>

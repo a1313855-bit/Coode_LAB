@@ -74,6 +74,37 @@ async function saveName() {
   }
 }
 
+// 修改密碼
+const pwForm = ref({ currentPassword: '', newPassword: '', confirmPassword: '' })
+const savingPw = ref(false)
+
+const canSavePw = computed(() => {
+  return !!(pwForm.value.currentPassword && pwForm.value.newPassword
+    && pwForm.value.newPassword === pwForm.value.confirmPassword)
+})
+
+async function savePassword() {
+  if (pwForm.value.newPassword.length < 6) {
+    error.value = '新密碼長度至少 6 碼'
+    return
+  }
+  savingPw.value = true
+  error.value = ''
+  saved.value = ''
+  try {
+    await vendorApi.changePassword(vendorId, {
+      currentPassword: pwForm.value.currentPassword,
+      newPassword: pwForm.value.newPassword,
+    })
+    saved.value = '密碼已更新'
+    pwForm.value = { currentPassword: '', newPassword: '', confirmPassword: '' }
+  } catch (e) {
+    error.value = e.message
+  } finally {
+    savingPw.value = false
+  }
+}
+
 onMounted(load)
 </script>
 
@@ -102,6 +133,29 @@ onMounted(load)
           <div class="info-row"><span class="muted">建立時間</span><b>{{ formatDate(detail.createdAt) }}</b></div>
         </div>
         <p class="hint muted">除廠商名稱外，其餘欄位皆為不可變更資訊。</p>
+      </div>
+
+      <!-- 修改密碼 -->
+      <div class="card pw-card">
+        <h3>修改密碼</h3>
+        <div class="pw-fields">
+          <div class="pw-field">
+            <label>目前密碼</label>
+            <input v-model="pwForm.currentPassword" type="password" placeholder="請輸入目前密碼" />
+          </div>
+          <div class="pw-field">
+            <label>新密碼</label>
+            <input v-model="pwForm.newPassword" type="password" placeholder="請輸入新密碼" />
+          </div>
+          <div class="pw-field">
+            <label>確認新密碼</label>
+            <input v-model="pwForm.confirmPassword" type="password" placeholder="再次輸入新密碼" @keyup.enter="savePassword" />
+          </div>
+          <button class="btn btn-primary" :disabled="savingPw || !canSavePw" @click="savePassword">
+            {{ savingPw ? '修改中...' : '修改密碼' }}
+          </button>
+        </div>
+        <p class="hint muted">修改密碼後，下次登入請使用新密碼。</p>
       </div>
 
       <!-- 合約資訊 -->
@@ -189,6 +243,36 @@ h3 {
 }
 .hint.muted {
   color: var(--c-text-light);
+}
+.pw-card {
+  margin-top: 16px;
+}
+.pw-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 480px;
+  margin-bottom: 8px;
+}
+.pw-fields label {
+  font-size: 13px;
+  color: var(--c-text-light);
+  display: block;
+  margin-bottom: 6px;
+}
+.pw-fields input {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid var(--c-border);
+  border-radius: 6px;
+  font-size: 14px;
+}
+.pw-fields input:focus {
+  outline: none;
+  border-color: var(--c-text);
+}
+.pw-fields .btn {
+  align-self: flex-start;
 }
 /* 合約資訊（原「合約資訊」頁內容已合併到此） */
 .contract {

@@ -76,7 +76,7 @@ function pickName(role, data) {
     <div class="auth-card">
       <p class="brand">Coode LAB</p>
       <h1>登入</h1>
-      <p class="sub">登入後依帳號身份前往對應後台</p>
+      <p class="sub">歡迎回來</p>
 
       <div v-if="error" class="alert alert-error">{{ error }}</div>
 
@@ -88,6 +88,9 @@ function pickName(role, data) {
         <label>密碼</label>
         <input v-model="password" type="password" placeholder="請輸入密碼" @keyup.enter="submit" />
       </div>
+      <p class="forgot">
+        <RouterLink to="/forgot-password">忘記密碼?</RouterLink>
+      </p>
 
       <button class="btn btn-primary btn-block" :disabled="loading" @click="submit">
         {{ loading ? '登入中...' : '登入' }}
@@ -137,6 +140,12 @@ function pickName(role, data) {
   color: var(--muted);
   font-size: 13px;
   margin: 6px 0 24px;
+}
+.forgot {
+  text-align: right;
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: var(--muted);
 }
 .center {
   text-align: center;

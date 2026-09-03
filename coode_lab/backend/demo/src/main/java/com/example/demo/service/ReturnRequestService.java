@@ -53,4 +53,30 @@ public interface ReturnRequestService {
 
     // 更新退換貨明細狀態（線性推進），廠商下決定時一併將申請單設為 REVIEWED
     ReturnItemDTO updateStatus(Long returnItemId, UpdateReturnItemStatusRequest request);
+
+    // ╔══════════════════════════════════╗
+    // ║ 退換貨狀態流程（角色權限驗證）    ║
+    // ╚══════════════════════════════════╝
+
+    // 廠商審核申請：PENDING_REVIEW → APPROVED / REJECTED
+    ReturnItemDTO vendorReview(Long returnItemId, Long vendorId, String decision);
+
+    // 廠商推進下一階段：SHIPPED_BACK→RECEIVED（確認收件）、
+    // RECEIVED(RETURN)→REFUNDING→REFUNDED、RECEIVED(EXCHANGE)→EXCHANGING→EXCHANGE_SHIPPED
+    ReturnItemDTO advanceVendorStatus(Long returnItemId, Long vendorId);
+
+    // 廠商手動修改狀態（異常修正，僅限廠商權限內狀態）
+    ReturnItemDTO vendorManualStatus(Long returnItemId, Long vendorId, String status);
+
+    // 會員確認已寄回：AWAITING_SHIPBACK→SHIPPED_BACK
+    ReturnItemDTO memberConfirmShippedBack(Long returnItemId, Long userId);
+
+    // 會員確認收到換貨商品：EXCHANGE_SHIPPED→EXCHANGED
+    ReturnItemDTO memberConfirmExchangeReceived(Long returnItemId, Long userId);
+
+    // 會員取消申請（若尚未進入不可取消階段）
+    ReturnRequestDTO memberCancel(Long returnRequestId, Long userId);
+
+    // 管理員手動修改狀態（人工修正）
+    ReturnItemDTO adminUpdateStatus(Long returnItemId, String status);
 }

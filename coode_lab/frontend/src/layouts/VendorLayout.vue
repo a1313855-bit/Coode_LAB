@@ -18,6 +18,7 @@ const nav = [
   { to: '/vendor/orders', label: '訂單管理' },
   { to: '/vendor/returns', label: '退換貨管理' },
   { to: '/vendor/reports', label: '銷售報表' },
+  { to: '/vendor/low-stock', label: '低庫存管理' },
   { to: '/vendor/account', label: '帳號資訊' },
 ]
 

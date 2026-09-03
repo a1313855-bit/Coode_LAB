@@ -18,9 +18,9 @@ public final class VendorStatusMapper {
     public static List<String> toOrderItemStatuses(String vendorStatus) {
         switch (vendorStatus) {
             case NOT_SHIPPED:
-                return List.of("PENDING");
+                return List.of("PENDING", "PROCESSING");
             case IN_TRANSIT:
-                return List.of("SHIPPED", "ARRIVED");
+                return List.of("SHIPPED");
             case COMPLETED:
                 return List.of("RECEIVED");
             case CANCELLED:
@@ -34,9 +34,9 @@ public final class VendorStatusMapper {
     public static String toVendorStatus(String orderItemStatus) {
         switch (orderItemStatus) {
             case "PENDING":
+            case "PROCESSING":
                 return NOT_SHIPPED;
             case "SHIPPED":
-            case "ARRIVED":
                 return IN_TRANSIT;
             case "RECEIVED":
                 return COMPLETED;

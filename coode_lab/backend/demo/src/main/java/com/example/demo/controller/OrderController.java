@@ -69,9 +69,10 @@ public class OrderController {
 
     @GetMapping("/all")
     public ResponseEntity<SelectPartOfData.Result<OrderDTO>> getAllOrders(
-            @RequestParam(defaultValue = "0") int page) {
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(required = false) String keyword) {
         // TODO: 查詢所有訂單（admin 管理員）
-        SelectPartOfData.Result<OrderDTO> orders = orderService.findAll(page);
+        SelectPartOfData.Result<OrderDTO> orders = orderService.findAllSearch(keyword, page);
         if (!orders.getContent().isEmpty()) {
             return ResponseEntity.ok(orders);
         } else {

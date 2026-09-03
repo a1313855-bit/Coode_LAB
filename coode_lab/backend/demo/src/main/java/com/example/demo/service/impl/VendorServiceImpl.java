@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import com.example.demo.dto.VendorActivateRequest;
 import com.example.demo.dto.VendorContractRequest;
 import com.example.demo.dto.VendorLoginRequest;
+import com.example.demo.dto.VendorPasswordRequest;
 import com.example.demo.dto.VendorRequest;
 import com.example.demo.dto.VendorResponse;
 import com.example.demo.dto.VendorUpdateRequest;
@@ -268,6 +269,30 @@ public class VendorServiceImpl implements VendorService {
         Vendor savedVendor = vendorRepository.save(oldVendor);
 
         return toResponse(savedVendor);
+    }
+
+    // 廠商修改自己的密碼
+    @Override
+    public VendorResponse changePassword(Long vendorId, VendorPasswordRequest request) {
+        Vendor vendor = vendorRepository.findById(vendorId)
+                .orElseThrow(() -> new RuntimeException("找不到廠商 ID:" + vendorId));
+
+        if (request.getCurrentPassword() == null || request.getCurrentPassword().isBlank()) {
+            throw new RuntimeException("目前密碼不能為空");
+        }
+        if (request.getNewPassword() == null || request.getNewPassword().isBlank()) {
+            throw new RuntimeException("新密碼不能為空");
+        }
+        if (!passwordEncoder.matches(request.getCurrentPassword(), vendor.getPassword())) {
+            throw new RuntimeException("目前密碼錯誤");
+        }
+        if (passwordEncoder.matches(request.getNewPassword(), vendor.getPassword())) {
+            throw new RuntimeException("新密碼不可與目前密碼相同");
+        }
+
+        vendor.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        Vendor saved = vendorRepository.save(vendor);
+        return toResponse(saved);
     }
 
     // 新增廠商

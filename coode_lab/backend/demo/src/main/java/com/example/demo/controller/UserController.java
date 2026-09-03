@@ -5,6 +5,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.demo.dto.ChangePasswordRequest;
+import com.example.demo.dto.ResetPasswordRequest;
 import com.example.demo.dto.UserLoginRequest;
 import com.example.demo.dto.UserResponse;
 import com.example.demo.dto.UserUpdateRequest;
@@ -157,6 +158,16 @@ public class UserController {
     @PatchMapping("/{userId}/password")
     public ResponseEntity<UserResponse> changePassword(@PathVariable Long userId, @Valid @RequestBody ChangePasswordRequest request) {
         UserResponse updatedUser = userService.changePassword(userId, request);
+
+        return ResponseEntity.ok(updatedUser);
+    }
+
+    // =================
+    // 忘記密碼：依 Email 直接重設密碼（不需舊密碼）
+    // =================
+    @PatchMapping("/password/reset")
+    public ResponseEntity<UserResponse> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        UserResponse updatedUser = userService.resetPassword(request.getEmail(), request.getNewPassword());
 
         return ResponseEntity.ok(updatedUser);
     }
