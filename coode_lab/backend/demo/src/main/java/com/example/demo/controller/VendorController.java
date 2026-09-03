@@ -17,6 +17,7 @@ import com.example.demo.dto.VendorContractRequest;
 import com.example.demo.dto.VendorLoginRequest;
 import com.example.demo.dto.VendorPasswordRequest;
 import com.example.demo.dto.VendorRequest;
+import com.example.demo.dto.VendorResetPasswordRequest;
 import com.example.demo.dto.VendorResponse;
 import com.example.demo.dto.VendorUpdateRequest;
 import com.example.demo.service.VendorService;
@@ -77,6 +78,12 @@ public class VendorController {
     @PatchMapping("/{vendorId}/password")
     public VendorResponse changePassword(@PathVariable Long vendorId, @Valid @RequestBody VendorPasswordRequest request) {
         return vendorService.changePassword(vendorId, request);
+    }
+
+    // 管理員重設廠商密碼
+    @PatchMapping("/{vendorId}/reset-password")
+    public VendorResponse resetPassword(@PathVariable Long vendorId, @Valid @RequestBody VendorResetPasswordRequest request) {
+        return vendorService.resetPassword(vendorId, request);
     }
 
     // 管理員啟用廠商

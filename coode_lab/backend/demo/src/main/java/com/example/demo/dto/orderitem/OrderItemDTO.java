@@ -20,6 +20,12 @@ public class OrderItemDTO {
     private BigDecimal priceTotal;
     private String status;
 
+    // 會員端判斷是否可申請退換貨（規則由後端統一計算）
+    // 訂單明細已完成（RECEIVED）且此訂單無進行中的退換貨申請
+    private Boolean canReturnOrExchange;
+    // 此訂單目前的退換貨狀態：PROCESSING（進行中）/ COMPLETED（已完成）/ 無則為 null
+    private String returnStatus;
+
     private OrderInfo order;
     private VendorInfo vendor;
     private VariantInfo variant;

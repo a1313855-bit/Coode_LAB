@@ -7,6 +7,7 @@ import com.example.demo.dto.VendorContractRequest;
 import com.example.demo.dto.VendorLoginRequest;
 import com.example.demo.dto.VendorPasswordRequest;
 import com.example.demo.dto.VendorRequest;
+import com.example.demo.dto.VendorResetPasswordRequest;
 import com.example.demo.dto.VendorResponse;
 import com.example.demo.dto.VendorUpdateRequest;
 import com.example.demo.util.SelectPartOfData;
@@ -45,5 +46,8 @@ public interface VendorService {
 
     // 廠商修改自己的密碼（需驗證目前密碼）
     VendorResponse changePassword(Long vendorId, VendorPasswordRequest request);
+
+    // 管理員重設廠商密碼（無需目前密碼）
+    VendorResponse resetPassword(Long vendorId, VendorResetPasswordRequest request);
 
 }

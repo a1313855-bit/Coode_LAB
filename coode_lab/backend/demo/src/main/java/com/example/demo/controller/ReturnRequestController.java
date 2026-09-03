@@ -86,11 +86,7 @@ public class ReturnRequestController {
             @PathVariable Long vendorId,
             @RequestParam(defaultValue = "0") int page) {
         SelectPartOfData.Result<ReturnRequestDTO> list = returnRequestService.findByVendorId(vendorId, page);
-        if (!list.getContent().isEmpty()) {
-            return ResponseEntity.ok(list);
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+        return ResponseEntity.ok(list);
     }
 
     @PutMapping("/{id}/status")

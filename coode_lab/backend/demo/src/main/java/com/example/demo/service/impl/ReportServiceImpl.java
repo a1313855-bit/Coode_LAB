@@ -68,6 +68,7 @@ public class ReportServiceImpl implements ReportService {
 
         // ── 趨勢 / 狀態 / 排行 ──
         dto.setSalesTrend(buildTrend(reportRepository.findDailySales(vendorId, window.currentStart(), window.currentEnd()), window));
+        dto.setHourlyTrend(buildHourlyTrend(reportRepository.findHourlySales(vendorId, window.currentStart(), window.currentEnd()), window));
         dto.setSalesStatus(buildSalesStatus(reportRepository.countByStatus(vendorId, window.currentStart(), window.currentEnd())));
 
         List<VendorDashboardDTO.ProductRankItem> products = reportRepository.findTopProducts(vendorId, window.currentStart(), window.currentEnd())
@@ -189,6 +190,23 @@ public class ReportServiceImpl implements ReportService {
         return trend;
     }
 
+    private List<VendorDashboardDTO.DailyPoint> buildHourlyTrend(List<ReportRepository.HourlySales> rows, DateTimeWindow window) {
+        Map<Integer, BigDecimal> byHour = new HashMap<>();
+        for (ReportRepository.HourlySales row : rows) {
+            byHour.put(row.getHr(), row.getAmount());
+        }
+
+        List<VendorDashboardDTO.DailyPoint> trend = new ArrayList<>();
+        LocalDate base = window.currentStart().toLocalDate();
+        for (int hr = 0; hr < 24; hr++) {
+            VendorDashboardDTO.DailyPoint point = new VendorDashboardDTO.DailyPoint();
+            point.setDate(base.plusDays(hr));   // hr 編碼在日期偏移量中
+            point.setAmount(byHour.getOrDefault(hr, BigDecimal.ZERO));
+            trend.add(point);
+        }
+        return trend;
+    }
+
     private List<VendorDashboardDTO.StatusCount> buildSalesStatus(List<ReportRepository.StatusCountRow> rows) {
         Map<String, Long> counts = new HashMap<>();
         for (ReportRepository.StatusCountRow row : rows) {
@@ -242,7 +260,10 @@ public class ReportServiceImpl implements ReportService {
                 pendingReview += row.getCount();
             } else if (APPROVED_STATUSES.contains(status)) {
                 approvedCount += row.getCount();
-                approvedQuantity = approvedQuantity.add(row.getReturnedQuantity());
+                BigDecimal returned = row.getReturnedQuantity();
+                if (returned != null) {
+                    approvedQuantity = approvedQuantity.add(returned);
+                }
             } else if ("REJECTED".equals(status)) {
                 rejectedCount += row.getCount();
             } else if (CANCELLED.equals(status)) {

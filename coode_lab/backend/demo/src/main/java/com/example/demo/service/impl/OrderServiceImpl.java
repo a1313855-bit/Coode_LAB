@@ -36,6 +36,7 @@ import com.example.demo.repository.ProductRepository;
 import com.example.demo.repository.ProductVariantRepository;
 import com.example.demo.repository.VendorRepository;
 import com.example.demo.service.OrderService;
+import com.example.demo.service.ReturnRequestService;
 import com.example.demo.util.VendorStatusMapper;
 import com.example.demo.util.SelectPartOfData;
 
@@ -53,6 +54,7 @@ public class OrderServiceImpl implements OrderService {
     private final ProductRepository productRepository;
     private final ProductVariantRepository productVariantRepository;
     private final VendorRepository vendorRepository;
+    private final ReturnRequestService returnRequestService;
 
     public OrderServiceImpl(OrderRepository orderRepository,
             OrderItemRepository orderItemRepository,
@@ -60,7 +62,8 @@ public class OrderServiceImpl implements OrderService {
             CartItemRepository cartItemRepository,
             ProductRepository productRepository,
             ProductVariantRepository productVariantRepository,
-            VendorRepository vendorRepository) {
+            VendorRepository vendorRepository,
+            ReturnRequestService returnRequestService) {
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
         this.userRepository = userRepository;
@@ -68,6 +71,7 @@ public class OrderServiceImpl implements OrderService {
         this.productRepository = productRepository;
         this.productVariantRepository = productVariantRepository;
         this.vendorRepository = vendorRepository;
+        this.returnRequestService = returnRequestService;
     }
 
     // ╔══════════════════════════════╗
@@ -286,6 +290,14 @@ public class OrderServiceImpl implements OrderService {
         dto.setPrice(item.getPrice());
         dto.setPriceTotal(item.getPriceTotal());
         dto.setStatus(item.getStatus());
+
+        // 退換貨資格（後端統一計算，前端顯示與後端防護一致）
+        Long orderId = item.getOrder() != null ? item.getOrder().getOrderId() : null;
+        String returnStatus = orderId != null ? returnRequestService.returnStatusForOrder(orderId) : null;
+        dto.setReturnStatus(returnStatus);
+        boolean orderCompleted = "RECEIVED".equals(item.getStatus());
+        boolean noInProgress = orderId == null || !returnRequestService.hasInProgressReturnForOrder(orderId);
+        dto.setCanReturnOrExchange(orderCompleted && noInProgress);
 
         if (item.getOrder() != null) {
             OrderItemDTO.OrderInfo orderInfo = new OrderItemDTO.OrderInfo();

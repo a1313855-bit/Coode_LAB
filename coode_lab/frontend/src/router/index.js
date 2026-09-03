@@ -30,6 +30,7 @@ import AdminVendors from '../views/admin/AdminVendors.vue'
 import AdminAdmins from '../views/admin/AdminAdmins.vue'
 import AdminProducts from '../views/admin/AdminProducts.vue'
 import AdminOrders from '../views/admin/AdminOrders.vue'
+import AdminReturns from '../views/admin/AdminReturns.vue'
 
 // 登入狀態（reload 後仍保持）
 import { useAuth, homeFor } from '../composables/auth'
@@ -83,6 +84,7 @@ const router = createRouter({
         { path: 'admins', name: 'admin-admins', component: AdminAdmins },
         { path: 'products', name: 'admin-products', component: AdminProducts },
         { path: 'orders', name: 'admin-orders', component: AdminOrders },
+        { path: 'returns', name: 'admin-returns', component: AdminReturns },
       ],
     },
     { path: '/:pathMatch(.*)*', redirect: '/store' },

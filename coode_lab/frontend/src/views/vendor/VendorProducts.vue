@@ -28,6 +28,7 @@ const filters = reactive({
   pattern: '',
   color: '',
   size: '',
+  sizeCustom: '',
   minPrice: '',
   maxPrice: '',
   status: '',
@@ -47,11 +48,13 @@ const categoryOptions = [
   { value: 'DRESS', label: '洋裝' },
   { value: 'HEADWEAR', label: '帽子/頭飾' },
 ]
-const genderOptions = [
+const patternOptions = [
   { value: 'MEN', label: '男裝' },
   { value: 'WOMEN', label: '女裝' },
   { value: 'KIDS', label: '童裝' },
 ]
+const colorOptions = ['白', '黑', '藍', '卡其', '軍綠', '灰', '米白']
+const sizeOptions = ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL', 'F', 'U']
 
 const showingFilters = computed(() => activeTab.value !== 'low')
 const showingBatch = computed(() => activeTab.value !== 'low')
@@ -111,7 +114,7 @@ async function load() {
         categoryType: filters.categoryType,
         pattern: filters.pattern,
         color: filters.color,
-        size: filters.size,
+        size: resolvedSize(),
         minPrice: filters.minPrice,
         maxPrice: filters.maxPrice,
         status,
@@ -150,6 +153,16 @@ async function refreshCounts() {
 function changePage(p) {
   page.value = p
   load()
+}
+
+function onSizeFilterChange() {
+  if (filters.size !== '__custom__') {
+    filters.sizeCustom = ''
+  }
+}
+
+function resolvedSize() {
+  return filters.size === '__custom__' ? filters.sizeCustom : filters.size
 }
 
 function applySearch() {
@@ -230,6 +243,15 @@ async function toggleStatus(p) {
     } else {
       await productApi.activate(vendorId, p.productId)
     }
+    await Promise.all([load(), refreshCounts()])
+  } catch (e) {
+    error.value = e.message
+  }
+}
+
+async function setToDraft(p) {
+  try {
+    await productApi.setToDraft(vendorId, p.productId)
     await Promise.all([load(), refreshCounts()])
   } catch (e) {
     error.value = e.message
@@ -386,11 +408,25 @@ onMounted(() => {
         <option v-for="c in categoryOptions" :key="c.value" :value="c.value">{{ c.label }}</option>
       </select>
       <select v-model="filters.pattern">
-        <option value="">全部性別</option>
-        <option v-for="g in genderOptions" :key="g.value" :value="g.value">{{ g.label }}</option>
+        <option value="">全部版型</option>
+        <option v-for="g in patternOptions" :key="g.value" :value="g.value">{{ g.label }}</option>
       </select>
-      <input v-model="filters.color" placeholder="顏色" />
-      <input v-model="filters.size" placeholder="尺寸" />
+      <select v-model="filters.color">
+        <option value="">全部顏色</option>
+        <option v-for="c in colorOptions" :key="c" :value="c">{{ c }}</option>
+      </select>
+      <select v-model="filters.size" @change="onSizeFilterChange">
+        <option value="">全部尺寸</option>
+        <option v-for="s in sizeOptions" :key="s" :value="s">{{ s }}</option>
+        <option value="__custom__">其他（手動輸入）</option>
+      </select>
+      <input
+        v-if="filters.size === '__custom__'"
+        v-model="filters.sizeCustom"
+        placeholder="輸入尺寸"
+        class="size-custom"
+        @keyup.enter="applySearch"
+      />
       <input v-model.number="filters.minPrice" type="number" placeholder="最低價" class="price" />
       <input v-model.number="filters.maxPrice" type="number" placeholder="最高價" class="price" />
       <select v-if="activeTab === 'all'" v-model="filters.status">
@@ -451,6 +487,13 @@ onMounted(() => {
                     <button class="btn btn-sm" @click="openEdit(p)">編輯</button>
                     <button v-if="activeTab !== 'low'" class="btn btn-sm" @click="toggleStatus(p)">
                       {{ statusButtonLabel(activeTab, p) }}
+                    </button>
+                    <button
+                      v-if="activeTab !== 'low' && p.status === 'INACTIVE'"
+                      class="btn btn-sm"
+                      @click="setToDraft(p)"
+                    >
+                      待上架
                     </button>
                   </div>
                 </td>
@@ -544,7 +587,7 @@ onMounted(() => {
           <div class="form-field"><label>商品名稱</label><input v-model="form.name" /></div>
           <div class="form-field"><label>男裝 / 女裝 / 童裝</label>
             <select v-model="form.pattern">
-              <option v-for="g in genderOptions" :key="g.value" :value="g.value">{{ g.label }}</option>
+              <option v-for="g in patternOptions" :key="g.value" :value="g.value">{{ g.label }}</option>
             </select>
           </div>
         </div>
@@ -576,8 +619,8 @@ onMounted(() => {
             :key="i"
             class="ve-row"
           >
-            <input v-model="v.color" placeholder="顏色（如 白）" class="ve-input" />
-            <input v-model="v.size" placeholder="尺寸（如 M）" class="ve-input" />
+            <input v-model="v.color" placeholder="顏色（如 白）" class="ve-input ve-color" />
+            <input v-model="v.size" placeholder="尺寸（如 M）" class="ve-input ve-size" />
             <input v-model.number="v.stock" type="number" placeholder="庫存" class="ve-stock" />
             <input v-model="v.imagesJpg" placeholder="商品圖" class="ve-img" />
             <input v-model="v.outfitPng" placeholder="試穿圖" class="ve-img" />
@@ -585,16 +628,9 @@ onMounted(() => {
               刪除
             </button>
           </div>
-          <div class="ve-hint muted small">至少需一種規格；後端會以（顏色, 尺寸）唯一組合管理庫存與販售狀態</div>
+          <div class="ve-hint muted small">請新增至少一種以上的(顏色, 尺寸)規格</div>
         </div>
 
-        <div class="form-field">
-          <label>上架方式</label>
-          <select v-model="form.status">
-            <option value="ACTIVE">直接上架</option>
-            <option value="DRAFT">待上架</option>
-          </select>
-        </div>
         <div class="flex">
           <button class="btn btn-primary" @click="submit">儲存</button>
           <button class="btn" @click="showForm = false">取消</button>
@@ -660,6 +696,9 @@ onMounted(() => {
 }
 .price {
   width: 90px;
+}
+.size-custom {
+  width: 100px;
 }
 .spacer {
   flex: 1;
@@ -769,8 +808,8 @@ onMounted(() => {
 }
 .ve-row {
   display: grid;
-  grid-template-columns: 90px 90px 70px 1fr 1fr auto;
-  gap: 8px;
+  grid-template-columns: 64px 64px 64px 1fr 1fr auto;
+  gap: 6px;
 }
 .ve-row input {
   padding: 7px 8px;

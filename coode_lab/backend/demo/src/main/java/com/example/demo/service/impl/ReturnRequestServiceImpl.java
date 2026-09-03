@@ -67,31 +67,46 @@ public class ReturnRequestServiceImpl implements ReturnRequestService {
     // ╚══════════════════════════════════╝
 
     @Override
+    @Transactional
     public ReturnRequestDTO createReturnRequest(Long userId, Long orderId, CreateReturnRequestRequest request) {
         Optional<Order> optional = orderRepository.findById(orderId);
         if (optional.isEmpty()) {
-            return null;
+            throw new IllegalArgumentException("找不到訂單 ID:" + orderId);
         }
         Order order = optional.get();
 
         User user = userRepository.findById(userId).orElse(null);
         if (user == null) {
-            return null;
+            throw new IllegalArgumentException("找不到會員 ID:" + userId);
         }
 
         // 只有訂單擁有者可以申請退換貨
         if (order.getUser() == null || !order.getUser().getUserId().equals(userId)) {
-            return null;
+            throw new IllegalArgumentException("此訂單不屬於此會員");
         }
 
         // 該訂單明細必須存在，且必須屬於此訂單
         Optional<OrderItem> itemOptional = orderItemRepository.findById(request.getOrderItemId());
         if (itemOptional.isEmpty()) {
-            return null;
+            throw new IllegalArgumentException("找不到訂單明細 ID:" + request.getOrderItemId());
         }
         OrderItem orderItem = itemOptional.get();
         if (orderItem.getOrder() == null || !orderItem.getOrder().getOrderId().equals(orderId)) {
             throw new IllegalArgumentException("訂單明細不存在於此訂單");
+        }
+
+        // 核心商業規則：只有「訂單明細已完成」才有資格申請退換貨，
+        // 且同一筆訂單不可重複申請（已有進行中的退換貨申請即阻擋）。
+        // 此處同時涵蓋前端顯示與後端防護，避免繞過前端直接呼叫 API。
+        if ("CANCELLED".equals(orderItem.getStatus())) {
+            throw new IllegalArgumentException("訂單已取消，無法申請退換貨");
+        }
+        if (!"RECEIVED".equals(orderItem.getStatus())) {
+            throw new IllegalArgumentException("訂單尚未完成，目前無法申請退換貨");
+        }
+        List<ReturnRequest> existingRequests = returnRequestRepository.findByOrder_OrderId(orderId);
+        if (hasInProgressReturn(existingRequests)) {
+            throw new IllegalArgumentException("此訂單已有退換貨申請正在處理中");
         }
 
         // 退換貨數量不可大於該明細的購買數量
@@ -105,7 +120,7 @@ public class ReturnRequestServiceImpl implements ReturnRequestService {
 
         Vendor vendor = orderItem.getVendor();
         if (vendor == null) {
-            return null;
+            throw new IllegalArgumentException("此訂單明細無法識別所屬廠商");
         }
 
         ReturnRequest returnRequest = new ReturnRequest();
@@ -123,6 +138,7 @@ public class ReturnRequestServiceImpl implements ReturnRequestService {
         returnItem.setRejectedQuantity(0);
         returnItem.setRefund(BigDecimal.ZERO);
         returnItem.setPicture(request.getPicture());
+        returnItem.setReason(request.getReason());
         returnItem.setOrderItem(orderItem);
         returnItem.setReturnRequest(returnRequest);
         returnRequest.setReturnItem(returnItem);
@@ -485,6 +501,68 @@ public class ReturnRequestServiceImpl implements ReturnRequestService {
         }
         item.setStatus(status);
         return toReturnItemDTO(returnItemRepository.save(item));
+    }
+
+    // 此訂單是否已有「進行中」的退換貨申請（供訂單頁面判斷能否再次申請）
+    @Override
+    @Transactional(readOnly = true)
+    public boolean hasInProgressReturnForOrder(Long orderId) {
+        List<ReturnRequest> requests = returnRequestRepository.findByOrder_OrderId(orderId);
+        return hasInProgressReturn(requests);
+    }
+
+    // 此訂單目前的退換貨狀態（供訂單頁面顯示「退換貨處理中 / 已完成」）
+    @Override
+    @Transactional(readOnly = true)
+    public String returnStatusForOrder(Long orderId) {
+        List<ReturnRequest> requests = returnRequestRepository.findByOrder_OrderId(orderId);
+        return currentReturnStatus(requests);
+    }
+
+    // 此筆訂單是否已有「進行中」的退換貨申請（尚未走到終態，則不可再次申請）
+    private boolean hasInProgressReturn(List<ReturnRequest> requests) {
+        if (requests == null || requests.isEmpty()) {
+            return false;
+        }
+        for (ReturnRequest req : requests) {
+            if (req.getReturnItem() != null) {
+                String s = req.getReturnItem().getStatus();
+                if (!isReturnTerminalStatus(s)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    // 判斷某退換貨明細狀態是否為「終態」（流程已結束，不再阻擋再次申請）
+    private boolean isReturnTerminalStatus(String status) {
+        return R_REFUNDED.equals(status)
+                || R_EXCHANGED.equals(status)
+                || R_COMPLETED.equals(status)
+                || R_CANCELLED.equals(status)
+                || R_REJECTED.equals(status);
+    }
+
+    // 此筆訂單目前的退換貨狀態（供前端顯示）：
+    // 有進行中申請 → PROCESSING；已完成申請（曾走到終態）→ COMPLETED；無 → null
+    private String currentReturnStatus(List<ReturnRequest> requests) {
+        if (requests == null || requests.isEmpty()) {
+            return null;
+        }
+        boolean hasCompleted = false;
+        for (ReturnRequest req : requests) {
+            if (req.getReturnItem() == null) {
+                continue;
+            }
+            String s = req.getReturnItem().getStatus();
+            if (isReturnTerminalStatus(s)) {
+                hasCompleted = true;
+            } else {
+                return "PROCESSING";
+            }
+        }
+        return hasCompleted ? "COMPLETED" : null;
     }
 
     // 廠商可設定的狀態（依退/換貨）

@@ -4,7 +4,9 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.springframework.data.jpa.domain.Specification;
@@ -346,11 +348,24 @@ public class ProductServiceImpl implements ProductService {
             oldProduct.setStatus(status);
         }
 
-        // 重設全部規格：清掉舊的再建新的（orphanRemoval 會刪除被移除的規格）
-        oldProduct.getVariants().clear();
-        for (ProductVariantRequest v : request.getVariants()) {
-            ProductVariant variant = toVariantEntity(oldProduct, v);
-            oldProduct.getVariants().add(variant);
+        // 規格同步：以 (color, size) 為 key 做 in-place 更新
+        // 避免 clear() + orphanRemoval 刪除被 CartItem/OrderItem 引用的規格導致 FK 衝突
+        Map<String, ProductVariant> existingMap = new java.util.LinkedHashMap<>();
+        for (ProductVariant v : oldProduct.getVariants()) {
+            existingMap.put(v.getColor() + "|" + v.getSize(), v);
+        }
+        for (ProductVariantRequest vr : request.getVariants()) {
+            String key = vr.getColor() + "|" + vr.getSize();
+            ProductVariant existing = existingMap.get(key);
+            if (existing != null) {
+                existing.setStock(vr.getStock());
+                existing.setImagesJpg(vr.getImagesJpg());
+                existing.setOutfitPng(vr.getOutfitPng());
+                existing.setStatus(vr.getStatus() == null || vr.getStatus().isBlank()
+                        ? "ACTIVE" : vr.getStatus());
+            } else {
+                oldProduct.getVariants().add(toVariantEntity(oldProduct, vr));
+            }
         }
 
         // 更新資料庫
@@ -560,6 +575,19 @@ public class ProductServiceImpl implements ProductService {
 
         // Entity 轉成 DTO 回傳
         return toResponse(savedProduct);
+    }
+
+    // 下架商品改為待上架
+    @Override
+    @Transactional
+    public ProductResponse setToDraftProduct(Long vendorId, Long productId) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new RuntimeException("找不到商品 ID：" + productId));
+        if (!product.getVendor().getVendorId().equals(vendorId)) {
+            throw new RuntimeException("你沒有權限修改其他廠商的商品");
+        }
+        product.setStatus("DRAFT");
+        return toResponse(productRepository.save(product));
     }
 
     // 批次下架

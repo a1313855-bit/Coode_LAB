@@ -7,7 +7,7 @@ defineProps({
   look: { type: Object, required: true },
   selectedProduct: { type: Object, default: null },
 })
-const emit = defineEmits(['remove-slot', 'choose-slot', 'view-product', 'preview', 'change-variant', 'save'])
+const emit = defineEmits(['remove-slot', 'choose-slot', 'view-product', 'preview', 'change-variant', 'save', 'add-to-cart'])
 
 // 縮圖讀取失敗時改用佔位，避免 broken image
 const broken = reactive({})
@@ -124,6 +124,13 @@ function selectVariant(product, variant) {
     </div>
 
     <button class="btn btn-save" @click="emit('save')">儲存穿搭</button>
+    <button
+      v-if="SLOTS.some((s) => look[s])"
+      class="btn btn-cart"
+      @click="emit('add-to-cart')"
+    >
+      加入購物車
+    </button>
   </section>
 </template>
 
@@ -348,5 +355,20 @@ function selectVariant(product, variant) {
   background: var(--ink-2);
   border-color: var(--ink-2);
   color: var(--paper);
+}
+.btn-cart {
+  margin-top: 4px;
+  background: #fff;
+  border: 1px solid var(--ink);
+  color: var(--ink);
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  padding: 10px;
+  border-radius: 4px;
+  width: 100%;
+}
+.btn-cart:hover {
+  background: #f6f6f6;
 }
 </style>

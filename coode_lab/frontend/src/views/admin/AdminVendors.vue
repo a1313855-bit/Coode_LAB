@@ -14,7 +14,7 @@ const status = ref('')
 
 const showForm = ref(false)
 const editing = ref(null)
-const form = ref({ vendorName: '', email: '', password: '' })
+const form = ref({ vendorName: '', email: '', password: '', newPassword: '' })
 
 const showContract = ref(false)
 const contractVendor = ref(null)
@@ -55,12 +55,12 @@ function clearKeyword() {
 
 function openCreate() {
   editing.value = null
-  form.value = { vendorName: '', email: '', password: '' }
+  form.value = { vendorName: '', email: '', password: '', newPassword: '' }
   showForm.value = true
 }
 function openEdit(v) {
   editing.value = v
-  form.value = { vendorName: v.vendorName, email: v.email, password: '' }
+  form.value = { vendorName: v.vendorName, email: v.email, password: '', newPassword: '' }
   showForm.value = true
 }
 async function save() {
@@ -71,6 +71,11 @@ async function save() {
         vendorName: form.value.vendorName,
         email: form.value.email,
       })
+      if (form.value.newPassword) {
+        await vendorApi.resetPassword(editing.value.vendorId, {
+          newPassword: form.value.newPassword,
+        })
+      }
     } else {
       await vendorApi.create(form.value)
     }
@@ -216,7 +221,8 @@ onMounted(load)
         <h3>{{ editing ? '編輯廠商' : '新增廠商' }}</h3>
         <div class="form-field"><label>廠商名稱</label><input v-model="form.vendorName" /></div>
         <div class="form-field"><label>Email</label><input v-model="form.email" /></div>
-        <div v-if="!editing" class="form-field"><label>密碼</label><input v-model="form.password" /></div>
+        <div v-if="!editing" class="form-field"><label>密碼</label><input v-model="form.password" type="password" /></div>
+        <div v-if="editing" class="form-field"><label>重設密碼（留空不修改）</label><input v-model="form.newPassword" type="password" placeholder="輸入新密碼" /></div>
         <div class="flex">
           <button class="btn btn-primary" @click="save">儲存</button>
           <button class="btn" @click="showForm = false">取消</button>

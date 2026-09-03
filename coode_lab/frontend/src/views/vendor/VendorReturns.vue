@@ -181,6 +181,8 @@ function getNextActionLabel(status) {
 }
 
 const allStatusOptions = Object.keys(retStatusLabel)
+
+onMounted(loadAll)
 </script>
 
 <template>

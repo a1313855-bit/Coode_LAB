@@ -22,6 +22,7 @@ public class VendorDashboardDTO {
     private Kpi returnQuantity;
 
     private List<DailyPoint> salesTrend;
+    private List<DailyPoint> hourlyTrend;
     private List<StatusCount> salesStatus;
 
     private List<ProductRankItem> topProductsByQuantity;

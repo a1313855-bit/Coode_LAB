@@ -17,6 +17,7 @@ import {
   chosenVariantOf,
 } from '../../api/outfitService'
 import { currentUserId } from '../../composables/auth'
+import { cartApi, cartItemApi } from '../../api'
 import ProductBrowser from '../../components/outfit/ProductBrowser.vue'
 import TryOnCanvas from '../../components/outfit/TryOnCanvas.vue'
 import SelectedItemsPanel from '../../components/outfit/SelectedItemsPanel.vue'
@@ -180,6 +181,38 @@ function resetZoom() {
 // 查看商品頁
 function openProductDetail(product) {
   router.push(`/store/product/${product.productId}`)
+}
+
+// 加入購物車：把目前已選的所有商品各1件加入購物車
+async function addChosenToCart() {
+  const items = chosenItems()
+    .filter((slot) => look[slot])
+    .map((slot) => look[slot])
+  if (!items.length) {
+    errorMsg.value = '請至少選擇一件商品'
+    return
+  }
+  try {
+    const cart = await cartApi.findByUserId(userId.value)
+    if (!cart || !cart.cartId) {
+      errorMsg.value = '找不到購物車，請先登入'
+      return
+    }
+    let added = 0
+    for (const p of items) {
+      const v = chosenVariantOf(p)
+      if (!v || !v.variantId) continue
+      try {
+        await cartItemApi.add({ cartId: cart.cartId, variantId: v.variantId, productQuantity: 1 })
+        added++
+      } catch (e) {
+        // 同規格可能已在購物車（後端會更新數量），不中斷
+      }
+    }
+    showToast(`已將 ${added} 件商品加入購物車`)
+  } catch (e) {
+    errorMsg.value = '加入購物車失敗：' + e.message
+  }
 }
 
 // 右側「選擇商品」：切換左側分類並捲回商品區
@@ -391,6 +424,7 @@ onBeforeUnmount(() => {
             @preview="(p) => (selectedProduct = p)"
             @change-variant="changeVariant"
             @save="openSaveModal"
+            @add-to-cart="addChosenToCart"
           />
         </aside>
       </div>

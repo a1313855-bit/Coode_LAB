@@ -31,6 +31,8 @@ public interface ProductService {
     // 上架按鈕（DRAFT → ACTIVE 或 INACTIVE → ACTIVE）
     ProductResponse activateProduct(Long vendorId, Long productId);
 
+    ProductResponse setToDraftProduct(Long vendorId, Long productId);
+
     // 批次上架
     List<ProductResponse> batchActivateProducts(Long vendorId, List<Long> productIds);
 

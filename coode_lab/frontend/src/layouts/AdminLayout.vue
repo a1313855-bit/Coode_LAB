@@ -20,6 +20,7 @@ function logout() {
       <RouterLink to="/admin/admins">管理員</RouterLink>
       <RouterLink to="/admin/products">商品管理</RouterLink>
       <RouterLink to="/admin/orders">訂單管理</RouterLink>
+      <RouterLink to="/admin/returns">退換貨管理</RouterLink>
       <div class="side-label">帳號</div>
       <button class="logout-btn" @click="logout">← 登出</button>
     </aside>

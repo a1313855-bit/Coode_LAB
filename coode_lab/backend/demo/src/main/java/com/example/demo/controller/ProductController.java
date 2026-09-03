@@ -234,6 +234,12 @@ public class ProductController {
         return productService.deactivateProduct(vendorId, productId);
     }
 
+    // 廠商將下架商品改為待上架
+    @PatchMapping("/vendor/{vendorId}/{productId}/draft")
+    public ProductResponse setToDraftProduct(@PathVariable Long vendorId, @PathVariable Long productId) {
+        return productService.setToDraftProduct(vendorId, productId);
+    }
+
     //廠商批次下架
     @PatchMapping("/vendor/{vendorId}/batch-deactivate")
     public List<ProductResponse> batchDeactivateProducts(@PathVariable Long vendorId,@Valid @RequestBody BatchProductRequest request){

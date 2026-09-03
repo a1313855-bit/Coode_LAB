@@ -125,6 +125,8 @@ export const productApi = {
     patch(`/coode_lab/products/vendor/${vendorId}/${productId}/activate`),
   deactivate: (vendorId, productId) =>
     patch(`/coode_lab/products/vendor/${vendorId}/${productId}/deactivate`),
+  setToDraft: (vendorId, productId) =>
+    patch(`/coode_lab/products/vendor/${vendorId}/${productId}/draft`),
   batchActivate: (vendorId, productIds) =>
     patch(`/coode_lab/products/vendor/${vendorId}/batch-activate`, { productIds }),
   batchDeactivate: (vendorId, productIds) =>
@@ -144,6 +146,8 @@ export const vendorApi = {
   update: (vendorId, body) => put(`/coode_lab/vendors/${vendorId}`, body),
   changePassword: (vendorId, body) =>
     patch(`/coode_lab/vendors/${vendorId}/password`, body),
+  resetPassword: (vendorId, body) =>
+    patch(`/coode_lab/vendors/${vendorId}/reset-password`, body),
   activate: (vendorId, body) => put(`/coode_lab/vendors/${vendorId}/activate`, body),
   suspend: (vendorId) => put(`/coode_lab/vendors/${vendorId}/suspend`),
   reactivate: (vendorId) => put(`/coode_lab/vendors/${vendorId}/reactivate`),

@@ -16,4 +16,7 @@ public interface ReturnRequestRepository extends JpaRepository<ReturnRequest, Lo
 
     // 查詢某廠商需要處理的申請
     List<ReturnRequest> findByVendor_VendorId(Long vendorId);
+
+    // 查詢某筆訂單的所有申請
+    List<ReturnRequest> findByOrder_OrderId(Long orderId);
 }

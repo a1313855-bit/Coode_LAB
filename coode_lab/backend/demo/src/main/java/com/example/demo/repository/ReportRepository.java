@@ -56,6 +56,25 @@ public interface ReportRepository extends JpaRepository<OrderItem, Long> {
                                     @Param("end") LocalDateTime end);
 
     // ╔══════════════════════════════════════╗
+    // ║ 銷售趨勢（逐小時金額，供日視圖）    ║
+    // ╚══════════════════════════════════════╝
+
+    @Query(value = """
+            select hour(o.createdAt) as hr,
+                   coalesce(sum(oi.priceTotal), 0) as amount
+            from OrderItem oi
+            join oi.order o
+            where oi.vendor.vendorId = :vendorId
+              and o.createdAt >= :start
+              and o.createdAt < :end
+              and oi.status <> 'CANCELLED'
+            group by hour(o.createdAt)
+            """)
+    List<HourlySales> findHourlySales(@Param("vendorId") Long vendorId,
+                                      @Param("start") LocalDateTime start,
+                                      @Param("end") LocalDateTime end);
+
+    // ╔══════════════════════════════════════╗
     // ║ 銷售狀態（原始狀態分組）            ║
     // ╚══════════════════════════════════════╝
 
@@ -100,7 +119,7 @@ public interface ReportRepository extends JpaRepository<OrderItem, Long> {
     @Query(value = """
             select ri.status as status,
                    count(ri) as count,
-                   coalesce(sum(ri.approvalQuantity), 0) as approvalQuantity
+                   coalesce(sum(ri.approvalQuantity), 0) as returnedQuantity
             from ReturnItem ri
             join ri.returnRequest rr
             where rr.vendor.vendorId = :vendorId
@@ -131,6 +150,12 @@ public interface ReportRepository extends JpaRepository<OrderItem, Long> {
         Integer getMo();
 
         Integer getDy();
+
+        BigDecimal getAmount();
+    }
+
+    interface HourlySales {
+        Integer getHr();
 
         BigDecimal getAmount();
     }

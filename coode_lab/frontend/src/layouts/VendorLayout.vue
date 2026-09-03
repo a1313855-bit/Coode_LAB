@@ -1,16 +1,12 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { computed } from 'vue'
 import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
-import { useAuth, clearAuth, currentVendorId } from '../composables/auth'
-import { vendorApi } from '../api'
+import { clearAuth } from '../composables/auth'
 
 const route = useRoute()
 const router = useRouter()
-const auth = useAuth()
 
 const pageTitle = computed(() => route.meta.title || '')
-
-const vendorName = ref(auth.value?.role === 'vendor' ? auth.value.name : '')
 
 const nav = [
   { to: '/vendor/dashboard', label: '首頁總覽' },
@@ -26,25 +22,12 @@ function logout() {
   clearAuth()
   router.push('/login')
 }
-
-onMounted(async () => {
-  try {
-    const data = await vendorApi.byId(currentVendorId())
-    if (data && data.vendorName) vendorName.value = data.vendorName
-  } catch (e) {
-    /* keep auth name */
-  }
-})
 </script>
 
 <template>
   <div class="vendor-shell">
     <header class="topbar">
       <div class="page-title">{{ pageTitle }}</div>
-      <div class="topbar-right">
-        <span class="vendor-name">{{ vendorName }}</span>
-        <button class="btn btn-sm" @click="logout">登出</button>
-      </div>
     </header>
 
     <div class="vendor-body">
@@ -62,10 +45,8 @@ onMounted(async () => {
           >
             {{ item.label }}
           </RouterLink>
+          <button class="logout-btn" @click="logout">← 登出</button>
         </nav>
-        <div class="side-foot">
-          <RouterLink to="/store" class="nav-link back-link">← 回到商城</RouterLink>
-        </div>
       </aside>
 
       <main class="admin-main">
@@ -95,15 +76,6 @@ onMounted(async () => {
   font-size: 18px;
   font-weight: 800;
   color: var(--c-text);
-}
-.topbar-right {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-.vendor-name {
-  font-size: 14px;
-  color: var(--c-text-light);
 }
 .vendor-body {
   flex: 1;
@@ -163,8 +135,23 @@ onMounted(async () => {
   padding-top: 16px;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
-.back-link {
+.logout-btn {
+  background: none;
+  border: none;
   color: #8a94a6;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  padding: 10px 12px;
+  display: block;
+  width: 100%;
+  text-decoration: none;
+  border-radius: 8px;
+  transition: background 0.15s, color 0.15s;
+}
+.logout-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
 }
 .admin-main {
   flex: 1;

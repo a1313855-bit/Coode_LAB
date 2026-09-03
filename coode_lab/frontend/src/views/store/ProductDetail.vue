@@ -41,6 +41,26 @@ const selectedVariant = computed(() =>
   (sizes.value || []).find((v) => v.size === size.value && v.status === 'ACTIVE'),
 )
 
+// 用於主圖顯示的規格（不可刪除）。
+// 與試穿使用同一個「所選顏色」的 Variant，避免選黑色卻顯示藍色圖片。
+// 優先序：
+//   1) 已選 color + size → 完全符合的 ACTIVE Variant
+//   2) 只選 color        → 該顏色第一個 ACTIVE Variant
+//   3) 都沒選            → 第一個 ACTIVE Variant
+const displayVariant = computed(() => {
+  if (!product.value) return null
+  const active = (product.value.variants || []).filter((v) => v.status === 'ACTIVE')
+  if (color.value && size.value) {
+    const exact = active.find((v) => v.color === color.value && v.size === size.value)
+    if (exact) return exact
+  }
+  if (color.value) {
+    const byColor = active.find((v) => v.color === color.value)
+    if (byColor) return byColor
+  }
+  return active[0] || null
+})
+
 function selectColor(c) {
   // 換顏色時清空已選尺寸
   size.value = ''
@@ -100,7 +120,8 @@ function canAdd() {
 }
 
 function imgSrc() {
-  return productImageUrl(product.value) || productPlaceholder
+  // 主圖隨所選顏色切換：displayVariant.imagesJpg → 商品層 imagesJpg → placeholder
+  return displayVariant.value?.imagesJpg || productImageUrl(product.value) || productPlaceholder
 }
 
 onMounted(load)

@@ -28,4 +28,7 @@ public class CreateReturnRequestRequest {
 
     // 退貨商品照片（可選）
     private String picture;
+
+    // 退換貨原因
+    private String reason;
 }

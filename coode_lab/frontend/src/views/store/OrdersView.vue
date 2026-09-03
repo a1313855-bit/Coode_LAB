@@ -54,7 +54,7 @@ async function toggleItems(orderId) {
 // 退換貨申請（從訂單明細發起）
 // ============================================================
 const returnModal = ref(null) // { orderId, itemId, productName, available }
-const rForm = ref({ requestType: 'RETURN', requestQuantity: 1, picture: '' })
+const rForm = ref({ requestType: 'RETURN', requestQuantity: 1, picture: '', reason: '' })
 const submitting = ref(false)
 const returnError = ref('')
 
@@ -69,7 +69,7 @@ function openReturn(orderId, it) {
     productName: product.name || '',
     available: it.productQuantity,
   }
-  rForm.value = { requestType: 'RETURN', requestQuantity: 1, picture: '' }
+  rForm.value = { requestType: 'RETURN', requestQuantity: 1, picture: '', reason: '' }
   returnError.value = ''
 }
 
@@ -127,6 +127,7 @@ async function submitReturn() {
       orderItemId: returnModal.value.itemId,
       requestQuantity: rForm.value.requestQuantity,
       picture: rForm.value.picture || '',
+      reason: rForm.value.reason || '',
     })
     const orderId = returnModal.value.orderId
     closeReturn()
@@ -218,7 +219,17 @@ onMounted(load)
             <button v-if="it.status === 'SHIPPED'" class="btn btn-sm btn-primary" @click="confirmReceived(it)">
               確認收貨
             </button>
-            <button class="btn btn-sm" @click="openReturn(o.orderId, it)">
+            <span v-else-if="it.returnStatus === 'PROCESSING'" class="muted small">
+              退換貨處理中
+            </span>
+            <span v-else-if="it.returnStatus === 'COMPLETED'" class="muted small">
+              退換貨已完成
+            </span>
+            <button
+              v-else-if="it.canReturnOrExchange"
+              class="btn btn-sm"
+              @click="openReturn(o.orderId, it)"
+            >
               退換貨
             </button>
           </div>
@@ -264,6 +275,16 @@ onMounted(load)
             class="upload-preview"
             alt="退貨照片"
           />
+        </div>
+
+        <div class="form-field">
+          <label>退換貨原因（選填）</label>
+          <textarea
+            v-model="rForm.reason"
+            rows="3"
+            class="reason-textarea"
+            placeholder="例如：非人為因素衣物破損、尺寸不合、收到瑕疵品..."
+          ></textarea>
         </div>
 
         <div v-if="returnError" class="alert alert-error">{{ returnError }}</div>
@@ -325,6 +346,16 @@ onMounted(load)
   object-fit: cover;
   border-radius: 8px;
   border: 1px solid var(--c-border);
+}
+.reason-textarea {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--c-border);
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 72px;
 }
 .modal-mask {
   position: fixed;

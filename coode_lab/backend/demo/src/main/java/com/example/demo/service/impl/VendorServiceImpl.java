@@ -12,6 +12,7 @@ import com.example.demo.dto.VendorContractRequest;
 import com.example.demo.dto.VendorLoginRequest;
 import com.example.demo.dto.VendorPasswordRequest;
 import com.example.demo.dto.VendorRequest;
+import com.example.demo.dto.VendorResetPasswordRequest;
 import com.example.demo.dto.VendorResponse;
 import com.example.demo.dto.VendorUpdateRequest;
 import com.example.demo.exception.VendorSpecification;
@@ -288,6 +289,21 @@ public class VendorServiceImpl implements VendorService {
         }
         if (passwordEncoder.matches(request.getNewPassword(), vendor.getPassword())) {
             throw new RuntimeException("新密碼不可與目前密碼相同");
+        }
+
+        vendor.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        Vendor saved = vendorRepository.save(vendor);
+        return toResponse(saved);
+    }
+
+    // 管理員重設廠商密碼
+    @Override
+    public VendorResponse resetPassword(Long vendorId, VendorResetPasswordRequest request) {
+        Vendor vendor = vendorRepository.findById(vendorId)
+                .orElseThrow(() -> new RuntimeException("找不到廠商 ID:" + vendorId));
+
+        if (request.getNewPassword() == null || request.getNewPassword().isBlank()) {
+            throw new RuntimeException("新密碼不能為空");
         }
 
         vendor.setPassword(passwordEncoder.encode(request.getNewPassword()));

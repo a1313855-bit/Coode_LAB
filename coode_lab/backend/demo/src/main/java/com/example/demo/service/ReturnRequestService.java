@@ -79,4 +79,14 @@ public interface ReturnRequestService {
 
     // 管理員手動修改狀態（人工修正）
     ReturnItemDTO adminUpdateStatus(Long returnItemId, String status);
+
+    // ╔══════════════════════════════════╗
+    // ║ 訂單退換貨資格（供訂單頁面使用）║
+    // ╚══════════════════════════════════╝
+
+    // 此訂單是否已有「進行中」的退換貨申請（未走到終態）
+    boolean hasInProgressReturnForOrder(Long orderId);
+
+    // 此訂單目前的退換貨狀態：PROCESSING（進行中）/ COMPLETED（已完成）/ null（無申請）
+    String returnStatusForOrder(Long orderId);
 }
