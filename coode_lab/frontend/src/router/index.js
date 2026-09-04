@@ -10,6 +10,8 @@ import OrdersView from '../views/store/OrdersView.vue'
 import ReturnsView from '../views/store/ReturnsView.vue'
 import OutfitsView from '../views/store/OutfitsView.vue'
 import AccountView from '../views/store/AccountView.vue'
+import SizeChart from '../views/store/SizeChart.vue'
+import ReturnPolicy from '../views/store/ReturnPolicy.vue'
 import LoginView from '../views/LoginView.vue'
 import RegisterView from '../views/RegisterView.vue'
 import ForgetPasswordView from '../views/ForgetPasswordView.vue'
@@ -56,6 +58,8 @@ const router = createRouter({
         { path: 'login', name: 'login', component: LoginView },
         { path: 'register', name: 'register', component: RegisterView },
         { path: 'forgot-password', name: 'forgot-password', component: ForgetPasswordView },
+        { path: 'store/size-chart', name: 'size-chart', component: SizeChart },
+        { path: 'store/return-policy', name: 'return-policy', component: ReturnPolicy },
       ],
     },
     // ═══ 廠商後台（需 vendor 登入）═══

@@ -145,6 +145,7 @@ onMounted(loadAll)
             <th>訂單項 ID</th>
             <th>商品</th>
             <th>訂單編號</th>
+            <th>收件人</th>
             <th>數量</th>
             <th>金額</th>
             <th>狀態</th>
@@ -160,6 +161,11 @@ onMounted(loadAll)
               </div>
             </td>
             <td>#{{ it.order.orderId }}</td>
+            <td>
+              <div>{{ (it.order && it.order.recipientName) || '-' }}</div>
+              <div style="color: var(--vr-mut); font-size: 12px">{{ (it.order && it.order.recipientPhone) || '-' }}</div>
+              <div style="color: var(--vr-mut); font-size: 12px; max-width: 180px">{{ (it.order && it.order.recipientAddress) || '-' }}</div>
+            </td>
             <td>{{ it.productQuantity }}</td>
             <td>{{ formatMoney(it.priceTotal) }}</td>
             <td>

@@ -37,7 +37,7 @@ function scrollToProducts() {
 }
 
 function pickCategory(type) {
-  router.push({ path: '/store/products', query: { category: type } })
+  router.push({ path: '/store/products', query: { categoryType: type } })
 }
 
 // 新品上架：依 productId 倒序（較新商品排前面）

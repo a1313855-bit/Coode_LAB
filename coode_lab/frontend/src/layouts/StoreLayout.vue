@@ -355,9 +355,8 @@ watch(
         </div>
         <div class="footer-col">
           <h4>購物指南</h4>
-          <button class="footer-link" @click="go('/store')">配送與運費</button>
-          <button class="footer-link" @click="go('/store')">尺寸說明</button>
-          <button class="footer-link" @click="go('/returns')">退換貨政策</button>
+          <button class="footer-link" @click="go('/store/size-chart')">尺寸說明</button>
+          <button class="footer-link" @click="go('/store/return-policy')">退換貨政策</button>
         </div>
         <div class="footer-col">
           <h4>會員服務</h4>
@@ -368,9 +367,9 @@ watch(
         </div>
         <div class="footer-col">
           <h4>聯絡我們</h4>
-          <p class="footer-line">service@coodelab.com</p>
-          <p class="footer-line">02-2345-6789</p>
-          <p class="footer-line">台北市信義區松高路 1 號 9 樓</p>
+          <p class="footer-line">asleep4allnight@coode.com</p>
+          <p class="footer-line">02-1111-2222</p>
+          <p class="footer-line">台北市台北區台北路2號B18樓</p>
         </div>
       </div>
       <div class="footer-bottom">
