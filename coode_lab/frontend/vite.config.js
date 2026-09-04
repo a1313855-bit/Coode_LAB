@@ -24,6 +24,7 @@ export default defineConfig({
       '/orders': 'http://localhost:8080',
       '/reports': 'http://localhost:8080',
       '/return-requests': 'http://localhost:8080',
+      '/images/products': 'http://localhost:8080',
     },
   },
 })

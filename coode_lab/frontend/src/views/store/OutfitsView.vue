@@ -16,7 +16,7 @@ import {
   defaultVariant,
   chosenVariantOf,
 } from '../../api/outfitService'
-import { currentUserId } from '../../composables/auth'
+import { currentUserId, isLoggedIn } from '../../composables/auth'
 import { cartApi, cartItemApi } from '../../api'
 import ProductBrowser from '../../components/outfit/ProductBrowser.vue'
 import TryOnCanvas from '../../components/outfit/TryOnCanvas.vue'
@@ -190,6 +190,11 @@ async function addChosenToCart() {
     .map((slot) => look[slot])
   if (!items.length) {
     errorMsg.value = '請至少選擇一件商品'
+    return
+  }
+  // 未登入：導去登入頁
+  if (!isLoggedIn.value) {
+    router.push({ path: '/login', query: { redirect: '/outfits' } })
     return
   }
   try {

@@ -3,7 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { productApi, cartItemApi, cartApi } from '../../api'
 import { categoryLabel, formatMoney, productImageUrl, statusLabel } from '../../utils/format'
-import { currentUserId } from '../../composables/auth'
+import { currentUserId, isLoggedIn } from '../../composables/auth'
 import productPlaceholder from '../../assets/coode-fashion/product-placeholder.svg'
 
 const route = useRoute()
@@ -91,6 +91,11 @@ async function addToCart() {
     error.value = '請選擇在庫且可販售的規格，數量不可超過庫存'
     return
   }
+  // 未登入：導去登入頁（登入後自動回此頁）
+  if (!isLoggedIn.value) {
+    router.push({ path: '/login', query: { redirect: route.fullPath } })
+    return
+  }
   try {
     // 取得登入會員的購物車（未登入時用測試帳號）
     const cart = await cartApi.findByUserId(currentUserId())
@@ -121,7 +126,13 @@ function canAdd() {
 
 function imgSrc() {
   // 主圖隨所選顏色切換：displayVariant.imagesJpg → 商品層 imagesJpg → placeholder
-  return displayVariant.value?.imagesJpg || productImageUrl(product.value) || productPlaceholder
+  // 規格圖若只是舊檔名（非合法 URL）則退回商品層的真實圖片
+  const vImg = displayVariant.value?.imagesJpg
+  if (vImg) {
+    const t = String(vImg).trim()
+    if (/^(data:|https?:|\/)/i.test(t)) return t
+  }
+  return productImageUrl(product.value) || productPlaceholder
 }
 
 onMounted(load)

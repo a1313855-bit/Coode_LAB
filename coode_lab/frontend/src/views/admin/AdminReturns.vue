@@ -96,19 +96,22 @@ onMounted(load)
 </script>
 
 <template>
-  <div class="admin-content">
-    <div class="page-header">
-      <div>
-        <h1>退換貨管理</h1>
-        <p class="subtitle">管理全平台所有會員的退換貨申請</p>
+  <div class="vendor-report">
+    <div class="vr-banner">
+      <div class="vr-banner-inner">
+        <div>
+          <div class="vr-eyebrow">ADMIN</div>
+          <h1 class="vr-title">退換貨管理</h1>
+          <p class="vr-subtitle">管理全平台所有會員的退換貨申請</p>
+        </div>
       </div>
     </div>
 
-    <div class="tabs" role="tablist">
+    <div class="vr-tabs" role="tablist">
       <button
         v-for="t in tabs"
         :key="t.key"
-        class="tab"
+        class="vr-tab"
         :class="{ active: activeTab === t.key }"
         @click="activeTab = t.key; page = 0"
       >
@@ -116,56 +119,54 @@ onMounted(load)
       </button>
     </div>
 
-    <div v-if="error" class="alert alert-error">{{ error }}</div>
-    <div v-if="loading" class="empty">載入中...</div>
-    <div v-else-if="paged.length === 0" class="empty">暫無退換貨申請</div>
+    <div v-if="error" class="vr-alert">{{ error }}</div>
+    <div v-if="loading" class="vr-empty">載入中...</div>
+    <div v-else-if="paged.length === 0" class="vr-empty">暫無退換貨申請</div>
 
-    <div v-else class="card">
-      <div class="table-wrap">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>申請編號</th>
-              <th>訂單</th>
-              <th>會員</th>
-              <th>所屬廠商</th>
-              <th>類型</th>
-              <th>申請商品</th>
-              <th>規格</th>
-              <th>數量</th>
-              <th>原因</th>
-              <th>狀態</th>
-              <th>申請時間</th>
-              <th>操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="r in paged" :key="r.returnRequestsId">
-              <td>#{{ r.returnRequestsId }}</td>
-              <td>#{{ r.order ? r.order.orderId : '-' }}</td>
-              <td>{{ r.user ? r.user.name : '-' }}</td>
-              <td>{{ r.vendor ? r.vendor.vendorName : '-' }}</td>
-              <td>{{ statusLabel(r.requestType) }}</td>
-              <td>{{ r.returnItem ? r.returnItem.productName : '-' }}</td>
-              <td>
-                <span v-if="r.returnItem">{{ r.returnItem.color }} / {{ r.returnItem.size }}</span>
-                <span v-else>-</span>
-              </td>
-              <td>{{ r.returnRequestQuantity }}</td>
-              <td class="small">{{ r.returnItem && r.returnItem.reason ? r.returnItem.reason : '-' }}</td>
-              <td>
-                <span :class="['badge', statusBadgeClass(r.returnItem ? r.returnItem.status : r.status)]">
-                  {{ statusLocal[r.returnItem ? r.returnItem.status : r.status] || statusLabel(r.returnItem ? r.returnItem.status : r.status) }}
-                </span>
-              </td>
-              <td>{{ formatDate(r.createdAt) }}</td>
-              <td>
-                <button class="btn btn-sm" @click="openDetail(r)">詳情</button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+    <div v-else class="vr-card">
+      <table class="vr-table">
+        <thead>
+          <tr>
+            <th>申請編號</th>
+            <th>訂單</th>
+            <th>會員</th>
+            <th>所屬廠商</th>
+            <th>類型</th>
+            <th>申請商品</th>
+            <th>規格</th>
+            <th>數量</th>
+            <th>原因</th>
+            <th>狀態</th>
+            <th>申請時間</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="r in paged" :key="r.returnRequestsId">
+            <td>#{{ r.returnRequestsId }}</td>
+            <td>#{{ r.order ? r.order.orderId : '-' }}</td>
+            <td>{{ r.user ? r.user.name : '-' }}</td>
+            <td>{{ r.vendor ? r.vendor.vendorName : '-' }}</td>
+            <td>{{ statusLabel(r.requestType) }}</td>
+            <td>{{ r.returnItem ? r.returnItem.productName : '-' }}</td>
+            <td>
+              <span v-if="r.returnItem">{{ r.returnItem.color }} / {{ r.returnItem.size }}</span>
+              <span v-else>-</span>
+            </td>
+            <td>{{ r.returnRequestQuantity }}</td>
+            <td class="small">{{ r.returnItem && r.returnItem.reason ? r.returnItem.reason : '-' }}</td>
+            <td>
+              <span :class="['vr-badge', statusBadgeClass(r.returnItem ? r.returnItem.status : r.status)]">
+                {{ statusLocal[r.returnItem ? r.returnItem.status : r.status] || statusLabel(r.returnItem ? r.returnItem.status : r.status) }}
+              </span>
+            </td>
+            <td>{{ formatDate(r.createdAt) }}</td>
+            <td>
+              <button class="vr-btn vr-btn-sm vr-btn-outline" @click="openDetail(r)">詳情</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
 
     <AppPagination
@@ -182,39 +183,39 @@ onMounted(load)
     />
 
     <!-- 詳情 Modal -->
-    <div v-if="showModal && selectedReturn" class="modal-mask" @click.self="showModal = false">
-      <div class="modal">
+    <div v-if="showModal && selectedReturn" class="vr-modal-mask" @click.self="showModal = false">
+      <div class="vr-modal">
         <h3>退換貨詳情 #{{ selectedReturn.returnRequestsId }}</h3>
-        <div class="detail-grid">
-          <div class="detail-row"><span class="label">訂單編號</span><span>#{{ selectedReturn.order ? selectedReturn.order.orderId : '-' }}</span></div>
-          <div class="detail-row"><span class="label">會員</span><span>{{ selectedReturn.user ? selectedReturn.user.name : '-' }}</span></div>
-          <div class="detail-row"><span class="label">所屬廠商</span><span>{{ selectedReturn.vendor ? selectedReturn.vendor.vendorName : '-' }}</span></div>
-          <div class="detail-row"><span class="label">類型</span><span>{{ statusLabel(selectedReturn.requestType) }}</span></div>
-          <div class="detail-row"><span class="label">申請商品</span><span>{{ selectedReturn.returnItem ? selectedReturn.returnItem.productName : '-' }}</span></div>
-          <div class="detail-row"><span class="label">規格</span><span v-if="selectedReturn.returnItem">{{ selectedReturn.returnItem.color }} / {{ selectedReturn.returnItem.size }}</span><span v-else>-</span></div>
-          <div class="detail-row"><span class="label">數量</span><span>{{ selectedReturn.returnRequestQuantity }}</span></div>
-          <div class="detail-row"><span class="label">原因</span><span>{{ selectedReturn.returnItem && selectedReturn.returnItem.reason ? selectedReturn.returnItem.reason : '-' }}</span></div>
-          <div class="detail-row"><span class="label">描述</span><span>{{ selectedReturn.returnItem && selectedReturn.returnItem.description ? selectedReturn.returnItem.description : '-' }}</span></div>
-          <div class="detail-row">
-            <span class="label">照片</span>
+        <div class="vr-info-grid">
+          <div class="vr-info-row"><span class="vr-label">訂單編號</span><span class="vr-val">#{{ selectedReturn.order ? selectedReturn.order.orderId : '-' }}</span></div>
+          <div class="vr-info-row"><span class="vr-label">會員</span><span class="vr-val">{{ selectedReturn.user ? selectedReturn.user.name : '-' }}</span></div>
+          <div class="vr-info-row"><span class="vr-label">所屬廠商</span><span class="vr-val">{{ selectedReturn.vendor ? selectedReturn.vendor.vendorName : '-' }}</span></div>
+          <div class="vr-info-row"><span class="vr-label">類型</span><span class="vr-val">{{ statusLabel(selectedReturn.requestType) }}</span></div>
+          <div class="vr-info-row"><span class="vr-label">申請商品</span><span class="vr-val">{{ selectedReturn.returnItem ? selectedReturn.returnItem.productName : '-' }}</span></div>
+          <div class="vr-info-row"><span class="vr-label">規格</span><span class="vr-val" v-if="selectedReturn.returnItem">{{ selectedReturn.returnItem.color }} / {{ selectedReturn.returnItem.size }}</span><span class="vr-val" v-else>-</span></div>
+          <div class="vr-info-row"><span class="vr-label">數量</span><span class="vr-val">{{ selectedReturn.returnRequestQuantity }}</span></div>
+          <div class="vr-info-row"><span class="vr-label">原因</span><span class="vr-val">{{ selectedReturn.returnItem && selectedReturn.returnItem.reason ? selectedReturn.returnItem.reason : '-' }}</span></div>
+          <div class="vr-info-row"><span class="vr-label">描述</span><span class="vr-val">{{ selectedReturn.returnItem && selectedReturn.returnItem.description ? selectedReturn.returnItem.description : '-' }}</span></div>
+          <div class="vr-info-row">
+            <span class="vr-label">照片</span>
             <img v-if="selectedReturn.returnItem && selectedReturn.returnItem.picture" :src="selectedReturn.returnItem.picture" class="detail-thumb" />
-            <span v-else>無</span>
+            <span v-else class="vr-val">無</span>
           </div>
-          <div class="detail-row"><span class="label">申請時間</span><span>{{ formatDate(selectedReturn.createdAt) }}</span></div>
+          <div class="vr-info-row"><span class="vr-label">申請時間</span><span class="vr-val">{{ formatDate(selectedReturn.createdAt) }}</span></div>
         </div>
 
         <div class="admin-action">
           <label>修改狀態（管理員權限）</label>
-          <div class="flex gap-8">
+          <div style="display: flex; gap: 8px">
             <select v-model="adminStatusValue">
               <option v-for="s in allStatuses" :key="s" :value="s">{{ statusLocal[s] || s }}</option>
             </select>
-            <button class="btn btn-primary" @click="applyAdminStatus">套用</button>
+            <button class="vr-btn vr-btn-primary" @click="applyAdminStatus">套用</button>
           </div>
         </div>
 
-        <div style="margin-top: 16px">
-          <button class="btn" @click="showModal = false">關閉</button>
+        <div class="vr-modal-actions">
+          <button class="vr-btn vr-btn-outline" @click="showModal = false">關閉</button>
         </div>
       </div>
     </div>
@@ -222,84 +223,19 @@ onMounted(load)
 </template>
 
 <style scoped>
-.page-header {
-  margin-bottom: 16px;
-}
-.subtitle {
-  color: var(--c-text-light);
-  font-size: 14px;
-}
-.tabs {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-bottom: 16px;
-}
-.tab {
-  padding: 9px 16px;
-  border: 1px solid var(--c-border);
-  border-radius: var(--radius);
-  background: #fff;
-  cursor: pointer;
-  font-size: 14px;
-  color: var(--c-text-light);
-}
-.tab.active {
-  border-color: transparent;
-  background: #db2777;
-  color: #fff;
-  font-weight: 700;
-}
 .small {
   font-size: 12px;
   max-width: 160px;
-}
-.modal-mask {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 100;
-}
-.modal {
-  background: #fff;
-  border-radius: var(--radius);
-  padding: 24px;
-  width: 560px;
-  max-width: 90vw;
-  max-height: 85vh;
-  overflow-y: auto;
-}
-.modal h3 {
-  margin-bottom: 16px;
-}
-.detail-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-bottom: 16px;
-}
-.detail-row {
-  display: flex;
-  gap: 12px;
-}
-.detail-row .label {
-  min-width: 80px;
-  font-weight: 600;
-  color: var(--c-text-light);
-  font-size: 13px;
 }
 .detail-thumb {
   width: 64px;
   height: 64px;
   object-fit: cover;
   border-radius: 4px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--vr-line);
 }
 .admin-action {
-  border-top: 1px solid var(--c-border);
+  border-top: 1px solid var(--vr-line);
   padding-top: 16px;
 }
 .admin-action label {
@@ -310,12 +246,9 @@ onMounted(load)
 }
 .admin-action select {
   padding: 7px 10px;
-  border: 1px solid var(--c-border);
+  border: 1px solid var(--vr-line);
   border-radius: 6px;
   font-size: 13px;
   flex: 1;
-}
-.gap-8 {
-  gap: 8px;
 }
 </style>

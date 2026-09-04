@@ -138,11 +138,7 @@ public class OrderItemController {
         } else {
             items = orderService.findItemsByVendorIdAndStatus(vendorId, query.getStatus(), page);
         }
-        if (!items.getContent().isEmpty()) {
-            return ResponseEntity.ok(items);
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+        return ResponseEntity.ok(items);
     }
 
 }

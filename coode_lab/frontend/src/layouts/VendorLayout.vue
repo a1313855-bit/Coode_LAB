@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 import { clearAuth } from '../composables/auth'
+import '../assets/dashboard-common.css'
 
 const route = useRoute()
 const router = useRouter()
@@ -25,11 +26,7 @@ function logout() {
 </script>
 
 <template>
-  <div class="vendor-shell">
-    <header class="topbar">
-      <div class="page-title">{{ pageTitle }}</div>
-    </header>
-
+  <div class="vr-app vendor-shell">
     <div class="vendor-body">
       <aside class="admin-sidebar">
         <div class="brand">
@@ -58,24 +55,10 @@ function logout() {
 
 <style scoped>
 .vendor-shell {
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
-}
-.topbar {
-  height: 56px;
-  flex: 0 0 56px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 24px;
-  background: #fff;
-  border-bottom: 1px solid var(--c-border);
-}
-.page-title {
-  font-size: 18px;
-  font-weight: 800;
-  color: var(--c-text);
+  background: linear-gradient(180deg, #faf6f0 0%, #f3ece1 480px);
 }
 .vendor-body {
   flex: 1;
@@ -85,8 +68,8 @@ function logout() {
 .admin-sidebar {
   width: 220px;
   flex: 0 0 220px;
-  background: #1f2430;
-  color: #aeb6c4;
+  background: linear-gradient(180deg, #3d2e22 0%, #2a1e15 100%);
+  color: #c9b8a5;
   display: flex;
   flex-direction: column;
   padding: 18px 12px;
@@ -95,7 +78,9 @@ function logout() {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 10px 20px;
+  padding: 6px 10px 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  margin-bottom: 14px;
 }
 .brand-mark {
   color: #fff;
@@ -104,8 +89,8 @@ function logout() {
   letter-spacing: 0.5px;
 }
 .brand-text {
-  font-size: 14px;
-  color: #cbd2df;
+  font-size: 13px;
+  color: #c9b8a5;
 }
 .side-nav {
   display: flex;
@@ -114,10 +99,10 @@ function logout() {
 }
 .nav-link {
   display: block;
-  padding: 10px 12px;
+  padding: 10px 14px;
   border-radius: 8px;
   font-size: 14px;
-  color: #aeb6c4;
+  color: #b8a898;
   text-decoration: none;
   transition: background 0.15s, color 0.15s;
 }
@@ -126,28 +111,26 @@ function logout() {
   color: #fff;
 }
 .nav-link.router-link-active {
-  background: #db2777;
+  background: rgba(185, 138, 95, 0.25);
   color: #fff;
   font-weight: 700;
-}
-.side-foot {
-  margin-top: auto;
-  padding-top: 16px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 .logout-btn {
   background: none;
   border: none;
-  color: #8a94a6;
+  color: #8a7a6c;
   text-align: left;
   font: inherit;
   cursor: pointer;
-  padding: 10px 12px;
+  padding: 10px 14px;
   display: block;
   width: 100%;
   text-decoration: none;
   border-radius: 8px;
   transition: background 0.15s, color 0.15s;
+  margin-top: auto;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 16px;
 }
 .logout-btn:hover {
   background: rgba(255, 255, 255, 0.06);
@@ -156,7 +139,6 @@ function logout() {
 .admin-main {
   flex: 1;
   padding: 24px;
-  background: #f6f7f9;
+  background: linear-gradient(180deg, #faf6f0 0%, #f3ece1 480px);
   overflow-x: auto;
-}
-</style>
+}</style>

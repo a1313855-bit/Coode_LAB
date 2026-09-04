@@ -83,7 +83,8 @@ public class ProductController {
             @RequestParam(required = false) String pattern,
             @RequestParam(required = false) BigDecimal minPrice,
             @RequestParam(required = false) BigDecimal maxPrice,
-            @RequestParam(required = false) Long vendorId) {
+            @RequestParam(required = false) Long vendorId,
+            @RequestParam(required = false) String sort) {
 
         return productService.searchProducts(
                 page,
@@ -95,7 +96,15 @@ public class ProductController {
                 pattern,
                 minPrice,
                 maxPrice,
-                vendorId);
+                vendorId,
+                sort);
+    }
+
+    // 熱銷商品：取前 N 筆
+    @GetMapping("/top-selling")
+    public List<ProductResponse> topSelling(
+            @RequestParam(defaultValue = "5") int limit) {
+        return productService.findTopSelling(limit);
     }
 
     // 管理員後台多條件搜尋商品 (固定每頁10筆,page 從 0 開始)

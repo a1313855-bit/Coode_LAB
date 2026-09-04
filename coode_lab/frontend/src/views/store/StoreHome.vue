@@ -3,42 +3,32 @@ import { ref, watch, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { productApi } from '../../api'
 import ProductCard from '../../components/ProductCard.vue'
-import AppPagination from '../../components/AppPagination.vue'
 import { categoryLabel } from '../../utils/format'
-import heroImg from '../../assets/coode-fashion/hero.svg'
-import catTop from '../../assets/coode-fashion/cat-top.svg'
-import catOuter from '../../assets/coode-fashion/cat-outer.svg'
-import catBottom from '../../assets/coode-fashion/cat-bottom.svg'
 
 const router = useRouter()
 const route = useRoute()
 
-const products = ref([])
-const page = ref(0)
-const totalPages = ref(1)
 const loading = ref(false)
 const error = ref('')
 
-const filters = ref({
-  keyword: '',
-  categoryType: '',
-  style: '',
-  color: '',
-  size: '',
-  pattern: '',
-  minPrice: '',
-  maxPrice: '',
-})
+// 新品上架（依 productId 倒序，取前 5 項）
+const newArrivals = ref([])
+// 熱銷商品（依營收，取前 5 項）
+const bestSellers = ref([])
+// 全部商品（首頁只顯示 5 項）
+const allProducts = ref([])
+const allProductsTotal = ref(0)
 
 const categories = [
-  { type: 'TOP', label: '上衣', img: catTop },
-  { type: 'OUTER', label: '外套', img: catOuter },
-  { type: 'BOTTOM', label: '下著', img: catBottom },
-  { type: 'DRESS', label: '洋裝', img: catTop },
-  { type: 'HEADWEAR', label: '帽子/頭飾', img: catOuter },
+  { type: 'TOP', label: '上衣', img: '/images/Top.png' },
+  { type: 'OUTER', label: '外套', img: '/images/coat.jpeg' },
+  { type: 'BOTTOM', label: '下著', img: '/images/Bottoms.jpeg' },
+  { type: 'DRESS', label: '洋裝', img: '/images/Dress.jpeg' },
+  { type: 'HEADWEAR', label: '帽子/頭飾', img: '/images/head.png' },
 ]
 
 const productSection = ref(null)
+const newArrivalsSection = ref(null)
 
 function scrollToProducts() {
   if (productSection.value) {
@@ -46,18 +36,46 @@ function scrollToProducts() {
   }
 }
 
+function pickCategory(type) {
+  router.push({ path: '/store/products', query: { category: type } })
+}
+
+// 新品上架：依 productId 倒序（較新商品排前面）
+async function loadNewArrivals() {
+  try {
+    const res = await productApi.filter({ page: 0, sort: 'newest' })
+    newArrivals.value = (res.content || []).slice(0, 5)
+  } catch (e) {
+    /* ignore */
+  }
+}
+
+// 熱銷商品：依營收取前 5 項
+async function loadBestSellers() {
+  try {
+    bestSellers.value = await productApi.topSelling(5)
+  } catch (e) {
+    /* ignore */
+  }
+}
+
+// 全部商品：首頁只顯示前 5 項
+// 後端 filter 每頁固定 10 筆無法只取 5，所以此處取第 1 頁前 5 筆
+async function loadAllProducts() {
+  try {
+    const res = await productApi.filter({ page: 0 })
+    allProducts.value = (res.content || []).slice(0, 5)
+    allProductsTotal.value = res.totalElements || 0
+  } catch (e) {
+    /* ignore */
+  }
+}
+
 async function load() {
   loading.value = true
   error.value = ''
   try {
-    const params = {
-      page: page.value,
-      ...filters.value,
-    }
-    const res = await productApi.filter(params)
-    products.value = res.content || []
-    page.value = res.page || 0
-    totalPages.value = res.totalPages || 1
+    await Promise.all([loadNewArrivals(), loadBestSellers(), loadAllProducts()])
   } catch (e) {
     error.value = e.message
   } finally {
@@ -65,49 +83,28 @@ async function load() {
   }
 }
 
-function changePage(p) {
-  page.value = p
-  load()
-}
-
-function applySearch() {
-  page.value = 0
-  load()
-}
-
-function clearKeyword() {
-  filters.value.keyword = ''
-  page.value = 0
-  load()
-}
-
-function pickCategory(type) {
-  filters.value.categoryType = type
-  page.value = 0
-  load()
-  setTimeout(scrollToProducts, 50)
-}
-
-function priceInput(key, e) {
-  const raw = String(e.target.value).trim()
-  filters.value[key] = raw === '' || Number(raw) < 0 ? '' : raw
-}
-
-function blockInvalidPriceKeys(e) {
-  const k = e.key
-  if (k === '-' || k === 'e' || k === 'E') e.preventDefault()
-}
-
 function goDetail(id) {
   router.push(`/store/product/${id}`)
 }
 
-// 依導覽 query 定位：?new=1 → 捲到頂端（精選/Hero）；?go=products → 捲到商品區
+function goMoreNew() {
+  router.push({ path: '/store/products', query: { mode: 'new' } })
+}
+
+function goMoreAll() {
+  router.push({ path: '/store/products', query: { mode: 'all' } })
+}
+
+// 依導覽 query 定位：?new=1 → 捲到新品上架；?go=products → 捲到全部商品區
 watch(
   () => route.query,
   (q) => {
     if (q.new === '1') {
-      window.scrollTo({ top: 0, behavior: 'smooth' })
+      if (newArrivalsSection.value) {
+        newArrivalsSection.value.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      } else {
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+      }
     } else if (q.go === 'products' && productSection.value) {
       productSection.value.scrollIntoView({ behavior: 'smooth', block: 'start' })
     }
@@ -121,7 +118,7 @@ onMounted(load)
 <template>
   <div class="store-home">
     <!-- Hero：NEW ARRIVALS -->
-    <section class="hero">
+    <section class="hero" data-nav-section="home">
       <div class="hero-copy">
         <p class="eyebrow">NEW ARRIVALS</p>
         <h1 class="hero-title">城市日常<br />風格提案</h1>
@@ -134,41 +131,13 @@ onMounted(load)
         </button>
       </div>
       <div class="hero-fig zoom-img">
-        <img :src="heroImg" alt="Coode LAB 新品形象" />
+        <img src="/images/Key_Visual.png" alt="Coode LAB 新品形象" />
       </div>
     </section>
 
-    <!-- 服務特色 -->
-    <section class="features">
-      <div class="feature-item">
-        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5">
-          <path d="M3 5h13l3 4v9H3z" />
-        </svg>
-        <div><strong>滿額免運</strong><span>消費滿 NT$2,000 享免運</span></div>
-      </div>
-      <div class="feature-item">
-        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5">
-          <path d="M4 4h4l2 6-2.5 1.5a11 11 0 0 0 5 5L14 14l6 2v4a2 2 0 0 1-2 2A16 16 0 0 1 2 6a2 2 0 0 1 2-2z" />
-        </svg>
-        <div><strong>七天鑑賞</strong><span>退換貨流程簡單</span></div>
-      </div>
-      <div class="feature-item">
-        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5">
-          <path d="M12 21s-7-4.5-9.5-9A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.5 6c-2.5 4.5-9.5 9-9.5 9z" />
-          <circle cx="12" cy="10" r="1.6" />
-        </svg>
-        <div><strong>會員穿搭</strong><span>專屬造型搭配建議</span></div>
-      </div>
-      <div class="feature-item">
-        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5">
-          <rect x="4" y="10" width="16" height="11" rx="2" />
-          <path d="M8 10V7a4 4 0 0 1 8 0v3" />
-        </svg>
-        <div><strong>安心結帳</strong><span>支援多種付款方式</span></div>
-      </div>
-    </section>
+    <div v-if="error" class="alert alert-error">載入失敗：{{ error }}</div>
 
-    <!-- 分類圖塊 -->
+    <!-- 選購分類 -->
     <section class="cat-section container-wide">
       <div class="section-head">
         <p class="eyebrow">SHOP BY CATEGORY</p>
@@ -187,90 +156,65 @@ onMounted(load)
       </div>
     </section>
 
-    <!-- 商品列表 -->
-    <section ref="productSection" class="product-section container-wide">
-      <div class="section-head">
-        <p class="eyebrow">THE COLLECTION</p>
-        <h2>{{ filters.categoryType ? categoryLabel(filters.categoryType) : '全部商品' }}</h2>
-      </div>
-
-      <!-- 篩選列 -->
-      <div class="filter-panel">
-        <div class="search-wrap">
-          <input
-            v-model="filters.keyword"
-            class="search-input"
-            placeholder="搜尋商品名稱..."
-            @keyup.enter="applySearch"
-          />
-          <button
-            v-if="filters.keyword"
-            type="button"
-            class="clear-keyword"
-            aria-label="清空搜尋文字"
-            @click="clearKeyword"
-          >
-            ×
-          </button>
+    <!-- 新品上架 -->
+    <section ref="newArrivalsSection" class="section container-wide" data-nav-section="new">
+      <div class="section-head row-head">
+        <div>
+          <p class="eyebrow">NEW ARRIVALS</p>
+          <h2>新品上架</h2>
         </div>
-        <select v-model="filters.categoryType">
-          <option value="">全部分類</option>
-          <option v-for="c in categories" :key="c.type" :value="c.type">{{ c.label }}</option>
-        </select>
-        <select v-model="filters.style">
-          <option value="">風格</option>
-          <option value="休閒">休閒</option>
-          <option value="街頭">街頭</option>
-          <option value="機能">機能</option>
-          <option value="運動">運動</option>
-        </select>
-        <select v-model="filters.color">
-          <option value="">顏色</option>
-          <option value="白">白</option>
-          <option value="黑">黑</option>
-          <option value="卡其">卡其</option>
-        </select>
-        <input
-          :value="filters.minPrice"
-          type="number"
-          min="0"
-          placeholder="最低價"
-          class="price-input"
-          @input="priceInput('minPrice', $event)"
-          @keydown="blockInvalidPriceKeys"
-        />
-        <input
-          :value="filters.maxPrice"
-          type="number"
-          min="0"
-          placeholder="最高價"
-          class="price-input"
-          @input="priceInput('maxPrice', $event)"
-          @keydown="blockInvalidPriceKeys"
-        />
-        <button class="btn btn-primary" @click="applySearch">搜尋</button>
+        <button class="more-link" @click="goMoreNew">more →</button>
       </div>
-
-      <div v-if="error" class="alert alert-error">載入失敗：{{ error }}</div>
-      <div v-if="loading" class="empty">載入中...</div>
-
-      <div v-else-if="products.length === 0" class="empty">沒有符合條件的商品</div>
-
-      <div v-else class="grid-4 product-grid">
+      <div v-if="loading && newArrivals.length === 0" class="empty">載入中...</div>
+      <div v-else class="grid-5 product-grid">
         <ProductCard
-          v-for="p in products"
+          v-for="p in newArrivals"
           :key="p.productId"
           :product="p"
           @detail="goDetail"
         />
       </div>
+    </section>
 
-      <AppPagination
-        v-if="products.length > 0"
-        :page="page"
-        :total-pages="totalPages"
-        @change="changePage"
-      />
+    <!-- 熱銷商品 -->
+    <section class="section container-wide">
+      <div class="section-head row-head">
+        <div>
+          <p class="eyebrow">BEST SELLERS</p>
+          <h2>熱銷商品</h2>
+        </div>
+      </div>
+      <div v-if="loading && bestSellers.length === 0" class="empty">載入中...</div>
+      <div v-else-if="bestSellers.length === 0" class="empty">暫無熱銷商品</div>
+      <div v-else class="grid-5 product-grid">
+        <ProductCard
+          v-for="p in bestSellers"
+          :key="p.productId"
+          :product="p"
+          @detail="goDetail"
+        />
+      </div>
+    </section>
+
+    <!-- 全部商品 -->
+    <section ref="productSection" class="section container-wide" data-nav-section="products">
+      <div class="section-head row-head">
+        <div>
+          <p class="eyebrow">ALL PRODUCTS</p>
+          <h2>全部商品</h2>
+        </div>
+        <button class="more-link" @click="goMoreAll">more →</button>
+      </div>
+      <div v-if="loading && allProducts.length === 0" class="empty">載入中...</div>
+      <div v-else-if="allProducts.length === 0" class="empty">沒有符合條件的商品</div>
+      <div v-else class="grid-5 product-grid">
+        <ProductCard
+          v-for="p in allProducts"
+          :key="p.productId"
+          :product="p"
+          @detail="goDetail"
+        />
+      </div>
     </section>
   </div>
 </template>
@@ -329,6 +273,7 @@ onMounted(load)
   font-weight: 700;
   letter-spacing: 0.24em;
   transition: background 0.2s ease;
+  cursor: pointer;
 }
 .btn-shop:hover {
   background: #2c2c2c;
@@ -344,37 +289,6 @@ onMounted(load)
   object-fit: cover;
 }
 
-/* ── 服務特色 ── */
-.features {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  border-bottom: 1px solid var(--line);
-}
-.feature-item {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 26px 24px;
-  border-right: 1px solid var(--line);
-}
-.feature-item:last-child {
-  border-right: none;
-}
-.feature-item svg {
-  color: var(--ink);
-  flex-shrink: 0;
-}
-.feature-item strong {
-  display: block;
-  font-size: 14px;
-  color: var(--ink);
-  letter-spacing: 0.04em;
-}
-.feature-item span {
-  font-size: 12px;
-  color: var(--muted);
-}
-
 /* ── Section 標題 ── */
 .section-head {
   text-align: center;
@@ -387,6 +301,35 @@ onMounted(load)
   font-size: 28px;
   font-weight: 800;
   letter-spacing: 0.14em;
+  color: var(--ink);
+}
+
+/* 左右對齊的標題 + more 按鈕 */
+.row-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  text-align: left;
+}
+.row-head .eyebrow {
+  margin-bottom: 8px;
+}
+.row-head h2 {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  color: var(--ink);
+}
+.more-link {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  padding: 0 0 8px;
+}
+.more-link:hover {
   color: var(--ink);
 }
 
@@ -429,74 +372,16 @@ onMounted(load)
 }
 
 /* ── 商品區 ── */
-.product-section {
-  padding-bottom: 80px;
-}
-.filter-panel {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 28px;
-  padding: 14px;
-  border: 1px solid var(--line);
-  border-radius: 4px;
-  background: #fbfaf8;
-}
-.filter-panel input,
-.filter-panel select {
-  padding: 9px 12px;
-  border: 1px solid var(--line);
-  border-radius: 4px;
-  background: #fff;
-  color: var(--ink);
-  font-size: 13px;
-}
-.filter-panel input:focus,
-.filter-panel select:focus {
-  outline: none;
-  border-color: var(--ink);
-}
-.filter-panel .btn {
-  margin-left: auto;
-}
-.search-wrap {
-  position: relative;
-  flex: 1;
-  min-width: 200px;
-}
-.search-input {
-  width: 100%;
-  padding-right: 32px !important;
-}
-.clear-keyword {
-  position: absolute;
-  right: 8px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 20px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  border-radius: 50%;
-  background: #d3cfc9;
-  color: #fff;
-  font-size: 14px;
-  line-height: 1;
-  padding: 0;
-  cursor: pointer;
-}
-.clear-keyword:hover {
-  background: var(--ink);
-}
-.price-input {
-  width: 108px;
+.section {
+  padding-bottom: 40px;
 }
 .product-grid {
   row-gap: 32px;
   column-gap: 20px;
+}
+.grid-5 {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
 }
 
 /* ── RWD ── */
@@ -507,16 +392,10 @@ onMounted(load)
   .hero-copy {
     padding: 56px 24px 48px;
   }
-  .features {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  .feature-item:nth-child(2) {
-    border-right: none;
-  }
-  .feature-item:nth-child(n + 3) {
-    border-top: 1px solid var(--line);
-  }
   .cat-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .grid-5 {
     grid-template-columns: repeat(3, 1fr);
   }
 }
@@ -524,22 +403,11 @@ onMounted(load)
   .container-wide {
     padding: 0 16px;
   }
-  .features {
-    grid-template-columns: 1fr 1fr;
-  }
-  .feature-item {
-    padding: 20px 16px;
-    gap: 10px;
-  }
   .cat-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-  .product-grid {
-    gap: 20px 12px;
-  }
-  .filter-panel .btn {
-    margin-left: 0;
-    width: 100%;
+  .grid-5 {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 </style>

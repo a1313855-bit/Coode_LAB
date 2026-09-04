@@ -50,13 +50,9 @@ public class OrderController {
     public ResponseEntity<SelectPartOfData.Result<OrderDTO>> getOrdersByUserId(
             @RequestParam Long userId,
             @RequestParam(defaultValue = "0") int page) {
-        // TODO: 查詢訂單列表（依使用者）
+        // TODO: 查詢訂單列表（依使用者）— 無資料回傳空陣列（200）
         SelectPartOfData.Result<OrderDTO> orders = orderService.findByUserId(userId, page);
-        if (!orders.getContent().isEmpty()) {
-            return ResponseEntity.ok(orders);
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+        return ResponseEntity.ok(orders);
     }
 
     @GetMapping("/{id}")

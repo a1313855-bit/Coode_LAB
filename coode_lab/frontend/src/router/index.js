@@ -3,6 +3,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 // 商城（會員端）
 import StoreLayout from '../layouts/StoreLayout.vue'
 import StoreHome from '../views/store/StoreHome.vue'
+import StoreProducts from '../views/store/StoreProducts.vue'
 import ProductDetail from '../views/store/ProductDetail.vue'
 import CartView from '../views/store/CartView.vue'
 import OrdersView from '../views/store/OrdersView.vue'
@@ -45,6 +46,7 @@ const router = createRouter({
       redirect: '/store',
       children: [
         { path: 'store', name: 'store', component: StoreHome },
+        { path: 'store/products', name: 'store-products', component: StoreProducts },
         { path: 'store/product/:id', name: 'product-detail', component: ProductDetail },
         { path: 'cart', name: 'cart', component: CartView, meta: { auth: 'user' } },
         { path: 'orders', name: 'orders', component: OrdersView, meta: { auth: 'user' } },

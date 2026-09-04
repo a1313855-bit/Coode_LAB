@@ -109,34 +109,43 @@ onMounted(load)
 </script>
 
 <template>
-  <div class="admin-content">
-    <div v-if="error" class="alert alert-error">{{ error }}</div>
-    <div v-if="saved" class="alert alert-success">{{ saved }}</div>
-    <div v-if="loading" class="empty">載入中...</div>
+  <div class="vendor-report">
+    <div class="vr-banner">
+      <div class="vr-banner-inner">
+        <div>
+          <div class="vr-eyebrow">VENDOR</div>
+          <h1 class="vr-title">帳號設定</h1>
+          <p class="vr-subtitle">管理帳號資料、密碼與合約資訊</p>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="error" class="vr-alert">{{ error }}</div>
+    <div v-if="saved" class="vr-alert-success">{{ saved }}</div>
+    <div v-if="loading" class="vr-empty">載入中...</div>
 
     <template v-else-if="detail">
       <!-- 基本資料 -->
-      <div class="card">
+      <div class="vr-card">
         <h3>基本資料</h3>
-        <div class="info-grid">
+        <div class="vr-info-grid" style="margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid var(--vr-line)">
           <div class="name-edit">
             <div class="name-fields">
               <label for="vendor-name">廠商名稱</label>
               <input id="vendor-name" v-model="form.vendorName" @keyup.enter="saveName" />
             </div>
-            <button class="btn btn-primary" :disabled="saving || !canSaveName" @click="saveName">
+            <button class="vr-btn vr-btn-primary" :disabled="saving || !canSaveName" @click="saveName">
               {{ saving ? '修改中...' : '修改名稱' }}
             </button>
           </div>
-          <div class="info-row"><span class="muted">Email</span><b>{{ detail.email }}</b></div>
-          <div class="info-row"><span class="muted">啟用時間</span><b>{{ formatDate(detail.activatedAt) }}</b></div>
-          <div class="info-row"><span class="muted">建立時間</span><b>{{ formatDate(detail.createdAt) }}</b></div>
+          <div class="vr-info-row"><span class="vr-label">Email</span><span class="vr-val">{{ detail.email }}</span></div>
+          <div class="vr-info-row"><span class="vr-label">啟用時間</span><span class="vr-val">{{ formatDate(detail.activatedAt) }}</span></div>
+          <div class="vr-info-row"><span class="vr-label">建立時間</span><span class="vr-val">{{ formatDate(detail.createdAt) }}</span></div>
         </div>
-        <p class="hint muted">除廠商名稱外，其餘欄位皆為不可變更資訊。</p>
       </div>
 
       <!-- 修改密碼 -->
-      <div class="card pw-card">
+      <div class="vr-card pw-card">
         <h3>修改密碼</h3>
         <div class="pw-fields">
           <div class="pw-field">
@@ -151,41 +160,40 @@ onMounted(load)
             <label>確認新密碼</label>
             <input v-model="pwForm.confirmPassword" type="password" placeholder="再次輸入新密碼" @keyup.enter="savePassword" />
           </div>
-          <button class="btn btn-primary" :disabled="savingPw || !canSavePw" @click="savePassword">
+          <button class="vr-btn vr-btn-primary" :disabled="savingPw || !canSavePw" @click="savePassword">
             {{ savingPw ? '修改中...' : '修改密碼' }}
           </button>
         </div>
-        <p class="hint muted">修改密碼後，下次登入請使用新密碼。</p>
       </div>
 
       <!-- 合約資訊 -->
-      <div class="card contract">
+      <div class="vr-card contract">
         <h3>合約資訊</h3>
         <div class="contract-head">
-          <span :class="['badge', contractValid ? 'badge-success' : 'badge-danger']">
+          <span :class="['vr-badge', contractValid ? 'vr-badge-active' : 'vr-badge-danger']">
             {{ statusLabel(detail.status) }}
           </span>
           <b class="cs-value" :class="{ danger: !contractValid }">{{ contractStatusText }}</b>
         </div>
         <div class="contract-row">
           <div class="kpi">
-            <span class="kpi-label">啟用時間</span>
-            <span class="kpi-value">{{ formatDate(detail.activatedAt) }}</span>
+            <span class="vr-kpi-label">啟用時間</span>
+            <span class="vr-kpi-value">{{ formatDate(detail.activatedAt) }}</span>
           </div>
           <div class="kpi">
-            <span class="kpi-label">合約到期時間</span>
-            <span class="kpi-value" :class="{ danger: !contractValid }">{{ formatDate(detail.contractExpiresAt) }}</span>
+            <span class="vr-kpi-label">合約到期時間</span>
+            <span class="vr-kpi-value" :class="{ danger: !contractValid }">{{ formatDate(detail.contractExpiresAt) }}</span>
           </div>
           <div class="kpi">
-            <span class="kpi-label">剩餘合約天數</span>
-            <span class="kpi-value" :class="{ danger: !contractValid }">
+            <span class="vr-kpi-label">剩餘合約天數</span>
+            <span class="vr-kpi-value" :class="{ danger: !contractValid }">
               {{ remainingDays }}
               <small>天</small>
             </span>
           </div>
         </div>
-        <p class="hint muted contract-note">
-          續約與停權由系統管理員在管理員後台處理。若你的合約即將到期，請聯絡店家管理員洽詢續約事宜。
+        <p style="font-size: 13px; color: var(--vr-mut); margin: 18px 0 0">
+          若你的合約即將到期，請聯絡店家管理員洽詢續約事宜。
         </p>
       </div>
     </template>
@@ -195,20 +203,9 @@ onMounted(load)
 <style scoped>
 h3 {
   margin-bottom: 14px;
-}
-.info-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  margin-bottom: 16px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid var(--c-border);
-}
-.info-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 14px;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--vr-brown-dk);
 }
 .name-edit {
   display: flex;
@@ -224,25 +221,18 @@ h3 {
 }
 .name-fields label {
   font-size: 13px;
-  color: var(--c-text-light);
+  color: var(--vr-mut);
 }
 .name-fields input {
   padding: 9px 12px;
-  border: 1px solid var(--c-border);
-  border-radius: 6px;
+  border: 1px solid var(--vr-line);
+  border-radius: 10px;
   font-size: 14px;
+  color: var(--vr-ink);
 }
 .name-fields input:focus {
   outline: none;
-  border-color: var(--c-text);
-}
-.hint {
-  font-size: 13px;
-  color: var(--c-text);
-  margin-bottom: 14px;
-}
-.hint.muted {
-  color: var(--c-text-light);
+  border-color: var(--vr-brown-mid);
 }
 .pw-card {
   margin-top: 16px;
@@ -256,31 +246,32 @@ h3 {
 }
 .pw-fields label {
   font-size: 13px;
-  color: var(--c-text-light);
+  color: var(--vr-mut);
   display: block;
   margin-bottom: 6px;
 }
 .pw-fields input {
   width: 100%;
   padding: 9px 12px;
-  border: 1px solid var(--c-border);
-  border-radius: 6px;
+  border: 1px solid var(--vr-line);
+  border-radius: 10px;
   font-size: 14px;
+  color: var(--vr-ink);
 }
 .pw-fields input:focus {
   outline: none;
-  border-color: var(--c-text);
+  border-color: var(--vr-brown-mid);
 }
-.pw-fields .btn {
+.pw-fields .vr-btn {
   align-self: flex-start;
 }
-/* 合約資訊（原「合約資訊」頁內容已合併到此） */
+/* 合約資訊 */
 .contract {
   margin-top: 16px;
-  border-left: 4px solid var(--c-success);
+  border-left: 4px solid var(--vr-up);
 }
 .contract .cs-value.danger {
-  color: var(--c-danger);
+  color: var(--vr-down);
 }
 .contract-head {
   display: flex;
@@ -298,38 +289,22 @@ h3 {
   gap: 14px;
 }
 .kpi {
-  border: 1px solid var(--c-border);
-  border-radius: var(--radius);
+  border: 1px solid var(--vr-line);
+  border-radius: 10px;
   padding: 16px;
   text-align: center;
 }
-.kpi-label {
-  display: block;
-  font-size: 13px;
-  color: var(--c-text-light);
-  margin-bottom: 8px;
-}
-.kpi-value {
-  font-size: 18px;
-  font-weight: 800;
-}
-.kpi-value.danger {
-  color: var(--c-danger);
-}
-.kpi-value small {
+.kpi small {
   font-size: 12px;
-  color: var(--c-text-light);
+  color: var(--vr-mut);
   font-weight: 400;
-}
-.contract-note {
-  margin: 18px 0 0;
 }
 @media (max-width: 900px) {
   .name-edit {
     flex-direction: column;
     align-items: stretch;
   }
-  .name-edit .btn {
+  .name-edit .vr-btn {
     width: 100%;
   }
   .contract-row {
@@ -337,7 +312,7 @@ h3 {
   }
   .contract {
     border-left: none;
-    border-top: 4px solid var(--c-success);
+    border-top: 4px solid var(--vr-up);
   }
 }
 </style>

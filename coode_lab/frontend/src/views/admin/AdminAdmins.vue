@@ -94,53 +94,56 @@ onMounted(load)
 </script>
 
 <template>
-  <div class="admin-content">
-    <div class="page-header flex-between">
-      <div>
-        <h1>管理員帳號</h1>
-        <p>管理後台管理員</p>
+  <div class="vendor-report">
+    <div class="vr-banner">
+      <div class="vr-banner-inner">
+        <div>
+          <div class="vr-eyebrow">ADMIN</div>
+          <h1 class="vr-title">管理員帳號</h1>
+          <p class="vr-subtitle">管理後台管理員</p>
+        </div>
+        <div class="vr-banner-controls">
+          <button class="vr-btn vr-btn-primary" @click="openCreate">+ 新增管理員</button>
+        </div>
       </div>
-      <button class="btn btn-success" @click="openCreate">+ 新增管理員</button>
     </div>
 
-    <div v-if="error" class="alert alert-error">{{ error }}</div>
-    <div v-if="loading" class="empty">載入中...</div>
-    <div v-else class="card">
-      <div class="table-wrap">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Email</th>
-              <th>操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="a in admins" :key="a.adminId">
-              <td>{{ a.adminId }}</td>
-              <td>{{ a.email }}</td>
-              <td>
-                <div class="flex">
-                  <button class="btn btn-sm" @click="openEdit(a)">編輯</button>
-                  <button class="btn btn-sm" @click="changePassword(a)">改密碼</button>
-                  <button class="btn btn-sm btn-danger" :disabled="isSelf(a)" :title="isSelf(a) ? '不能刪除自己的帳號' : ''" @click="remove(a)">刪除</button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+    <div v-if="error" class="vr-alert">{{ error }}</div>
+    <div v-if="loading" class="vr-empty">載入中...</div>
+    <div v-else class="vr-card">
+      <table class="vr-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Email</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="a in admins" :key="a.adminId">
+            <td>{{ a.adminId }}</td>
+            <td>{{ a.email }}</td>
+            <td>
+              <div style="display: flex; gap: 6px; flex-wrap: wrap">
+                <button class="vr-btn vr-btn-sm vr-btn-outline" @click="openEdit(a)">編輯</button>
+                <button class="vr-btn vr-btn-sm vr-btn-outline" @click="changePassword(a)">改密碼</button>
+                <button class="vr-btn vr-btn-sm vr-btn-danger" :disabled="isSelf(a)" :title="isSelf(a) ? '不能刪除自己的帳號' : ''" @click="remove(a)">刪除</button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
     <AppPagination :page="page" :total-pages="totalPages" @change="changePage" />
 
-    <div v-if="showForm" class="modal-mask">
-      <div class="modal">
+    <div v-if="showForm" class="vr-modal-mask">
+      <div class="vr-modal">
         <h3>{{ editing ? '編輯管理員' : '新增管理員' }}</h3>
-        <div class="form-field"><label>Email</label><input v-model="form.email" /></div>
-        <div v-if="!editing" class="form-field"><label>密碼</label><input v-model="form.password" /></div>
-        <div class="flex">
-          <button class="btn btn-primary" @click="save">儲存</button>
-          <button class="btn" @click="showForm = false">取消</button>
+        <div class="vr-form-field"><label>Email</label><input v-model="form.email" /></div>
+        <div v-if="!editing" class="vr-form-field"><label>密碼</label><input v-model="form.password" /></div>
+        <div class="vr-modal-actions">
+          <button class="vr-btn vr-btn-outline" @click="showForm = false">取消</button>
+          <button class="vr-btn vr-btn-primary" @click="save">儲存</button>
         </div>
       </div>
     </div>
@@ -148,23 +151,4 @@ onMounted(load)
 </template>
 
 <style scoped>
-.modal-mask {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 100;
-}
-.modal {
-  background: #fff;
-  border-radius: var(--radius);
-  padding: 24px;
-  width: 400px;
-  max-width: 90vw;
-}
-.modal h3 {
-  margin-bottom: 16px;
-}
 </style>

@@ -86,71 +86,74 @@ onMounted(load)
 </script>
 
 <template>
-  <div class="admin-content">
-    <div class="page-header">
-      <p class="subtitle">列出所有低庫存（庫存 ≤ 5）與缺貨（庫存 = 0）的商品規格，可直接補貨。</p>
+  <div class="vendor-report">
+    <div class="vr-banner">
+      <div class="vr-banner-inner">
+        <div>
+          <div class="vr-eyebrow">VENDOR</div>
+          <h1 class="vr-title">低庫存管理</h1>
+          <p class="vr-subtitle">低庫存（庫存 ≤ 5）；缺貨（庫存 = 0）</p>
+        </div>
+      </div>
     </div>
 
-    <div v-if="error" class="alert alert-error">{{ error }}</div>
-    <div v-if="saved" class="alert alert-success">{{ saved }}</div>
-    <div v-if="loading" class="empty">載入中...</div>
+    <div v-if="error" class="vr-alert">{{ error }}</div>
+    <div v-if="saved" class="vr-alert-success">{{ saved }}</div>
+    <div v-if="loading" class="vr-empty">載入中...</div>
 
-    <div v-else-if="lowRows.length === 0" class="empty">目前沒有低庫存或缺貨的規格</div>
-    <div v-else class="card">
-      <div class="table-wrap">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>商品</th>
-              <th>圖片</th>
-              <th>顏色</th>
-              <th>尺寸</th>
-              <th>庫存</th>
-              <th>狀態</th>
-              <th>操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(r, i) in lowRows" :key="i">
-              <td>{{ r.productName }}</td>
-              <td><img class="thumb" :src="productImageUrl(r.image)" alt="" /></td>
-              <td>{{ r.color }}</td>
-              <td>{{ r.size }}</td>
-              <td :class="{ 'low-cell': r.stock <= 5 }">{{ r.stock }}</td>
-              <td>
-                <span :class="['badge', r.stock === 0 ? 'badge-danger' : 'badge-warning']">
-                  {{ r.stock === 0 ? '缺貨' : '低庫存' }}
-                </span>
-              </td>
-              <td>
-                <button class="btn btn-sm btn-primary" @click="openReplenish(r)">補貨</button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+    <div v-else-if="lowRows.length === 0" class="vr-empty">目前沒有低庫存或缺貨的規格</div>
+    <div v-else class="vr-card">
+      <table class="vr-table">
+        <thead>
+          <tr>
+            <th>商品</th>
+            <th>圖片</th>
+            <th>顏色</th>
+            <th>尺寸</th>
+            <th>庫存</th>
+            <th>狀態</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="(r, i) in lowRows" :key="i">
+            <td>{{ r.productName }}</td>
+            <td><img class="vr-thumb" :src="productImageUrl(r.image)" alt="" /></td>
+            <td>{{ r.color }}</td>
+            <td>{{ r.size }}</td>
+            <td :class="{ 'low-cell': r.stock <= 5 }">{{ r.stock }}</td>
+            <td>
+              <span v-if="r.stock === 0" class="vr-badge vr-badge-danger">缺貨</span>
+              <span v-else class="vr-badge vr-badge-warning">低庫存</span>
+            </td>
+            <td>
+              <button class="vr-btn vr-btn-sm vr-btn-primary" @click="openReplenish(r)">補貨</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
 
     <AppPagination :page="page" :total-pages="totalPages" @change="changePage" />
 
     <!-- 補貨 modal -->
-    <div v-if="replenishTarget" class="modal-mask">
-      <div class="modal replenish-modal">
+    <div v-if="replenishTarget" class="vr-modal-mask">
+      <div class="vr-modal replenish-modal">
         <h3>補貨</h3>
-        <div class="rm-row"><span class="muted">商品</span><b>{{ replenishTarget.productName }}</b></div>
-        <div class="rm-row"><span class="muted">規格</span><b>{{ replenishTarget.color }} / {{ replenishTarget.size }}</b></div>
-        <div class="rm-row"><span class="muted">目前庫存</span><b :class="{ 'low-cell': replenishTarget.stock <= 5 }">{{ replenishTarget.stock }}</b></div>
-        <div class="form-field">
+        <div class="rm-row"><span style="color: var(--vr-mut)">商品</span><b>{{ replenishTarget.productName }}</b></div>
+        <div class="rm-row"><span style="color: var(--vr-mut)">規格</span><b>{{ replenishTarget.color }} / {{ replenishTarget.size }}</b></div>
+        <div class="rm-row"><span style="color: var(--vr-mut)">目前庫存</span><b :class="{ 'low-cell': replenishTarget.stock <= 5 }">{{ replenishTarget.stock }}</b></div>
+        <div class="vr-form-field">
           <label>本次補貨數量</label>
           <input v-model.number="replenishQty" type="number" min="1" />
         </div>
         <div class="rm-row calc">
-          <span class="muted">補貨後庫存</span>
+          <span style="color: var(--vr-mut)">補貨後庫存</span>
           <b>{{ replenishTarget.stock + (Number(replenishQty) || 0) }}</b>
         </div>
-        <div class="flex">
-          <button class="btn btn-primary" @click="confirmReplenish">確認補貨</button>
-          <button class="btn" @click="replenishTarget = null">取消</button>
+        <div class="vr-modal-actions">
+          <button class="vr-btn vr-btn-primary" @click="confirmReplenish">確認補貨</button>
+          <button class="vr-btn vr-btn-outline" @click="replenishTarget = null">取消</button>
         </div>
       </div>
     </div>
@@ -158,48 +161,19 @@ onMounted(load)
 </template>
 
 <style scoped>
-.page-header {
-  margin-bottom: 14px;
-}
-.subtitle {
-  color: var(--c-text-light);
-  font-size: 14px;
-}
-.thumb {
-  width: 40px;
-  height: 40px;
-  object-fit: cover;
-  border-radius: 6px;
-  border: 1px solid var(--c-border);
-}
 .low-cell {
-  color: var(--c-danger);
+  color: var(--vr-down);
   font-weight: 700;
 }
-.modal-mask {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 100;
-}
-.modal {
-  background: #fff;
-  border-radius: var(--radius);
-  padding: 24px;
+.replenish-modal {
   width: 420px;
   max-width: 92vw;
-}
-.modal h3 {
-  margin-bottom: 16px;
 }
 .rm-row {
   display: flex;
   justify-content: space-between;
   padding: 8px 0;
-  border-bottom: 1px solid var(--c-border);
+  border-bottom: 1px solid var(--vr-line);
   font-size: 14px;
 }
 .rm-row.calc {
@@ -208,28 +182,8 @@ onMounted(load)
   font-size: 16px;
   font-weight: 700;
 }
-.muted {
-  color: var(--c-text-light);
-}
-.form-field {
-  margin: 12px 0;
-}
-.form-field label {
-  font-size: 13px;
-  color: var(--c-text-light);
-  display: block;
-  margin-bottom: 6px;
-}
-.form-field input {
-  width: 100%;
-  padding: 9px 12px;
-  border: 1px solid var(--c-border);
-  border-radius: 6px;
-  font-size: 14px;
-}
-.flex {
-  display: flex;
-  gap: 10px;
-  margin-top: 4px;
+.vr-badge-warning {
+  background: #fef3c7;
+  color: #92400e;
 }
 </style>

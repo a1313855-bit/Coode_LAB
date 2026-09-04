@@ -57,6 +57,39 @@ const patch = (url, body, base) => request(url, { method: 'PATCH', body: JSON.st
 const del = (url, base) => request(url, { method: 'DELETE' }, base)
 
 // ============================================================
+// 檔案上傳（multipart）— 回傳 { url }，前端存 url 到 imagesJpg/outfitPng
+// ============================================================
+async function upload(url, file, base = '') {
+  const fd = new FormData()
+  fd.append('file', file)
+  const res = await fetch(base + url, { method: 'POST', body: fd })
+  if (!res.ok) {
+    let message = `HTTP ${res.status}`
+    try {
+      const b = await res.json()
+      if (b && (b.message || b.error)) message = b.message || b.error
+    } catch (e) {
+      /* ignore */
+    }
+    throw new Error(message)
+  }
+  const text = await res.text()
+  if (!text) return null
+  try {
+    return JSON.parse(text)
+  } catch (e) {
+    return null
+  }
+}
+
+// ============================================================
+// 上傳 (Upload)
+// ============================================================
+export const uploadApi = {
+  upload: (file) => upload('/coode_lab/upload', file),
+}
+
+// ============================================================
 // 會員 (User) — 商城端 / 管理員端
 // ============================================================
 export const userApi = {
@@ -107,6 +140,7 @@ export const productApi = {
   byVendor: (vendorId, page) => get(`/coode_lab/products/vendor/${vendorId}`, { page }),
   lowStock: (vendorId, page) => get(`/coode_lab/products/vendor/${vendorId}/low-stock`, { page }),
   filter: (p) => get('/coode_lab/products/filter', p),
+  topSelling: (limit) => get('/coode_lab/products/top-selling', { limit }),
   adminFilter: (p) => get('/coode_lab/products/admin/filter', p),
   adminUpdate: (productId, body) => put(`/coode_lab/products/admin/${productId}`, body),
   vendorFilter: (p) => get('/coode_lab/products/vendor/filter', p),
@@ -271,4 +305,4 @@ export const reportApi = {
     get(`/reports/vendor/${vendorId}/dashboard`, query),
 }
 
-export default { userApi, cartApi, cartItemApi, productApi, vendorApi, adminApi, orderApi, orderItemApi, outfitApi, outfitItemApi, returnRequestApi, returnItemApi, reportApi }
+export default { userApi, cartApi, cartItemApi, productApi, vendorApi, adminApi, orderApi, orderItemApi, outfitApi, outfitItemApi, returnRequestApi, returnItemApi, reportApi, uploadApi }

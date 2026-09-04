@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +27,7 @@ import com.example.demo.model.Vendor;
 import com.example.demo.repository.ProductRepository;
 import com.example.demo.repository.ProductVariantRepository;
 import com.example.demo.repository.VendorRepository;
+import com.example.demo.repository.OrderItemRepository;
 import com.example.demo.service.ProductService;
 import com.example.demo.util.SelectPartOfData;
 
@@ -35,14 +37,17 @@ public class ProductServiceImpl implements ProductService {
     private final ProductRepository productRepository;
     private final VendorRepository vendorRepository;
     private final ProductVariantRepository productVariantRepository;
+    private final OrderItemRepository orderItemRepository;
 
     // 建構子注入
     public ProductServiceImpl(ProductRepository productRepository,
             VendorRepository vendorRepository,
-            ProductVariantRepository productVariantRepository) {
+            ProductVariantRepository productVariantRepository,
+            OrderItemRepository orderItemRepository) {
         this.productRepository = productRepository;
         this.vendorRepository = vendorRepository;
         this.productVariantRepository = productVariantRepository;
+        this.orderItemRepository = orderItemRepository;
     }
 
     // 查所有商品 (固定每頁10筆)
@@ -102,7 +107,8 @@ public class ProductServiceImpl implements ProductService {
             String pattern,
             BigDecimal minPrice,
             BigDecimal maxPrice,
-            Long vendorId) {
+            Long vendorId,
+            String sort) {
 
         // 1. 先建立搜尋條件
         // 商品必須 ACTIVE，而且 Vendor 也必須 ACTIVE,廠商合約到期時間需大於等於現在時間
@@ -130,7 +136,30 @@ public class ProductServiceImpl implements ProductService {
 
                 // 5. 重新組成 List
                 .toList();
+
+        // 6. 排序
+        if ("newest".equalsIgnoreCase(sort)) {
+            all = all.stream().sorted((a, b) -> Long.compare(b.getProductId(), a.getProductId())).toList();
+        }
+
         return SelectPartOfData.pageOf10(all, page);
+    }
+
+    // 熱銷商品（依營收排序，取前 N 筆 ACTIVE 商品）
+    @Override
+    @Transactional(readOnly = true)
+    public List<ProductResponse> findTopSelling(int limit) {
+        List<Object[]> rows = orderItemRepository.findTopSellingByRevenue(PageRequest.of(0, limit));
+        List<ProductResponse> result = new java.util.ArrayList<>();
+        for (Object[] row : rows) {
+            Long productId = ((Number) row[0]).longValue();
+            productRepository.findById(productId).ifPresent(p -> {
+                if ("ACTIVE".equals(p.getStatus())) {
+                    result.add(toResponse(p));
+                }
+            });
+        }
+        return result;
     }
 
     // 管理員後台多條件搜尋 (固定每頁10筆)

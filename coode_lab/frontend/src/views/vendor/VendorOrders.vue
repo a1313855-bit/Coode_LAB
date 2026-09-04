@@ -110,143 +110,103 @@ onMounted(loadAll)
 </script>
 
 <template>
-  <div class="admin-content">
-    <div class="tabs" role="tablist">
+  <div class="vendor-report">
+    <div class="vr-banner">
+      <div class="vr-banner-inner">
+        <div>
+          <div class="vr-eyebrow">VENDOR</div>
+          <h1 class="vr-title">訂單管理</h1>
+          <p class="vr-subtitle">查看並更新訂單商品狀態</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="vr-tabs" role="tablist">
       <button
         v-for="t in tabs"
         :key="t.key"
-        class="tab"
+        class="vr-tab"
         :class="{ active: activeTab === t.key }"
         @click="changeTab(t.key)"
       >
         {{ t.label }}
-        <span class="tab-count">{{ tabCounts[t.key] }}</span>
+        <span class="vr-tab-count">{{ tabCounts[t.key] }}</span>
       </button>
     </div>
 
-    <p class="subtitle">查看並更新訂單商品狀態</p>
-
-    <div v-if="error" class="alert alert-error">{{ error }}</div>
-    <div v-if="loading" class="empty">載入中...</div>
-    <div v-else-if="allItems.length === 0" class="empty">目前沒有訂單商品</div>
-    <div v-else-if="filteredItems.length === 0" class="empty">此分頁暫時沒有訂單</div>
-    <div v-else class="card">
-      <div class="table-wrap">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>訂單項 ID</th>
-              <th>商品</th>
-              <th>訂單編號</th>
-              <th>數量</th>
-              <th>金額</th>
-              <th>狀態</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="it in clientRows" :key="it.orderItemId">
-              <td>{{ it.orderItemId }}</td>
-              <td>
-                {{ (it.variant && it.variant.product && it.variant.product.name) || '-' }}
-                <div class="muted small">
-                  {{ it.variant ? categoryLabel(it.variant.product.categoryType) + ' · ' + it.variant.color + ' / ' + it.variant.size : '-' }}
-                </div>
-              </td>
-              <td>#{{ it.order.orderId }}</td>
-              <td>{{ it.productQuantity }}</td>
-              <td>{{ formatMoney(it.priceTotal) }}</td>
-              <td>
-                <div class="status-cell">
-                  <span :class="['badge', statusBadgeClass(it.status)]">{{ orderStatusLabel[it.status] || it.status }}</span>
-                  <button
-                    v-if="advanceButtonLabel[it.status]"
-                    class="btn btn-sm btn-primary"
-                    @click="advanceAction(it)"
-                  >
-                    {{ advanceButtonLabel[it.status] }}
-                  </button>
-                  <span v-if="it.status === 'SHIPPED'" class="text-muted">等待買家確認收貨</span>
-                  <select
-                    class="status-select"
-                    :value="it.status"
-                    @change="(e) => manualStatusAction(it, e.target.value)"
-                  >
-                    <option disabled value="">修改狀態</option>
-                    <option v-for="s in manualStatusOptions" :key="s" :value="s">{{ orderStatusLabel[s] }}</option>
-                  </select>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+    <div v-if="error" class="vr-alert">{{ error }}</div>
+    <div v-if="loading" class="vr-empty">載入中...</div>
+    <div v-else-if="allItems.length === 0" class="vr-empty">目前沒有訂單商品</div>
+    <div v-else-if="filteredItems.length === 0" class="vr-empty">此分頁暫時沒有訂單</div>
+    <div v-else class="vr-card">
+      <table class="vr-table">
+        <thead>
+          <tr>
+            <th>訂單項 ID</th>
+            <th>商品</th>
+            <th>訂單編號</th>
+            <th>數量</th>
+            <th>金額</th>
+            <th>狀態</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="it in clientRows" :key="it.orderItemId">
+            <td>{{ it.orderItemId }}</td>
+            <td>
+              {{ (it.variant && it.variant.product && it.variant.product.name) || '-' }}
+              <div style="color: var(--vr-mut); font-size: 12px">
+                {{ it.variant ? categoryLabel(it.variant.product.categoryType) + ' · ' + it.variant.color + ' / ' + it.variant.size : '-' }}
+              </div>
+            </td>
+            <td>#{{ it.order.orderId }}</td>
+            <td>{{ it.productQuantity }}</td>
+            <td>{{ formatMoney(it.priceTotal) }}</td>
+            <td>
+              <div class="status-cell">
+                <span v-if="it.status === 'PENDING'" class="vr-badge vr-badge-pending">{{ orderStatusLabel[it.status] || it.status }}</span>
+                <span v-else-if="it.status === 'PROCESSING'" class="vr-badge vr-badge-pending">{{ orderStatusLabel[it.status] || it.status }}</span>
+                <span v-else-if="it.status === 'SHIPPED'" class="vr-badge vr-badge-active">{{ orderStatusLabel[it.status] || it.status }}</span>
+                <span v-else-if="it.status === 'RECEIVED'" class="vr-badge vr-badge-active">{{ orderStatusLabel[it.status] || it.status }}</span>
+                <span v-else-if="it.status === 'CANCELLED'" class="vr-badge vr-badge-danger">{{ orderStatusLabel[it.status] || it.status }}</span>
+                <span v-else class="vr-badge vr-badge-inactive">{{ orderStatusLabel[it.status] || it.status }}</span>
+                <button
+                  v-if="advanceButtonLabel[it.status]"
+                  class="vr-btn vr-btn-sm vr-btn-primary"
+                  @click="advanceAction(it)"
+                >
+                  {{ advanceButtonLabel[it.status] }}
+                </button>
+                <span v-if="it.status === 'SHIPPED'" style="color: var(--vr-mut); font-size: 13px; white-space: nowrap">等待買家確認收貨</span>
+                <select
+                  class="status-select"
+                  :value="it.status"
+                  @change="(e) => manualStatusAction(it, e.target.value)"
+                >
+                  <option disabled value="">修改狀態</option>
+                  <option v-for="s in manualStatusOptions" :key="s" :value="s">{{ orderStatusLabel[s] }}</option>
+                </select>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
     <AppPagination :page="clientPage" :total-pages="totalPages" @change="changePage" />
   </div>
 </template>
 
 <style scoped>
-.tabs {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-bottom: 10px;
-}
-.tab {
-  padding: 9px 16px;
-  border: 1px solid var(--c-border);
-  border-radius: var(--radius);
-  background: #fff;
-  cursor: pointer;
-  font-size: 14px;
-  color: var(--c-text-light);
-}
-.tab.active {
-  border-color: transparent;
-  background: #db2777;
-  color: #fff;
-  font-weight: 700;
-}
-.tab-count {
-  display: inline-block;
-  margin-left: 6px;
-  font-size: 12px;
-  opacity: 0.8;
-}
-.subtitle {
-  color: var(--c-text-light);
-  font-size: 14px;
-  margin-bottom: 16px;
-}
 .status-cell {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-wrap: wrap;
 }
 .status-select {
   padding: 6px 8px;
-  border: 1px solid var(--c-border);
+  border: 1px solid var(--vr-line);
   border-radius: 6px;
-}
-.btn-primary {
-  background: #db2777;
-  color: #fff;
-  border: none;
-  white-space: nowrap;
-  cursor: pointer;
-}
-.btn-primary:hover {
-  background: #be185d;
-}
-.text-muted {
-  color: #9ca3af;
   font-size: 13px;
-  white-space: nowrap;
-}
-.status-cell {
-  flex-wrap: wrap;
-}
-.small {
-  font-size: 12px;
 }
 </style>

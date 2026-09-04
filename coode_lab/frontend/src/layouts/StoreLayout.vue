@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
+import { ref, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { RouterLink, RouterView, useRouter, useRoute } from 'vue-router'
 import { useAuth, clearAuth, currentUserId } from '../composables/auth'
 import { cartApi, cartItemApi } from '../api'
@@ -10,6 +10,8 @@ const auth = useAuth()
 
 const menuOpen = ref(false)
 const cartCount = ref(0)
+// 依捲動位置決定的導覽 active 狀態：首頁/精選/商品
+const activeNav = ref('home')
 
 const userMenuOpen = ref(false)
 function onDocClick() {
@@ -17,15 +19,43 @@ function onDocClick() {
 }
 onMounted(() => {
   document.addEventListener('click', onDocClick)
+  document.addEventListener('scroll', onScroll, { passive: true })
   refreshCartCount()
 })
-onBeforeUnmount(() => document.removeEventListener('click', onDocClick))
+onBeforeUnmount(() => {
+  document.removeEventListener('click', onDocClick)
+  document.removeEventListener('scroll', onScroll)
+})
+
+// 依捲動位置決定導覽 active（僅在首頁 /store）
+function onScroll() {
+  if (route.path !== '/store') return
+  const anchors = document.querySelectorAll('[data-nav-section]')
+  if (!anchors.length) return
+  const marker = window.innerHeight * 0.35 // 畫面 35% 高度當基準線
+  let current = 'home'
+  anchors.forEach((el) => {
+    const key = el.getAttribute('data-nav-section')
+    if (el.getBoundingClientRect().top <= marker) {
+      current = key
+    } else if (current === 'home' && key === 'home' && el.getBoundingClientRect().top > marker && window.scrollY < 10) {
+      current = 'home'
+    }
+  })
+  activeNav.value = current
+}
 
 function logout() {
   clearAuth()
   menuOpen.value = false
   userMenuOpen.value = false
   router.push('/store')
+}
+
+// 點首頁/Logo：回到首頁並捲到最上方（TOP 概念）
+function goHome() {
+  menuOpen.value = false
+  window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
 function go(path) {
@@ -50,6 +80,18 @@ async function refreshCartCount() {
 }
 
 watch(() => route.fullPath, refreshCartCount)
+
+// 導航完成後依捲動位置重算 active（等子元件渲染完）
+watch(
+  () => route.fullPath,
+  () => {
+    if (route.path !== '/store') {
+      activeNav.value = 'home'
+      return
+    }
+    nextTick(onScroll)
+  },
+)
 </script>
 
 <template>
@@ -66,12 +108,15 @@ watch(() => route.fullPath, refreshCartCount)
           <span></span><span></span><span></span>
         </button>
 
-        <RouterLink to="/store" class="logo" @click="menuOpen = false">Coode LAB</RouterLink>
+        <RouterLink to="/store" class="logo" @click="goHome">
+          <img src="/images/coode_lab_logo.png" alt="Coode LAB logo" class="logo-img" />
+          <span class="logo-text">COODE&nbsp;LAB</span>
+        </RouterLink>
 
         <nav class="store-nav">
-          <RouterLink to="/store" exact-active-class="is-active">首頁</RouterLink>
-          <RouterLink to="/store?go=products" class="nav-link">商品</RouterLink>
-          <RouterLink to="/store?new=1" class="nav-link">精選</RouterLink>
+          <RouterLink to="/store" :class="{ 'is-active': activeNav === 'home' }" @click="goHome">首頁</RouterLink>
+          <RouterLink to="/store?new=1" :class="{ 'is-active': activeNav === 'new' }">精選</RouterLink>
+          <RouterLink to="/store?go=products" :class="{ 'is-active': activeNav === 'products' }">商品</RouterLink>
         </nav>
 
         <div class="header-right">
@@ -154,9 +199,9 @@ watch(() => route.fullPath, refreshCartCount)
       <!-- 手機選單 -->
       <transition name="drawer">
         <nav v-if="menuOpen" class="mobile-nav">
-          <RouterLink to="/store" class="mobile-link" @click="menuOpen = false">首頁</RouterLink>
-          <RouterLink to="/store?go=products" class="mobile-link" @click="menuOpen = false">商品</RouterLink>
+          <RouterLink to="/store" class="mobile-link" @click="goHome">首頁</RouterLink>
           <RouterLink to="/store?new=1" class="mobile-link" @click="menuOpen = false">精選</RouterLink>
+          <RouterLink to="/store?go=products" class="mobile-link" @click="menuOpen = false">商品</RouterLink>
           <RouterLink to="/cart" class="mobile-link" @click="menuOpen = false">購物車</RouterLink>
           <template v-if="auth && auth.role === 'user'">
             <RouterLink to="/orders" class="mobile-link" @click="menuOpen = false">我的訂單</RouterLink>
@@ -255,11 +300,21 @@ watch(() => route.fullPath, refreshCartCount)
   padding: 14px 24px;
 }
 .logo {
-  font-size: 22px;
-  font-weight: 800;
-  letter-spacing: 0.22em;
-  color: var(--ink);
   justify-self: start;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.logo-img {
+  height: 32px;
+  display: block;
+}
+.logo-text {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  color: var(--ink);
+  line-height: 1;
 }
 .logo:hover {
   color: var(--ink);

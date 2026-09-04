@@ -186,144 +186,122 @@ onMounted(loadAll)
 </script>
 
 <template>
-  <div class="admin-content">
-    <div class="tabs" role="tablist">
+  <div class="vendor-report">
+    <div class="vr-banner">
+      <div class="vr-banner-inner">
+        <div>
+          <div class="vr-eyebrow">VENDOR</div>
+          <h1 class="vr-title">退換貨管理</h1>
+          <p class="vr-subtitle">審核會員的退換貨申請，處理狀態以退貨商品（ReturnItem）為準</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="vr-tabs" role="tablist">
       <button
         v-for="t in allTabs"
         :key="t.key"
-        class="tab"
+        class="vr-tab"
         :class="{ active: activeTab === t.key }"
         @click="changeTab(t.key)"
       >
         {{ t.label }}
-        <span class="tab-count">{{ tabCounts[t.key] }}</span>
+        <span class="vr-tab-count">{{ tabCounts[t.key] }}</span>
       </button>
     </div>
 
-    <p class="subtitle">審核會員的退換貨申請，處理狀態以退貨商品（ReturnItem）為準</p>
+    <div v-if="error" class="vr-alert">{{ error }}</div>
+    <div v-if="loading" class="vr-empty">載入中...</div>
+    <div v-else-if="allReturns.length === 0" class="vr-empty">目前沒有退換貨申請</div>
+    <div v-else-if="filteredItems.length === 0" class="vr-empty">此分頁暫時沒有申請</div>
+    <div v-else class="vr-card">
+      <table class="vr-table">
+        <thead>
+          <tr>
+            <th>申請編號</th>
+            <th>商品</th>
+            <th>會員</th>
+            <th>訂單</th>
+            <th>類型</th>
+            <th>數量</th>
+            <th>建立時間</th>
+            <th>處理狀態</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="r in clientRows" :key="r.returnRequestsId">
+            <td>#{{ r.returnRequestsId }}</td>
+            <td>
+              <template v-if="r.returnItem">
+                {{ r.returnItem.productName }}
+                <div style="color: var(--vr-mut); font-size: 12px">{{ r.returnItem.color }} {{ r.returnItem.size }}</div>
+              </template>
+              <span v-else style="color: var(--vr-mut); font-size: 12px">無商品資訊</span>
+            </td>
+            <td>{{ r.user.name }}</td>
+            <td>#{{ r.order.orderId }}</td>
+            <td>{{ statusLabel(r.requestType) }}</td>
+            <td>{{ r.returnRequestQuantity }}</td>
+            <td>{{ formatDate(r.createdAt) }}</td>
+            <td>
+              <template v-if="r.returnItem">
+                <div class="status-cell">
+                  <span v-if="r.returnItem.status === 'PENDING_REVIEW'" class="vr-badge vr-badge-pending">{{ rLabel(r.returnItem.status) }}</span>
+                  <span v-else-if="r.returnItem.status === 'APPROVED' || r.returnItem.status === 'RECEIVED' || r.returnItem.status === 'REFUNDING' || r.returnItem.status === 'EXCHANGING' || r.returnItem.status === 'EXCHANGE_SHIPPED'" class="vr-badge vr-badge-active">{{ rLabel(r.returnItem.status) }}</span>
+                  <span v-else-if="r.returnItem.status === 'REFUNDED' || r.returnItem.status === 'EXCHANGED'" class="vr-badge vr-badge-active">{{ rLabel(r.returnItem.status) }}</span>
+                  <span v-else-if="r.returnItem.status === 'REJECTED'" class="vr-badge vr-badge-danger">{{ rLabel(r.returnItem.status) }}</span>
+                  <span v-else class="vr-badge vr-badge-inactive">{{ rLabel(r.returnItem.status) }}</span>
+                </div>
 
-    <div v-if="error" class="alert alert-error">{{ error }}</div>
-    <div v-if="loading" class="empty">載入中...</div>
-    <div v-else-if="allReturns.length === 0" class="empty">目前沒有退換貨申請</div>
-    <div v-else-if="filteredItems.length === 0" class="empty">此分頁暫時沒有申請</div>
-    <div v-else class="card">
-      <div class="table-wrap">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>申請編號</th>
-              <th>商品</th>
-              <th>會員</th>
-              <th>訂單</th>
-              <th>類型</th>
-              <th>數量</th>
-              <th>建立時間</th>
-              <th>處理狀態</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="r in clientRows" :key="r.returnRequestsId">
-              <td>#{{ r.returnRequestsId }}</td>
-              <td>
-                <template v-if="r.returnItem">
-                  {{ r.returnItem.productName }}
-                  <div class="muted small">{{ r.returnItem.color }} {{ r.returnItem.size }}</div>
-                </template>
-                <span v-else class="muted small">無商品資訊</span>
-              </td>
-              <td>{{ r.user.name }}</td>
-              <td>#{{ r.order.orderId }}</td>
-              <td>{{ statusLabel(r.requestType) }}</td>
-              <td>{{ r.returnRequestQuantity }}</td>
-              <td>{{ formatDate(r.createdAt) }}</td>
-              <td>
-                <template v-if="r.returnItem">
-                  <div class="status-cell">
-                    <span :class="['badge', statusBadgeClass(r.returnItem.status)]">{{ rLabel(r.returnItem.status) }}</span>
-                  </div>
+                <div class="action-row" v-if="r.returnItem.status === 'PENDING_REVIEW'">
+                  <select v-model="reviewDecision" class="status-select">
+                    <option value="" disabled>選擇</option>
+                    <option value="APPROVED">通過</option>
+                    <option value="REJECTED">拒絕</option>
+                  </select>
+                  <button class="vr-btn vr-btn-sm vr-btn-primary" @click="doReview(r)">審核</button>
+                </div>
 
-                  <div class="action-row" v-if="r.returnItem.status === 'PENDING_REVIEW'">
-                    <select v-model="reviewDecision" class="status-select">
-                      <option value="" disabled>選擇</option>
-                      <option value="APPROVED">通過</option>
-                      <option value="REJECTED">拒絕</option>
-                    </select>
-                    <button class="btn btn-sm btn-primary" @click="doReview(r)">審核</button>
-                  </div>
+                <div class="action-row" v-if="r.returnItem.status === 'APPROVED'">
+                  <button class="vr-btn vr-btn-sm vr-btn-primary" @click="doVendorAdvance(r)">確認收件</button>
+                </div>
 
-                  <div class="action-row" v-if="r.returnItem.status === 'APPROVED'">
-                    <button class="btn btn-sm btn-primary" @click="doVendorAdvance(r)">確認收件</button>
-                  </div>
+                <div class="action-row" v-if="r.returnItem.status === 'RECEIVED'">
+                  <button class="vr-btn vr-btn-sm vr-btn-primary" @click="doVendorAdvance(r)">開始退款</button>
+                  <button class="vr-btn vr-btn-sm vr-btn-warning" @click="doStartExchange(r)">開始換貨</button>
+                </div>
 
-                  <div class="action-row" v-if="r.returnItem.status === 'RECEIVED'">
-                    <button class="btn btn-sm btn-primary" @click="doVendorAdvance(r)">開始退款</button>
-                    <button class="btn btn-sm btn-warning" @click="doStartExchange(r)">開始換貨</button>
-                  </div>
+                <div class="action-row" v-if="r.returnItem.status === 'REFUNDING'">
+                  <button class="vr-btn vr-btn-sm vr-btn-primary" @click="doVendorAdvance(r)">完成退款</button>
+                </div>
 
-                  <div class="action-row" v-if="r.returnItem.status === 'REFUNDING'">
-                    <button class="btn btn-sm btn-primary" @click="doVendorAdvance(r)">完成退款</button>
-                  </div>
+                <div class="action-row" v-if="r.returnItem.status === 'EXCHANGING'">
+                  <button class="vr-btn vr-btn-sm vr-btn-primary" @click="doVendorAdvance(r)">確認換貨商品出貨</button>
+                </div>
 
-                  <div class="action-row" v-if="r.returnItem.status === 'EXCHANGING'">
-                    <button class="btn btn-sm btn-primary" @click="doVendorAdvance(r)">確認換貨商品出貨</button>
-                  </div>
+                <div class="action-row" v-if="r.returnItem.status === 'EXCHANGE_SHIPPED'">
+                  <span style="color: var(--vr-mut); font-size: 12px">等待買家確認收到換貨</span>
+                </div>
 
-                  <div class="action-row" v-if="r.returnItem.status === 'EXCHANGE_SHIPPED'">
-                    <span class="muted small">等待買家確認收到換貨</span>
-                  </div>
-
-                  <div class="action-row manual-status">
-                    <select v-model="manualStatusTarget" class="status-select">
-                      <option value="" disabled>修改狀態</option>
-                      <option v-for="s in allStatusOptions" :key="s" :value="s">{{ rLabel(s) }}</option>
-                    </select>
-                    <button class="btn btn-sm btn-next" @click="doManualStatus(r)">修改</button>
-                  </div>
-                </template>
-                <span v-else class="muted small">-</span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+                <div class="action-row manual-status">
+                  <select v-model="manualStatusTarget" class="status-select">
+                    <option value="" disabled>修改狀態</option>
+                    <option v-for="s in allStatusOptions" :key="s" :value="s">{{ rLabel(s) }}</option>
+                  </select>
+                  <button class="vr-btn vr-btn-sm vr-btn-primary" @click="doManualStatus(r)">修改</button>
+                </div>
+              </template>
+              <span v-else style="color: var(--vr-mut); font-size: 12px">-</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
     <AppPagination :page="clientPage" :total-pages="totalPages" @change="changePage" />
   </div>
 </template>
 
 <style scoped>
-.tabs {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-bottom: 10px;
-}
-.tab {
-  padding: 9px 16px;
-  border: 1px solid var(--c-border);
-  border-radius: var(--radius);
-  background: #fff;
-  cursor: pointer;
-  font-size: 14px;
-  color: var(--c-text-light);
-}
-.tab.active {
-  border-color: transparent;
-  background: #db2777;
-  color: #fff;
-  font-weight: 700;
-}
-.tab-count {
-  display: inline-block;
-  margin-left: 6px;
-  font-size: 12px;
-  opacity: 0.8;
-}
-.subtitle {
-  color: var(--c-text-light);
-  font-size: 14px;
-  margin-bottom: 16px;
-}
 .status-cell {
   display: flex;
   align-items: center;
@@ -341,36 +319,8 @@ onMounted(loadAll)
 }
 .status-select {
   padding: 6px 8px;
-  border: 1px solid var(--c-border);
+  border: 1px solid var(--vr-line);
   border-radius: 6px;
   font-size: 13px;
-}
-.btn-primary {
-  border-color: #bfdbfe;
-  color: #1d4ed8;
-}
-.btn-primary:hover {
-  background: #eff6ff;
-  color: #1d4ed8;
-}
-.btn-warning {
-  border-color: #fde68a;
-  color: #b45309;
-}
-.btn-warning:hover {
-  background: #fefce8;
-  color: #b45309;
-}
-.btn-next {
-  border-color: #bfdbfe;
-  color: #1d4ed8;
-  white-space: nowrap;
-}
-.btn-next:hover {
-  background: #eff6ff;
-  color: #1d4ed8;
-}
-.small {
-  font-size: 12px;
 }
 </style>

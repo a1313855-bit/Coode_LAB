@@ -74,7 +74,11 @@ public interface ProductService {
             String pattern,
             BigDecimal minPrice,
             BigDecimal maxPrice,
-            Long vendorId);
+            Long vendorId,
+            String sort);
+
+    // 熱銷商品（依營收排序，取前 N 筆 ACTIVE 商品）
+    List<ProductResponse> findTopSelling(int limit);
 
     // 管理員使用,多條件搜尋商品 (固定每頁10筆,page 從 0 開始)
     SelectPartOfData.Result<ProductResponse> adminSearchProducts(

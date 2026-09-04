@@ -76,74 +76,84 @@ onMounted(load)
 </script>
 
 <template>
-  <div class="overview">
-    <div v-if="error" class="alert alert-error">{{ error }}</div>
-    <div v-if="loading" class="empty">載入中...</div>
+  <div class="vendor-report">
+    <div class="vr-banner">
+      <div class="vr-banner-inner">
+        <div>
+          <div class="vr-eyebrow">VENDOR</div>
+          <h1 class="vr-title">總覽</h1>
+          <p class="vr-subtitle">查看商店狀態、商品統計與合約資訊</p>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="error" class="vr-alert">{{ error }}</div>
+    <div v-if="loading" class="vr-empty">載入中...</div>
 
     <template v-else-if="vendor">
-      <div class="grid-4 kpis">
-        <div class="card kpi">
-          <div class="kpi-label">商品總數</div>
-          <div class="kpi-value">{{ counts.all }}</div>
+      <div class="vr-kpis">
+        <div class="vr-card">
+          <div class="vr-kpi-label">商品總數</div>
+          <div class="vr-kpi-value">{{ counts.all }}</div>
           <RouterLink to="/vendor/products" class="kpi-link">前往管理</RouterLink>
         </div>
-        <div class="card kpi">
-          <div class="kpi-label">已上架商品數</div>
-          <div class="kpi-value kpi-ok">{{ counts.ACTIVE }}</div>
+        <div class="vr-card">
+          <div class="vr-kpi-label">已上架商品數</div>
+          <div class="vr-kpi-value" style="color: var(--vr-up)">{{ counts.ACTIVE }}</div>
           <RouterLink to="/vendor/products" class="kpi-link">前往管理</RouterLink>
         </div>
-        <div class="card kpi">
-          <div class="kpi-label">待上架商品數</div>
-          <div class="kpi-value kpi-warn">{{ counts.DRAFT }}</div>
+        <div class="vr-card">
+          <div class="vr-kpi-label">待上架商品數</div>
+          <div class="vr-kpi-value" style="color: #eab308">{{ counts.DRAFT }}</div>
           <RouterLink to="/vendor/products" class="kpi-link">前往管理</RouterLink>
         </div>
-        <div class="card kpi">
-          <div class="kpi-label">低庫存商品數</div>
-          <div class="kpi-value" :class="{ 'kpi-danger': counts.low > 0 }">{{ counts.low }}</div>
+        <div class="vr-card">
+          <div class="vr-kpi-label">低庫存商品數</div>
+          <div class="vr-kpi-value" :class="{ danger: counts.low > 0 }">{{ counts.low }}</div>
           <RouterLink to="/vendor/products" class="kpi-link">前往管理</RouterLink>
         </div>
       </div>
 
-      <div class="grid-2">
-        <div class="card">
+      <div class="vr-grid-2">
+        <div class="vr-card">
           <h3>商店目前狀態</h3>
           <div class="status-line">
-            <span :class="['badge', contractValid ? 'badge-success' : 'badge-danger']">
+            <span :class="['vr-badge', contractValid ? 'vr-badge-active' : 'vr-badge-danger']">
               {{ statusLabel(vendor.status) }}
             </span>
             <span class="status-text" :class="{ danger: !contractValid }">{{ storeStatusText }}</span>
           </div>
-          <div class="info-grid">
-            <div class="info-row"><span class="muted">廠商名稱</span><b>{{ vendor.vendorName }}</b></div>
-            <div class="info-row"><span class="muted">Email</span><b>{{ vendor.email }}</b></div>
-            <div class="info-row"><span class="muted">啟用時間</span><b>{{ formatDate(vendor.activatedAt) }}</b></div>
+          <div class="vr-info-grid">
+            <div class="vr-info-row"><span class="vr-label">廠商名稱</span><span class="vr-val">{{ vendor.vendorName }}</span></div>
+            <div class="vr-info-row"><span class="vr-label">Email</span><span class="vr-val">{{ vendor.email }}</span></div>
+            <div class="vr-info-row"><span class="vr-label">啟用時間</span><span class="vr-val">{{ formatDate(vendor.activatedAt) }}</span></div>
           </div>
         </div>
 
-        <div class="card">
+        <div class="vr-card">
           <h3>合約到期資訊</h3>
-          <div class="info-grid">
-            <div class="info-row"><span class="muted">合約狀態</span><b>{{ contractValid ? '合約有效' : '合約已到期' }}</b></div>
-            <div class="info-row"><span class="muted">合約到期時間</span><b>{{ formatDate(vendor.contractExpiresAt) }}</b></div>
-            <div class="info-row">
-              <span class="muted">剩餘合約天數</span>
-              <b :class="{ danger: !contractValid }">{{ remainingDays }} 天</b>
+          <div class="vr-info-grid">
+            <div class="vr-info-row"><span class="vr-label">合約狀態</span><span class="vr-val">{{ contractValid ? '合約有效' : '合約已到期' }}</span></div>
+            <div class="vr-info-row"><span class="vr-label">合約到期時間</span><span class="vr-val">{{ formatDate(vendor.contractExpiresAt) }}</span></div>
+            <div class="vr-info-row">
+              <span class="vr-label">剩餘合約天數</span>
+              <span class="vr-val" :class="{ danger: !contractValid }">{{ remainingDays }} 天</span>
             </div>
           </div>
-          <div class="meter">
-            <div class="meter-bar" :class="{ danger: !contractValid }" :style="{ width: contractValid ? '100%' : '12%' }"></div>
+          <div class="vr-meter" style="margin-top: 18px">
+            <div class="vr-meter-bar" :class="{ danger: !contractValid }" :style="{ width: contractValid ? '100%' : '12%' }"></div>
           </div>
         </div>
       </div>
 
-      <div class="card">
-        <div class="card-head">
-          <h3>近期商品庫存狀況</h3>
+      <div class="vr-card">
+        <div class="vr-card-head">
+          <h3 class="vr-card-title">近期商品庫存狀況</h3>
           <RouterLink to="/vendor/products" class="kpi-link">前往商品管理 →</RouterLink>
         </div>
-        <div v-if="lowProducts.length === 0" class="empty">目前沒有低於庫存警戒線的商品</div>
-        <div v-else class="table-wrap">
-          <table class="data-table">
+        <div v-if="lowProducts.length === 0" class="vr-empty">目前沒有低於庫存警戒線的商品</div>
+        <div v-else>
+          <table class="vr-table">
             <thead>
               <tr>
                 <th>商品</th>
@@ -158,8 +168,8 @@ onMounted(load)
                 <td>{{ categoryLabel(p.categoryType) }}</td>
                 <td :class="{ 'low-cell': totalStock(p) <= 5 }">{{ totalStock(p) }}</td>
                 <td>
-                  <span v-if="totalStock(p) === 0" class="badge badge-danger">缺貨</span>
-                  <span v-else class="badge badge-warning">低庫存</span>
+                  <span v-if="totalStock(p) === 0" class="vr-badge vr-badge-danger">缺貨</span>
+                  <span v-else class="vr-badge vr-badge-warning">低庫存</span>
                 </td>
               </tr>
             </tbody>
@@ -171,39 +181,9 @@ onMounted(load)
 </template>
 
 <style scoped>
-.grid-4 {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-  margin-bottom: 16px;
-}
-.grid-2 {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  margin-bottom: 16px;
-}
-.kpi-label {
-  font-size: 13px;
-  color: var(--c-text-light);
-}
-.kpi-value {
-  font-size: 28px;
-  font-weight: 800;
-  margin: 6px 0;
-}
-.kpi-ok {
-  color: var(--c-success);
-}
-.kpi-warn {
-  color: #eab308;
-}
-.kpi-danger {
-  color: var(--c-danger);
-}
 .kpi-link {
   font-size: 13px;
-  color: var(--c-primary);
+  color: var(--vr-brown);
   text-decoration: none;
 }
 .kpi-link:hover {
@@ -211,6 +191,9 @@ onMounted(load)
 }
 h3 {
   margin-bottom: 14px;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--vr-brown-dk);
 }
 .status-line {
   display: flex;
@@ -221,51 +204,17 @@ h3 {
 .status-text {
   font-size: 14px;
   font-weight: 700;
+  color: var(--vr-ink);
 }
 .status-text.danger {
-  color: var(--c-danger);
-}
-.info-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.info-row {
-  display: flex;
-  justify-content: space-between;
-  font-size: 14px;
-}
-.info-row b.danger {
-  color: var(--c-danger);
-}
-.meter {
-  height: 8px;
-  background: var(--c-border);
-  border-radius: 99px;
-  margin-top: 18px;
-  overflow: hidden;
-}
-.meter-bar {
-  height: 100%;
-  background: var(--c-success);
-  border-radius: 99px;
-}
-.meter-bar.danger {
-  background: var(--c-danger);
-}
-.card-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  color: var(--vr-down);
 }
 .low-cell {
-  color: var(--c-danger);
+  color: var(--vr-down);
   font-weight: 700;
 }
-@media (max-width: 900px) {
-  .grid-4,
-  .grid-2 {
-    grid-template-columns: 1fr 1fr;
-  }
+.vr-badge-warning {
+  background: #fef3c7;
+  color: #92400e;
 }
 </style>

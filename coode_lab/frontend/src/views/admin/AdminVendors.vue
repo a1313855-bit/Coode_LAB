@@ -153,19 +153,24 @@ onMounted(load)
 </script>
 
 <template>
-  <div class="admin-content">
-    <div class="page-header flex-between">
-      <div>
-        <h1>廠商管理</h1>
-        <p>管理合作廠商</p>
+  <div class="vendor-report">
+    <div class="vr-banner">
+      <div class="vr-banner-inner">
+        <div>
+          <div class="vr-eyebrow">ADMIN</div>
+          <h1 class="vr-title">廠商管理</h1>
+          <p class="vr-subtitle">管理合作廠商</p>
+        </div>
+        <div class="vr-banner-controls">
+          <button class="vr-btn vr-btn-primary" @click="openCreate">+ 新增廠商</button>
+        </div>
       </div>
-      <button class="btn btn-success" @click="openCreate">+ 新增廠商</button>
     </div>
 
-    <div class="card filter-bar">
-      <div class="search-wrap">
-        <input v-model="keyword" class="search-input" placeholder="搜尋廠商名稱 / Email" @keyup.enter="applySearch" />
-        <button v-if="keyword" type="button" class="clear-keyword" aria-label="清空搜尋文字" @click="clearKeyword">×</button>
+    <div class="vr-filter-bar">
+      <div class="vr-search-wrap">
+        <input v-model="keyword" placeholder="搜尋廠商名稱 / Email" @keyup.enter="applySearch" />
+        <button v-if="keyword" type="button" class="vr-clear-keyword" aria-label="清空搜尋文字" @click="clearKeyword">×</button>
       </div>
       <select v-model="status">
         <option value="">全部狀態</option>
@@ -173,81 +178,79 @@ onMounted(load)
         <option value="SUSPENDED">已停權</option>
         <option value="INACTIVE">未啟用</option>
       </select>
-      <button class="btn btn-primary" @click="applySearch">搜尋</button>
+      <button class="vr-btn vr-btn-primary" @click="applySearch">搜尋</button>
     </div>
 
-    <div v-if="error" class="alert alert-error">{{ error }}</div>
-    <div v-if="loading" class="empty">載入中...</div>
-    <div v-else class="card">
-      <div class="table-wrap">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>廠商名稱</th>
-              <th>Email</th>
-              <th>狀態</th>
-              <th>合約啟用</th>
-              <th>合約到期</th>
-              <th>操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="v in vendors" :key="v.vendorId">
-              <td>{{ v.vendorId }}</td>
-              <td>{{ v.vendorName }}</td>
-              <td>{{ v.email }}</td>
-              <td><span :class="['badge', statusBadgeClass(v.status)]">{{ statusLabel(v.status) }}</span></td>
-              <td>{{ formatDate(v.activatedAt) }}</td>
-              <td>{{ formatDate(v.contractExpiresAt) }}</td>
-              <td>
-                <div class="flex">
-                  <button class="btn btn-sm" @click="openEdit(v)">編輯</button>
-                  <button v-if="v.status !== 'ACTIVE'" class="btn btn-sm btn-success" @click="activate(v)">啟用</button>
-                  <button v-if="v.status === 'SUSPENDED'" class="btn btn-sm" @click="reactivate(v)">恢復</button>
-                  <button v-if="v.status === 'ACTIVE'" class="btn btn-sm btn-danger" @click="suspend(v)">停權</button>
-                  <button v-if="v.status === 'ACTIVE'" class="btn btn-sm" @click="renewContract(v)">續約</button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+    <div v-if="error" class="vr-alert">{{ error }}</div>
+    <div v-if="loading" class="vr-empty">載入中...</div>
+    <div v-else class="vr-card">
+      <table class="vr-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>廠商名稱</th>
+            <th>Email</th>
+            <th>狀態</th>
+            <th>合約啟用</th>
+            <th>合約到期</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="v in vendors" :key="v.vendorId">
+            <td>{{ v.vendorId }}</td>
+            <td>{{ v.vendorName }}</td>
+            <td>{{ v.email }}</td>
+            <td><span :class="['vr-badge', statusBadgeClass(v.status)]">{{ statusLabel(v.status) }}</span></td>
+            <td>{{ formatDate(v.activatedAt) }}</td>
+            <td>{{ formatDate(v.contractExpiresAt) }}</td>
+            <td>
+              <div style="display: flex; gap: 6px; flex-wrap: wrap">
+                <button class="vr-btn vr-btn-sm vr-btn-outline" @click="openEdit(v)">編輯</button>
+                <button v-if="v.status !== 'ACTIVE'" class="vr-btn vr-btn-sm vr-btn-success" @click="activate(v)">啟用</button>
+                <button v-if="v.status === 'SUSPENDED'" class="vr-btn vr-btn-sm vr-btn-outline" @click="reactivate(v)">恢復</button>
+                <button v-if="v.status === 'ACTIVE'" class="vr-btn vr-btn-sm vr-btn-danger" @click="suspend(v)">停權</button>
+                <button v-if="v.status === 'ACTIVE'" class="vr-btn vr-btn-sm vr-btn-outline" @click="renewContract(v)">續約</button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
     <AppPagination :page="page" :total-pages="totalPages" @change="changePage" />
 
-    <div v-if="showForm" class="modal-mask">
-      <div class="modal">
+    <div v-if="showForm" class="vr-modal-mask">
+      <div class="vr-modal">
         <h3>{{ editing ? '編輯廠商' : '新增廠商' }}</h3>
-        <div class="form-field"><label>廠商名稱</label><input v-model="form.vendorName" /></div>
-        <div class="form-field"><label>Email</label><input v-model="form.email" /></div>
-        <div v-if="!editing" class="form-field"><label>密碼</label><input v-model="form.password" type="password" /></div>
-        <div v-if="editing" class="form-field"><label>重設密碼（留空不修改）</label><input v-model="form.newPassword" type="password" placeholder="輸入新密碼" /></div>
-        <div class="flex">
-          <button class="btn btn-primary" @click="save">儲存</button>
-          <button class="btn" @click="showForm = false">取消</button>
+        <div class="vr-form-field"><label>廠商名稱</label><input v-model="form.vendorName" /></div>
+        <div class="vr-form-field"><label>Email</label><input v-model="form.email" /></div>
+        <div v-if="!editing" class="vr-form-field"><label>密碼</label><input v-model="form.password" type="password" /></div>
+        <div v-if="editing" class="vr-form-field"><label>重設密碼（留空不修改）</label><input v-model="form.newPassword" type="password" placeholder="輸入新密碼" /></div>
+        <div class="vr-modal-actions">
+          <button class="vr-btn vr-btn-outline" @click="showForm = false">取消</button>
+          <button class="vr-btn vr-btn-primary" @click="save">儲存</button>
         </div>
       </div>
     </div>
 
-    <div v-if="showContract" class="modal-mask">
-      <div class="modal">
+    <div v-if="showContract" class="vr-modal-mask">
+      <div class="vr-modal">
         <h3>啟用廠商「{{ contractVendor.vendorName }}」</h3>
-        <div class="form-field"><label>合約到期日</label><input v-model="contractDate" type="date" /></div>
-        <div class="flex">
-          <button class="btn btn-primary" @click="confirmActivate">確認啟用</button>
-          <button class="btn" @click="showContract = false">取消</button>
+        <div class="vr-form-field"><label>合約到期日</label><input v-model="contractDate" type="date" /></div>
+        <div class="vr-modal-actions">
+          <button class="vr-btn vr-btn-outline" @click="showContract = false">取消</button>
+          <button class="vr-btn vr-btn-primary" @click="confirmActivate">確認啟用</button>
         </div>
       </div>
     </div>
 
-    <div v-if="showRenew" class="modal-mask">
-      <div class="modal">
+    <div v-if="showRenew" class="vr-modal-mask">
+      <div class="vr-modal">
         <h3>續約廠商「{{ renewVendor.vendorName }}」</h3>
-        <div class="form-field"><label>續約到期日</label><input v-model="renewDate" type="date" /></div>
-        <div class="flex">
-          <button class="btn btn-primary" @click="confirmRenew">確認續約</button>
-          <button class="btn" @click="showRenew = false">取消</button>
+        <div class="vr-form-field"><label>續約到期日</label><input v-model="renewDate" type="date" /></div>
+        <div class="vr-modal-actions">
+          <button class="vr-btn vr-btn-outline" @click="showRenew = false">取消</button>
+          <button class="vr-btn vr-btn-primary" @click="confirmRenew">確認續約</button>
         </div>
       </div>
     </div>
@@ -255,72 +258,4 @@ onMounted(load)
 </template>
 
 <style scoped>
-.filter-bar {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  flex-wrap: wrap;
-  margin-bottom: 16px;
-}
-.search-wrap {
-  position: relative;
-  flex: 1;
-  min-width: 200px;
-}
-.search-input {
-  width: 100%;
-  padding-right: 32px !important;
-}
-.clear-keyword {
-  position: absolute;
-  right: 8px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 20px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  border-radius: 50%;
-  background: #d3cfc9;
-  color: #fff;
-  font-size: 14px;
-  line-height: 1;
-  padding: 0;
-  cursor: pointer;
-}
-.clear-keyword:hover {
-  background: var(--ink);
-}
-.filter-bar input {
-  padding: 8px 10px;
-  border: 1px solid var(--c-border);
-  border-radius: 8px;
-  min-width: 180px;
-}
-.filter-bar select {
-  padding: 8px;
-  border: 1px solid var(--c-border);
-  border-radius: 8px;
-}
-.modal-mask {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 100;
-}
-.modal {
-  background: #fff;
-  border-radius: var(--radius);
-  padding: 24px;
-  width: 420px;
-  max-width: 90vw;
-}
-.modal h3 {
-  margin-bottom: 16px;
-}
 </style>

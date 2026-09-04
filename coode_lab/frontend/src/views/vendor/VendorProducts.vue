@@ -1,6 +1,6 @@
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
-import { productApi } from '../../api'
+import { productApi, uploadApi } from '../../api'
 import { currentVendorId } from '../../composables/auth'
 import { formatMoney, statusBadgeClass, statusLabel, categoryLabel, productStatusLabel } from '../../utils/format'
 import AppPagination from '../../components/AppPagination.vue'
@@ -95,6 +95,34 @@ function addVariantRow() {
 
 function removeVariantRow(i) {
   form.value.variants.splice(i, 1)
+}
+
+async function onFormImage(e, field) {
+  const file = e.target.files && e.target.files[0]
+  if (!file) return
+  try {
+    const res = await uploadApi.upload(file)
+    if (res && res.url) form.value[field] = res.url
+    else error.value = '圖片上傳失敗'
+  } catch (err) {
+    error.value = '圖片上傳失敗：' + err.message
+  } finally {
+    e.target.value = ''
+  }
+}
+
+async function onVariantImage(e, i, field) {
+  const file = e.target.files && e.target.files[0]
+  if (!file) return
+  try {
+    const res = await uploadApi.upload(file)
+    if (res && res.url) form.value.variants[i][field] = res.url
+    else error.value = '圖片上傳失敗'
+  } catch (err) {
+    error.value = '圖片上傳失敗：' + err.message
+  } finally {
+    e.target.value = ''
+  }
 }
 
 async function load() {
@@ -380,28 +408,34 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="admin-content">
-    <div class="tabs" role="tablist">
+  <div class="vendor-report">
+    <div class="vr-banner">
+      <div class="vr-banner-inner">
+        <div>
+          <div class="vr-eyebrow">VENDOR</div>
+          <h1 class="vr-title">商品管理</h1>
+          <p class="vr-subtitle">{{ activeTab === 'low' ? '低庫存（庫存 ≤ 5）；缺貨（庫存 = 0）' : '管理商品、規格（顏色×尺寸）庫存與販售狀態' }}</p>
+        </div>
+        <div class="vr-banner-controls">
+          <button class="vr-btn vr-btn-primary" @click="openCreate">＋ 新增商品</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="vr-tabs" role="tablist">
       <button
         v-for="t in tabs"
         :key="t.key"
-        class="tab"
+        class="vr-tab"
         :class="{ active: activeTab === t.key }"
         @click="changeTab(t.key)"
       >
         {{ t.label }}
-        <span class="tab-count">{{ counts[t.key === 'all' ? 'all' : (t.key === 'low' ? 'low' : t.status)] }}</span>
+        <span class="vr-tab-count">{{ counts[t.key === 'all' ? 'all' : (t.key === 'low' ? 'low' : t.status)] }}</span>
       </button>
     </div>
 
-    <div class="page-header">
-      <p class="subtitle">
-        {{ activeTab === 'low' ? '商品底下有任一規格庫存 ≤ 5 即顯示（含缺貨商品）' : '管理商品、規格（顏色×尺寸）庫存與販售狀態' }}
-      </p>
-      <button class="btn btn-primary" @click="openCreate">＋ 新增商品</button>
-    </div>
-
-    <div v-if="showingFilters" class="card filter-bar">
+    <div v-if="showingFilters" class="vr-filter-bar">
       <input v-model="filters.keyword" placeholder="搜尋商品名稱" @keyup.enter="applySearch" />
       <select v-model="filters.categoryType">
         <option value="">全部分類</option>
@@ -435,205 +469,265 @@ onMounted(() => {
         <option value="DRAFT">待上架</option>
         <option value="INACTIVE">下架</option>
       </select>
-      <button class="btn btn-sm btn-primary" @click="applySearch">搜尋</button>
+      <button class="vr-btn vr-btn-sm vr-btn-primary" @click="applySearch">搜尋</button>
       <span class="spacer"></span>
-      <button class="btn btn-sm" :disabled="selected.length === 0" @click="batch(true)">批次上架</button>
-      <button class="btn btn-sm" :disabled="selected.length === 0" @click="batch(false)">批次下架</button>
+      <button class="vr-btn vr-btn-sm vr-btn-outline" :disabled="selected.length === 0" @click="batch(true)">批次上架</button>
+      <button class="vr-btn vr-btn-sm vr-btn-outline" :disabled="selected.length === 0" @click="batch(false)">批次下架</button>
     </div>
 
-    <div v-if="error" class="alert alert-error">{{ error }}</div>
-    <div v-if="loading" class="empty">載入中...</div>
+    <div v-if="error" class="vr-alert">{{ error }}</div>
+    <div v-if="loading" class="vr-empty">載入中...</div>
 
-    <div v-else-if="products.length === 0" class="empty">目前沒有符合條件的商品</div>
-    <div v-else class="card">
-      <div class="table-wrap">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th v-if="showingBatch" width="36">
-                <input type="checkbox" :checked="allSelected" @change="toggleSelectAll" />
-              </th>
-              <th>商品</th>
-              <th>規格數</th>
-              <th>總庫存</th>
-              <th>價格</th>
-              <th>狀態</th>
-              <th>操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            <template v-for="p in products" :key="p.productId">
-              <tr class="product-row">
-                <td v-if="showingBatch">
-                  <input type="checkbox" :checked="selected.includes(p.productId)" @change="toggleSelect(p.productId)" />
-                </td>
-                <td>
-                  <button class="link-expand" @click="toggleExpand(p)">
-                    {{ expandedId === p.productId ? '▾' : '▸' }}
+    <div v-else-if="products.length === 0" class="vr-empty">目前沒有符合條件的商品</div>
+    <div v-else class="vr-card">
+      <table class="vr-table">
+        <thead>
+          <tr>
+            <th v-if="showingBatch" width="36">
+              <input type="checkbox" :checked="allSelected" @change="toggleSelectAll" />
+            </th>
+            <th>商品</th>
+            <th>規格數</th>
+            <th>總庫存</th>
+            <th>價格</th>
+            <th>狀態</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          <template v-for="p in products" :key="p.productId">
+            <tr class="product-row">
+              <td v-if="showingBatch">
+                <input type="checkbox" :checked="selected.includes(p.productId)" @change="toggleSelect(p.productId)" />
+              </td>
+              <td>
+                <button class="link-expand" @click="toggleExpand(p)">
+                  {{ expandedId === p.productId ? '▾' : '▸' }}
+                </button>
+                {{ p.name }}
+                <div style="color: var(--vr-mut); font-size: 12px">{{ statusLabel(p.pattern) }} · {{ categoryLabel(p.categoryType) }}</div>
+              </td>
+              <td>{{ (p.variants || []).length }}（{{ colorCount(p) }} 色）</td>
+              <td :class="{ 'low-cell': totalStock(p) <= 5 }">
+                {{ totalStock(p) }}
+                <span v-if="totalStock(p) === 0" class="vr-badge vr-badge-danger">缺貨</span>
+                <span v-else-if="totalStock(p) <= 5" class="vr-badge vr-badge-warning">低庫存</span>
+              </td>
+              <td>{{ formatMoney(p.price) }}</td>
+              <td>
+                <span v-if="p.status === 'ACTIVE'" class="vr-badge vr-badge-active">{{ productStatusLabel(p.status) }}</span>
+                <span v-else-if="p.status === 'DRAFT'" class="vr-badge vr-badge-pending">{{ productStatusLabel(p.status) }}</span>
+                <span v-else class="vr-badge vr-badge-inactive">{{ productStatusLabel(p.status) }}</span>
+              </td>
+              <td>
+                <div style="display: flex; gap: 10px">
+                  <button class="vr-btn vr-btn-sm vr-btn-outline" @click="openEdit(p)">編輯</button>
+                  <button v-if="activeTab !== 'low'" class="vr-btn vr-btn-sm vr-btn-outline" @click="toggleStatus(p)">
+                    {{ statusButtonLabel(activeTab, p) }}
                   </button>
-                  {{ p.name }}
-                  <div class="muted small">{{ statusLabel(p.pattern) }} · {{ categoryLabel(p.categoryType) }}</div>
-                </td>
-                <td>{{ (p.variants || []).length }}（{{ colorCount(p) }} 色）</td>
-                <td :class="{ 'low-cell': totalStock(p) <= 5 }">
-                  {{ totalStock(p) }}
-                  <span v-if="totalStock(p) === 0" class="badge badge-danger">缺貨</span>
-                  <span v-else-if="totalStock(p) <= 5" class="badge badge-warning">低庫存</span>
-                </td>
-                <td>{{ formatMoney(p.price) }}</td>
-                <td><span :class="['badge', statusBadgeClass(p.status)]">{{ productStatusLabel(p.status) }}</span></td>
-                <td>
-                  <div class="flex">
-                    <button class="btn btn-sm" @click="openEdit(p)">編輯</button>
-                    <button v-if="activeTab !== 'low'" class="btn btn-sm" @click="toggleStatus(p)">
-                      {{ statusButtonLabel(activeTab, p) }}
-                    </button>
-                    <button
-                      v-if="activeTab !== 'low' && p.status === 'INACTIVE'"
-                      class="btn btn-sm"
-                      @click="setToDraft(p)"
-                    >
-                      待上架
-                    </button>
-                  </div>
-                </td>
-              </tr>
+                  <button
+                    v-if="activeTab !== 'low' && p.status === 'INACTIVE'"
+                    class="vr-btn vr-btn-sm vr-btn-outline"
+                    @click="setToDraft(p)"
+                  >
+                    待上架
+                  </button>
+                </div>
+              </td>
+            </tr>
 
-              <!-- 規格明細列 -->
-              <tr v-if="expandedId === p.productId" class="variant-row">
-                <td :colspan="showingBatch ? 7 : 6">
-                  <table class="variant-table">
-                    <thead>
-                      <tr>
-                        <th>顏色</th>
-                        <th>尺寸</th>
-                        <th>庫存</th>
-                        <th>規格狀態</th>
-                        <th>操作</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr v-for="v in p.variants || []" :key="v.variantId">
-                        <td>{{ v.color }}</td>
-                        <td>{{ v.size }}</td>
-                        <td :class="{ 'low-cell': Number(v.stock) <= 5 }">
-                          {{ v.stock }}
-                          <span v-if="Number(v.stock) === 0" class="badge badge-danger">缺貨</span>
-                          <span v-else-if="Number(v.stock) <= 5" class="badge badge-warning">低庫存</span>
-                        </td>
-                        <td>
-                          <span :class="['badge', statusBadgeClass(v.status)]">{{ statusLabel(v.status) }}</span>
-                        </td>
-                        <td>
-                          <div class="flex">
-                            <button class="btn btn-sm" @click="updateVariantStock(v)">修改庫存</button>
-                            <button class="btn btn-sm" @click="toggleVariantStatus(v)">
-                              {{ v.status === 'ACTIVE' ? '停售' : '恢復' }}
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                      <!-- 整批停售 / 恢復 -->
-                      <tr class="batch-suspend-row">
-                        <td colspan="5">
-                          <div class="batch-suspend">
-                            <span class="bs-label">整批停售 / 恢復：</span>
-                            <select
-                              :value="(batchScope[p.productId] || {}).color || ''"
-                              @change="setBatchColor(p, $event.target.value)"
-                            >
-                              <option value="">所有顏色</option>
-                              <option v-for="c in [...new Set((p.variants || []).map((v) => v.color))]" :key="c" :value="c">{{ c }}</option>
-                            </select>
-                            <select
-                              :value="(batchScope[p.productId] || {}).size || ''"
-                              @change="setBatchSize(p, $event.target.value)"
-                            >
-                              <option value="">所有尺寸</option>
-                              <option v-for="s in [...new Set((p.variants || []).map((v) => v.size))]" :key="s" :value="s">{{ s }}</option>
-                            </select>
-                            <button
-                              class="btn btn-sm btn-danger-v"
-                              @click="batchVariantStatus(p, 'INACTIVE')"
-                            >
-                              停售
-                            </button>
-                            <button
-                              class="btn btn-sm"
-                              @click="batchVariantStatus(p, 'ACTIVE')"
-                            >
-                              恢復
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </td>
-              </tr>
-            </template>
-          </tbody>
-        </table>
-      </div>
+            <!-- 規格明細列 -->
+            <tr v-if="expandedId === p.productId" class="variant-row">
+              <td :colspan="showingBatch ? 7 : 6">
+                <table class="variant-table">
+                  <thead>
+                    <tr>
+                      <th>顏色</th>
+                      <th>尺寸</th>
+                      <th>庫存</th>
+                      <th>規格狀態</th>
+                      <th>操作</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="v in p.variants || []" :key="v.variantId">
+                      <td>{{ v.color }}</td>
+                      <td>{{ v.size }}</td>
+                      <td :class="{ 'low-cell': Number(v.stock) <= 5 }">
+                        {{ v.stock }}
+                        <span v-if="Number(v.stock) === 0" class="vr-badge vr-badge-danger">缺貨</span>
+                        <span v-else-if="Number(v.stock) <= 5" class="vr-badge vr-badge-warning">低庫存</span>
+                      </td>
+                      <td>
+                        <span v-if="v.status === 'ACTIVE'" class="vr-badge vr-badge-active">{{ statusLabel(v.status) }}</span>
+                        <span v-else class="vr-badge vr-badge-inactive">{{ statusLabel(v.status) }}</span>
+                      </td>
+                      <td>
+                        <div style="display: flex; gap: 10px">
+                          <button class="vr-btn vr-btn-sm vr-btn-outline" @click="updateVariantStock(v)">修改庫存</button>
+                          <button class="vr-btn vr-btn-sm vr-btn-outline" @click="toggleVariantStatus(v)">
+                            {{ v.status === 'ACTIVE' ? '停售' : '恢復' }}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                    <!-- 整批停售 / 恢復 -->
+                    <tr class="batch-suspend-row">
+                      <td colspan="5">
+                        <div class="batch-suspend">
+                          <span class="bs-label">整批停售 / 恢復：</span>
+                          <select
+                            :value="(batchScope[p.productId] || {}).color || ''"
+                            @change="setBatchColor(p, $event.target.value)"
+                          >
+                            <option value="">所有顏色</option>
+                            <option v-for="c in [...new Set((p.variants || []).map((v) => v.color))]" :key="c" :value="c">{{ c }}</option>
+                          </select>
+                          <select
+                            :value="(batchScope[p.productId] || {}).size || ''"
+                            @change="setBatchSize(p, $event.target.value)"
+                          >
+                            <option value="">所有尺寸</option>
+                            <option v-for="s in [...new Set((p.variants || []).map((v) => v.size))]" :key="s" :value="s">{{ s }}</option>
+                          </select>
+                          <button
+                            class="vr-btn vr-btn-sm vr-btn-danger"
+                            @click="batchVariantStatus(p, 'INACTIVE')"
+                          >
+                            停售
+                          </button>
+                          <button
+                            class="vr-btn vr-btn-sm vr-btn-outline"
+                            @click="batchVariantStatus(p, 'ACTIVE')"
+                          >
+                            恢復
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </td>
+            </tr>
+          </template>
+        </tbody>
+      </table>
     </div>
 
     <AppPagination :page="page" :total-pages="totalPages" @change="changePage" />
 
     <!-- 商品表單 -->
-    <div v-if="showForm" class="modal-mask">
-      <div class="modal product-form">
+    <div v-if="showForm" class="vr-modal-mask">
+      <div class="vr-modal product-form">
         <h3>{{ editing ? '編輯商品' : '新增商品' }}</h3>
-        <div class="form-row">
-          <div class="form-field"><label>商品名稱</label><input v-model="form.name" /></div>
-          <div class="form-field"><label>男裝 / 女裝 / 童裝</label>
+        <div class="vr-form-row">
+          <div class="vr-form-field"><label>商品名稱</label><input v-model="form.name" /></div>
+          <div class="vr-form-field"><label>男裝 / 女裝 / 童裝</label>
             <select v-model="form.pattern">
               <option v-for="g in patternOptions" :key="g.value" :value="g.value">{{ g.label }}</option>
             </select>
           </div>
         </div>
-        <div class="form-row">
-          <div class="form-field"><label>商品分類</label>
+        <div class="vr-form-row">
+          <div class="vr-form-field"><label>商品分類</label>
             <select v-model="form.categoryType">
               <option v-for="c in categoryOptions" :key="c.value" :value="c.value">{{ c.label }}</option>
             </select>
           </div>
-          <div class="form-field"><label>Style</label><input v-model="form.style" /></div>
+          <div class="vr-form-field"><label>Style</label><input v-model="form.style" /></div>
         </div>
-        <div class="form-row">
-          <div class="form-field"><label>價格</label><input v-model.number="form.price" type="number" /></div>
+        <div class="vr-form-row">
+          <div class="vr-form-field"><label>價格</label><input v-model.number="form.price" type="number" /></div>
         </div>
-        <div class="form-field"><label>商品說明</label><textarea v-model="form.description" rows="2"></textarea></div>
-        <div class="form-row">
-          <div class="form-field"><label>封面圖</label><input v-model="form.imagesJpg" placeholder="imagesJpg" /></div>
-          <div class="form-field"><label>Outfit 圖</label><input v-model="form.outfitPng" placeholder="outfitPng" /></div>
+        <div class="vr-form-field"><label>商品說明</label><textarea v-model="form.description" rows="2"></textarea></div>
+        <div class="vr-form-row">
+          <div class="vr-form-field">
+            <label>封面圖</label>
+            <div class="img-picker">
+              <template v-if="!form.imagesJpg">
+                <label class="img-btn">
+                  <input type="file" accept="image/*" @change="onFormImage($event, 'imagesJpg')" />
+                  選擇檔案
+                </label>
+              </template>
+              <div v-else class="img-prev">
+                <img :src="form.imagesJpg" alt="封面圖" />
+                <button type="button" class="img-remove" @click="form.imagesJpg = ''">移除</button>
+              </div>
+            </div>
+          </div>
+          <div class="vr-form-field">
+            <label>Outfit 圖</label>
+            <div class="img-picker">
+              <template v-if="!form.outfitPng">
+                <label class="img-btn">
+                  <input type="file" accept="image/*" @change="onFormImage($event, 'outfitPng')" />
+                  選擇檔案
+                </label>
+              </template>
+              <div v-else class="img-prev">
+                <img :src="form.outfitPng" alt="Outfit 圖" />
+                <button type="button" class="img-remove" @click="form.outfitPng = ''">移除</button>
+              </div>
+            </div>
+          </div>
         </div>
+        <div v-if="error && showForm" class="vr-alert form-error">{{ error }}</div>
 
         <!-- 規格編輯 -->
         <div class="variant-editor">
           <div class="ve-head">
             <label>規格（顏色 × 尺寸 × 庫存）</label>
-            <button class="btn btn-sm" @click="addVariantRow">＋ 新增規格</button>
+            <button class="vr-btn vr-btn-sm vr-btn-outline" @click="addVariantRow">＋ 新增規格</button>
           </div>
           <div
             v-for="(v, i) in form.variants"
             :key="i"
-            class="ve-row"
+            class="ve-block"
           >
-            <input v-model="v.color" placeholder="顏色（如 白）" class="ve-input ve-color" />
-            <input v-model="v.size" placeholder="尺寸（如 M）" class="ve-input ve-size" />
-            <input v-model.number="v.stock" type="number" placeholder="庫存" class="ve-stock" />
-            <input v-model="v.imagesJpg" placeholder="商品圖" class="ve-img" />
-            <input v-model="v.outfitPng" placeholder="試穿圖" class="ve-img" />
-            <button class="btn btn-sm danger-btn" :disabled="form.variants.length <= 1" @click="removeVariantRow(i)">
-              刪除
-            </button>
+            <div class="ve-row">
+              <input v-model="v.color" placeholder="顏色（如 白）" class="ve-input ve-color" />
+              <input v-model="v.size" placeholder="尺寸（如 M）" class="ve-input ve-size" />
+              <input v-model.number="v.stock" type="number" placeholder="庫存" class="ve-stock" />
+              <button class="vr-btn vr-btn-sm vr-btn-danger" :disabled="form.variants.length <= 1" @click="removeVariantRow(i)">
+                刪除
+              </button>
+            </div>
+            <div class="ve-imgs">
+              <div class="img-picker img-picker-sm">
+                <span class="img-label">商品圖</span>
+                <template v-if="!v.imagesJpg">
+                  <label class="img-btn">
+                    <input type="file" accept="image/*" @change="onVariantImage($event, i, 'imagesJpg')" />
+                    選擇
+                  </label>
+                </template>
+                <div v-else class="img-prev">
+                  <img :src="v.imagesJpg" alt="商品圖" />
+                  <button type="button" class="img-remove" @click="v.imagesJpg = ''">移除</button>
+                </div>
+              </div>
+              <div class="img-picker img-picker-sm">
+                <span class="img-label">試穿圖</span>
+                <template v-if="!v.outfitPng">
+                  <label class="img-btn">
+                    <input type="file" accept="image/*" @change="onVariantImage($event, i, 'outfitPng')" />
+                    選擇
+                  </label>
+                </template>
+                <div v-else class="img-prev">
+                  <img :src="v.outfitPng" alt="試穿圖" />
+                  <button type="button" class="img-remove" @click="v.outfitPng = ''">移除</button>
+                </div>
+              </div>
+            </div>
           </div>
-          <div class="ve-hint muted small">請新增至少一種以上的(顏色, 尺寸)規格</div>
+          <div class="ve-hint" style="color: var(--vr-mut); font-size: 12px; margin-top: 2px">請新增至少一種以上的(顏色, 尺寸)規格</div>
         </div>
 
-        <div class="flex">
-          <button class="btn btn-primary" @click="submit">儲存</button>
-          <button class="btn" @click="showForm = false">取消</button>
+        <div class="vr-modal-actions">
+          <button class="vr-btn vr-btn-primary" @click="submit">儲存</button>
+          <button class="vr-btn vr-btn-outline" @click="showForm = false">取消</button>
         </div>
       </div>
     </div>
@@ -641,59 +735,6 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.tabs {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-bottom: 16px;
-}
-.tab {
-  padding: 9px 16px;
-  border: 1px solid var(--c-border);
-  border-radius: var(--radius);
-  background: #fff;
-  cursor: pointer;
-  font-size: 14px;
-  color: var(--c-text-light);
-}
-.tab.active {
-  border-color: transparent;
-  background: #db2777;
-  color: #fff;
-  font-weight: 700;
-}
-.tab-count {
-  display: inline-block;
-  margin-left: 6px;
-  font-size: 12px;
-  opacity: 0.8;
-}
-.page-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 14px;
-}
-.subtitle {
-  color: var(--c-text-light);
-  font-size: 14px;
-}
-.filter-bar {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  flex-wrap: wrap;
-  margin-bottom: 16px;
-}
-.filter-bar input,
-.filter-bar select {
-  padding: 8px 10px;
-  border: 1px solid var(--c-border);
-  border-radius: 8px;
-}
-.filter-bar input {
-  min-width: 130px;
-}
 .price {
   width: 90px;
 }
@@ -704,39 +745,39 @@ onMounted(() => {
   flex: 1;
 }
 .low-cell {
-  color: var(--c-danger);
+  color: var(--vr-down);
   font-weight: 700;
 }
 .link-expand {
   border: none;
   background: none;
   font-size: 13px;
-  color: var(--c-text-light);
+  color: var(--vr-mut);
   cursor: pointer;
   margin-right: 2px;
 }
-.product-row:hover {
-  background: #fdf9fb;
+.product-row:hover td {
+  background: var(--vr-cream);
 }
 .variant-table {
   width: 100%;
   border-collapse: collapse;
-  background: #fafafa;
+  background: var(--vr-cream);
   font-size: 13px;
 }
 .variant-table th {
   text-align: left;
   padding: 6px 10px;
   font-size: 12px;
-  color: var(--c-text-light);
-  border-bottom: 1px solid var(--c-border);
+  color: var(--vr-mut);
+  border-bottom: 1px solid var(--vr-line);
 }
 .variant-table td {
   padding: 6px 10px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--vr-line);
 }
 .batch-suspend-row td {
-  background: #fdf9fb;
+  background: var(--vr-cream);
 }
 .batch-suspend {
   display: flex;
@@ -746,50 +787,24 @@ onMounted(() => {
 }
 .bs-label {
   font-size: 12px;
-  color: var(--c-text-light);
+  color: var(--vr-mut);
   white-space: nowrap;
 }
 .batch-suspend select {
   padding: 5px 8px;
-  border: 1px solid var(--c-border);
+  border: 1px solid var(--vr-line);
   border-radius: 6px;
   font-size: 13px;
-  background: #fff;
-}
-.btn-danger-v {
-  border-color: #fecaca;
-  color: #dc2626;
-}
-.btn-danger-v:hover {
-  background: #fef2f2;
-  color: #dc2626;
-}
-.modal-mask {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 100;
-}
-.modal {
-  background: #fff;
-  border-radius: var(--radius);
-  padding: 24px;
-  max-width: 90vw;
+  background: var(--vr-paper);
 }
 .product-form {
   width: 720px;
   max-height: 90vh;
   overflow-y: auto;
 }
-.modal h3 {
-  margin-bottom: 16px;
-}
 .variant-editor {
-  border: 1px solid var(--c-border);
-  border-radius: var(--radius);
+  border: 1px solid var(--vr-line);
+  border-radius: 10px;
   padding: 12px;
   margin: 12px 0;
   display: flex;
@@ -806,26 +821,91 @@ onMounted(() => {
   font-size: 13px;
   font-weight: 600;
 }
+.ve-block {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  border: 1px dashed var(--vr-line);
+  border-radius: 8px;
+  background: var(--vr-paper);
+}
 .ve-row {
   display: grid;
-  grid-template-columns: 64px 64px 64px 1fr 1fr auto;
-  gap: 6px;
+  grid-template-columns: 96px 96px 96px auto;
+  gap: 8px;
+  align-items: center;
 }
 .ve-row input {
   padding: 7px 8px;
-  border: 1px solid var(--c-border);
+  border: 1px solid var(--vr-line);
   border-radius: 6px;
   font-size: 13px;
+  min-width: 0;
+}
+.ve-imgs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.img-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.img-picker-sm .img-label {
+  font-size: 12px;
+  color: var(--vr-mut);
+}
+.img-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 7px 14px;
+  border: 1px dashed var(--vr-line);
+  border-radius: 8px;
+  background: var(--vr-cream);
+  color: var(--vr-mut);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.img-btn:hover {
+  border-color: var(--vr-brn);
+  color: var(--vr-brn);
+}
+.img-btn input[type='file'] {
+  display: none;
+}
+.img-prev {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.img-prev img {
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid var(--vr-line);
+  background: var(--vr-cream);
+}
+.img-remove {
+  border: none;
+  background: none;
+  color: var(--vr-down);
+  font-size: 12px;
+  cursor: pointer;
+  padding: 2px 0;
+}
+.form-error {
+  margin-bottom: 8px;
 }
 .ve-hint {
   margin-top: 2px;
 }
-.danger-btn {
-  border-color: #fecaca;
-  color: #dc2626;
-}
-.danger-btn:hover {
-  background: #fef2f2;
-  color: #dc2626;
+.vr-badge-warning {
+  background: #fef3c7;
+  color: #92400e;
 }
 </style>
