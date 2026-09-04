@@ -157,19 +157,19 @@ public class TestFakeData implements CommandLineRunner {
         // ║  Product（商品主表只存共用資訊）║
         // ╚═══════════╝
         Product product1 = new Product();
-        product1.setName("白色純棉T恤");
+        product1.setName("純棉T恤");
         product1.setPattern("MEN");
         product1.setCategoryType("TOP");
         product1.setStyle("休閒");
         product1.setPrice(new BigDecimal("299.00"));
         product1.setDescription("100%純棉，透氣舒適");
-        product1.setImagesJpg("/images/products/T-shirt.png");
+        product1.setImagesJpg("/images/products/T-shirt/T-shirt.png");
         product1.setOutfitPng("t_shirt_white.png");
         product1.setStatus("ACTIVE");
         product1.setVendor(vendor1);
 
         Product product2 = new Product();
-        product2.setName("黑色牛仔外套");
+        product2.setName("牛仔外套");
         product2.setPattern("MEN");
         product2.setCategoryType("OUTER");
         product2.setStyle("街頭");
@@ -181,7 +181,7 @@ public class TestFakeData implements CommandLineRunner {
         product2.setVendor(vendor1);
 
         Product product3 = new Product();
-        product3.setName("卡其色工裝長褲");
+        product3.setName("工裝長褲");
         product3.setPattern("WOMEN");
         product3.setCategoryType("BOTTOM");
         product3.setStyle("機能");
@@ -193,7 +193,7 @@ public class TestFakeData implements CommandLineRunner {
         product3.setVendor(vendor2);
 
         Product product4 = new Product();
-        product4.setName("黑色連身洋裝");
+        product4.setName("連身洋裝");
         product4.setPattern("WOMEN");
         product4.setCategoryType("DRESS");
         product4.setStyle("韓系");
@@ -205,7 +205,7 @@ public class TestFakeData implements CommandLineRunner {
         product4.setVendor(vendor2);
 
         Product product5 = new Product();
-        product5.setName("灰色針織毛衣");
+        product5.setName("針織毛衣");
         product5.setPattern("WOMEN");
         product5.setCategoryType("TOP");
         product5.setStyle("韓系");
@@ -217,7 +217,7 @@ public class TestFakeData implements CommandLineRunner {
         product5.setVendor(vendor1);
 
         Product product6 = new Product();
-        product6.setName("藍色格紋襯衫");
+        product6.setName("格紋襯衫");
         product6.setPattern("MEN");
         product6.setCategoryType("TOP");
         product6.setStyle("正式");
@@ -229,7 +229,7 @@ public class TestFakeData implements CommandLineRunner {
         product6.setVendor(vendor1);
 
         Product product7 = new Product();
-        product7.setName("黑色棒球帽");
+        product7.setName("棒球帽");
         product7.setPattern("KIDS");
         product7.setCategoryType("HEADWEAR");
         product7.setStyle("街頭");
@@ -245,12 +245,12 @@ public class TestFakeData implements CommandLineRunner {
         // ╔═══════════╗
         // ║  ProductVariant（規格表：顏色 × 尺寸 × 庫存 × 圖片 × 販售狀態）║
         // ╚═══════════╝
-        ProductVariant v1a = variant(product1, "白", "M", 48, "/images/products/T-shirt.png", "t_shirt_white_m.png", "ACTIVE");
-        ProductVariant v1b = variant(product1, "白", "L", 28, "/images/products/T-shirt.png", "t_shirt_white_l.png", "ACTIVE");
-        ProductVariant v1c = variant(product1, "黑", "M", 20, "/images/products/T-shirt.png", "t_shirt_black_m.png", "ACTIVE");
-        ProductVariant v1d = variant(product1, "黑", "L", 12, "/images/products/T-shirt.png", "t_shirt_black_l.png", "ACTIVE");
+        ProductVariant v1a = variant(product1, "白", "M", 48, "/images/products/T-shirt/T-shirt-white.png", "t_shirt_white_m.png", "ACTIVE");
+        ProductVariant v1b = variant(product1, "白", "L", 28, "/images/products/T-shirt/T-shirt-white.png", "t_shirt_white_l.png", "ACTIVE");
+        ProductVariant v1c = variant(product1, "黑", "M", 20, "/images/products/T-shirt/T-shirt-black.png", "t_shirt_black_m.png", "ACTIVE");
+        ProductVariant v1d = variant(product1, "黑", "L", 12, "/images/products/T-shirt/T-shirt-black.png", "t_shirt_black_l.png", "ACTIVE");
         // 示範「黑色停售、白色照賣」：黑/L 設為停售
-        ProductVariant v1e = variant(product1, "黑", "XL", 0, "/images/products/T-shirt.png", "t_shirt_black_xl.png", "INACTIVE");
+        ProductVariant v1e = variant(product1, "黑", "XL", 0, "/images/products/T-shirt/T-shirt-black.png", "t_shirt_black_xl.png", "INACTIVE");
 
         ProductVariant v2a = variant(product2, "黑", "M", 16, "/images/products/Denim jacket.png", "denim_jacket_black_m.png", "ACTIVE");
         ProductVariant v2b = variant(product2, "黑", "L", 8, "/images/products/Denim jacket.png", "denim_jacket_black_l.png", "ACTIVE");

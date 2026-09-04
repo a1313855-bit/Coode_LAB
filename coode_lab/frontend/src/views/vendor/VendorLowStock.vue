@@ -24,7 +24,7 @@ const lowRows = computed(() => {
         rows.push({
           productId: p.productId,
           productName: p.name,
-          image: p.imagesJpg,
+          image: v.imagesJpg || p.imagesJpg,
           variantId: v.variantId,
           color: v.color,
           size: v.size,
@@ -118,7 +118,7 @@ onMounted(load)
         <tbody>
           <tr v-for="(r, i) in lowRows" :key="i">
             <td>{{ r.productName }}</td>
-            <td><img class="vr-thumb" :src="productImageUrl(r.image)" alt="" /></td>
+            <td><img class="vr-thumb" :src="r.image" alt="" /></td>
             <td>{{ r.color }}</td>
             <td>{{ r.size }}</td>
             <td :class="{ 'low-cell': r.stock <= 5 }">{{ r.stock }}</td>

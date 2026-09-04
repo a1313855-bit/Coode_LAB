@@ -14,6 +14,11 @@ const cartCount = ref(0)
 const activeNav = ref('home')
 
 const userMenuOpen = ref(false)
+const searchOpen = ref(false)
+const searchKeyword = ref('')
+const selectedPatterns = ref([])
+const selectedCategories = ref([])
+const selectedStyles = ref([])
 function onDocClick() {
   if (userMenuOpen.value) userMenuOpen.value = false
 }
@@ -62,6 +67,50 @@ function go(path) {
   menuOpen.value = false
   userMenuOpen.value = false
   router.push(path)
+}
+
+function toggleSearch() {
+  searchOpen.value = !searchOpen.value
+  if (searchOpen.value) {
+    searchKeyword.value = ''
+    selectedPatterns.value = []
+    selectedCategories.value = []
+    selectedStyles.value = []
+  }
+}
+
+function togglePattern(v) {
+  const i = selectedPatterns.value.indexOf(v)
+  if (i === -1) selectedPatterns.value.push(v)
+  else selectedPatterns.value.splice(i, 1)
+}
+function toggleCategory(v) {
+  const i = selectedCategories.value.indexOf(v)
+  if (i === -1) selectedCategories.value.push(v)
+  else selectedCategories.value.splice(i, 1)
+}
+function toggleStyle(v) {
+  const i = selectedStyles.value.indexOf(v)
+  if (i === -1) selectedStyles.value.push(v)
+  else selectedStyles.value.splice(i, 1)
+}
+
+function clearSearch() {
+  searchKeyword.value = ''
+  selectedPatterns.value = []
+  selectedCategories.value = []
+  selectedStyles.value = []
+}
+
+function submitSearch() {
+  const q = searchKeyword.value.trim()
+  const query = {}
+  if (q) query.keyword = q
+  if (selectedPatterns.value.length) query.pattern = selectedPatterns.value.join(',')
+  if (selectedCategories.value.length) query.categoryType = selectedCategories.value.join(',')
+  if (selectedStyles.value.length) query.style = selectedStyles.value.join(',')
+  searchOpen.value = false
+  router.push({ path: '/store/products', query })
 }
 
 async function refreshCartCount() {
@@ -186,6 +235,13 @@ watch(
             <RouterLink to="/register" class="link-small">註冊</RouterLink>
           </template>
 
+          <button class="search-btn" aria-label="搜尋" @click="toggleSearch">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8">
+              <circle cx="11" cy="11" r="8" />
+              <path d="M21 21l-4.35-4.35" />
+            </svg>
+          </button>
+
           <RouterLink to="/cart" class="cart-link" aria-label="購物車">
             <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6">
               <path d="M5 8h14l-1.2 11a2 2 0 0 1-2 1.8H8.2a2 2 0 0 1-2-1.8L5 8z" />
@@ -202,6 +258,7 @@ watch(
           <RouterLink to="/store" class="mobile-link" @click="goHome">首頁</RouterLink>
           <RouterLink to="/store?new=1" class="mobile-link" @click="menuOpen = false">精選</RouterLink>
           <RouterLink to="/store?go=products" class="mobile-link" @click="menuOpen = false">商品</RouterLink>
+          <button class="mobile-link mobile-action" @click="menuOpen = false; toggleSearch()">搜尋</button>
           <RouterLink to="/cart" class="mobile-link" @click="menuOpen = false">購物車</RouterLink>
           <template v-if="auth && auth.role === 'user'">
             <RouterLink to="/orders" class="mobile-link" @click="menuOpen = false">我的訂單</RouterLink>
@@ -222,6 +279,68 @@ watch(
         </nav>
       </transition>
     </header>
+
+    <!-- 搜尋彈窗 -->
+    <transition name="fade">
+      <div v-if="searchOpen" class="search-overlay" @click.self="searchOpen = false">
+        <div class="search-panel">
+          <div class="search-top">
+            <svg class="search-top-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8">
+              <circle cx="11" cy="11" r="8" />
+              <path d="M21 21l-4.35-4.35" />
+            </svg>
+            <input
+              v-model="searchKeyword"
+              class="search-input"
+              placeholder="搜尋商品名稱..."
+              autofocus
+              @keyup.enter="submitSearch"
+            />
+            <button v-if="searchKeyword || selectedPatterns.length || selectedCategories.length || selectedStyles.length" class="search-clear" @click="clearSearch">清除全部</button>
+            <button class="search-close-x" @click="searchOpen = false">✕</button>
+          </div>
+
+          <div class="search-tags-section">
+            <div class="search-tags-group">
+              <p class="search-tags-label">款式</p>
+              <div class="search-tags">
+                <button class="search-tag" :class="{ 'is-active': selectedPatterns.includes('MEN') }" @click="togglePattern('MEN')">男裝</button>
+                <button class="search-tag" :class="{ 'is-active': selectedPatterns.includes('WOMEN') }" @click="togglePattern('WOMEN')">女裝</button>
+                <button class="search-tag" :class="{ 'is-active': selectedPatterns.includes('KIDS') }" @click="togglePattern('KIDS')">童裝</button>
+              </div>
+            </div>
+            <div class="search-tags-group">
+              <p class="search-tags-label">類別</p>
+              <div class="search-tags">
+                <button class="search-tag" :class="{ 'is-active': selectedCategories.includes('TOP') }" @click="toggleCategory('TOP')">上衣</button>
+                <button class="search-tag" :class="{ 'is-active': selectedCategories.includes('OUTER') }" @click="toggleCategory('OUTER')">外套</button>
+                <button class="search-tag" :class="{ 'is-active': selectedCategories.includes('BOTTOM') }" @click="toggleCategory('BOTTOM')">下著</button>
+                <button class="search-tag" :class="{ 'is-active': selectedCategories.includes('DRESS') }" @click="toggleCategory('DRESS')">洋裝</button>
+                <button class="search-tag" :class="{ 'is-active': selectedCategories.includes('HEADWEAR') }" @click="toggleCategory('HEADWEAR')">頭飾</button>
+              </div>
+            </div>
+            <div class="search-tags-group">
+              <p class="search-tags-label">風格</p>
+              <div class="search-tags">
+                <button class="search-tag" :class="{ 'is-active': selectedStyles.includes('日系') }" @click="toggleStyle('日系')">日系</button>
+                <button class="search-tag" :class="{ 'is-active': selectedStyles.includes('韓系') }" @click="toggleStyle('韓系')">韓系</button>
+                <button class="search-tag" :class="{ 'is-active': selectedStyles.includes('休閒') }" @click="toggleStyle('休閒')">休閒</button>
+                <button class="search-tag" :class="{ 'is-active': selectedStyles.includes('機能') }" @click="toggleStyle('機能')">機能</button>
+                <button class="search-tag" :class="{ 'is-active': selectedStyles.includes('正式') }" @click="toggleStyle('正式')">正式</button>
+              </div>
+            </div>
+          </div>
+
+          <button class="search-submit" @click="submitSearch">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8" />
+              <path d="M21 21l-4.35-4.35" />
+            </svg>
+            搜尋
+          </button>
+        </div>
+      </div>
+    </transition>
 
     <main class="store-main">
       <RouterView />
@@ -462,6 +581,170 @@ watch(
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* ── 搜尋按鈕 ── */
+.search-btn {
+  background: none;
+  border: none;
+  color: #3c3a37;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  transition: color 0.15s;
+}
+.search-btn:hover {
+  color: var(--ink);
+}
+
+/* ── 搜尋彈窗 ── */
+.search-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  justify-content: center;
+  padding-top: 80px;
+}
+.search-panel {
+  width: 100%;
+  max-width: 560px;
+  background: #fff;
+  border-radius: 0 0 12px 12px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.18);
+  padding: 24px 28px 28px;
+  max-height: calc(100vh - 80px);
+  overflow-y: auto;
+}
+.search-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid #e8e4dd;
+  padding-bottom: 14px;
+  margin-bottom: 20px;
+}
+.search-top-icon {
+  flex-shrink: 0;
+  color: #b0a89e;
+}
+.search-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 15px;
+  color: var(--ink);
+  background: transparent;
+}
+.search-input::placeholder {
+  color: #b0a89e;
+}
+.search-clear {
+  background: none;
+  border: none;
+  color: #b0a89e;
+  font-size: 15px;
+  cursor: pointer;
+  padding: 2px 4px;
+  line-height: 1;
+  transition: color 0.15s;
+}
+.search-clear:hover {
+  color: var(--ink);
+}
+.search-close-x {
+  background: none;
+  border: none;
+  color: #b0a89e;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 2px 4px;
+  line-height: 1;
+  margin-left: 4px;
+  transition: color 0.15s;
+}
+.search-close-x:hover {
+  color: var(--ink);
+}
+
+/* ── 標籤區 ── */
+.search-tags-section {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.search-tags-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.search-tags-label {
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  color: #b0a89e;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin: 0;
+}
+.search-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.search-tag {
+  border: 1px solid #d5cfc5;
+  border-radius: 999px;
+  padding: 6px 16px;
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  color: #3c3a37;
+  background: #fff;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.search-tag:hover {
+  background: var(--ink);
+  color: #fff;
+  border-color: var(--ink);
+}
+.search-tag.is-active {
+  background: var(--ink);
+  color: #fff;
+  border-color: var(--ink);
+}
+
+/* ── 搜尋按鈕 ── */
+.search-submit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 24px;
+  padding: 12px 0;
+  border: none;
+  border-radius: 8px;
+  background: var(--ink);
+  color: #fff;
+  font-size: 14px;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.search-submit:hover {
+  opacity: 0.85;
+}
+
+/* ── 搜尋彈窗動畫 ── */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 .burger {
   display: none;

@@ -2,6 +2,9 @@ package com.example.demo.exception;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.data.jpa.domain.Specification;
 
@@ -41,14 +44,24 @@ public class ProductSpecification {
 
         return (root, query, criteriaBuilder) -> {
 
-            // 沒有選分類，就不限制
             if (categoryType == null || categoryType.isBlank()) {
                 return criteriaBuilder.conjunction();
             }
 
-            return criteriaBuilder.equal(
-                    root.get("categoryType"),
-                    categoryType);
+            List<String> values = Arrays.stream(categoryType.split(","))
+                    .map(String::trim)
+                    .filter(s -> !s.isBlank())
+                    .collect(Collectors.toList());
+
+            if (values.isEmpty()) {
+                return criteriaBuilder.conjunction();
+            }
+
+            if (values.size() == 1) {
+                return criteriaBuilder.equal(root.get("categoryType"), values.get(0));
+            }
+
+            return root.get("categoryType").in(values);
         };
     }
 
@@ -65,9 +78,20 @@ public class ProductSpecification {
                 return criteriaBuilder.conjunction();
             }
 
-            return criteriaBuilder.equal(
-                    root.get("style"),
-                    style);
+            List<String> values = Arrays.stream(style.split(","))
+                    .map(String::trim)
+                    .filter(s -> !s.isBlank())
+                    .collect(Collectors.toList());
+
+            if (values.isEmpty()) {
+                return criteriaBuilder.conjunction();
+            }
+
+            if (values.size() == 1) {
+                return criteriaBuilder.equal(root.get("style"), values.get(0));
+            }
+
+            return root.get("style").in(values);
         };
     }
 
@@ -134,9 +158,20 @@ public class ProductSpecification {
                 return criteriaBuilder.conjunction();
             }
 
-            return criteriaBuilder.equal(
-                    root.get("pattern"),
-                    pattern);
+            List<String> values = Arrays.stream(pattern.split(","))
+                    .map(String::trim)
+                    .filter(s -> !s.isBlank())
+                    .collect(Collectors.toList());
+
+            if (values.isEmpty()) {
+                return criteriaBuilder.conjunction();
+            }
+
+            if (values.size() == 1) {
+                return criteriaBuilder.equal(root.get("pattern"), values.get(0));
+            }
+
+            return root.get("pattern").in(values);
         };
     }
 

@@ -14,7 +14,6 @@ const totalPages = ref(1)
 const loading = ref(false)
 const error = ref('')
 
-// 依 query 決定模式：?mode=new（近1個月新上架）或 ?mode=all（全部商品）
 const mode = ref('all')
 
 async function load() {
@@ -22,7 +21,14 @@ async function load() {
   error.value = ''
   try {
     const params = { page: page.value }
+    const q = route.query
     if (mode.value === 'new') params.sort = 'newest'
+    if (q.keyword) params.keyword = q.keyword
+    if (q.categoryType) params.categoryType = q.categoryType
+    if (q.style) params.style = q.style
+    if (q.pattern) params.pattern = q.pattern
+    if (q.color) params.color = q.color
+    if (q.size) params.size = q.size
     const res = await productApi.filter(params)
     products.value = res.content || []
     page.value = res.page || 0
@@ -40,9 +46,9 @@ function changePage(p) {
 }
 
 watch(
-  () => route.query.mode,
-  (m) => {
-    mode.value = m === 'new' ? 'new' : 'all'
+  () => route.fullPath,
+  () => {
+    mode.value = route.query.mode === 'new' ? 'new' : 'all'
     page.value = 0
     load()
   },
