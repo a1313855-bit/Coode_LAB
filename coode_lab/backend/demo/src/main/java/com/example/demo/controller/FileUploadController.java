@@ -114,10 +114,8 @@ public class FileUploadController {
 
     private String sanitizeColor(String color) {
         if (color == null) return "";
-        String clean = color.trim()
-                .replace("\\", "")
-                .replace("/", "")
-                .replace("..", "");
+        String clean = color.trim().toLowerCase()
+                .replaceAll("[^a-z0-9\\-]", "");
         if (clean.length() > 50) {
             clean = clean.substring(0, 50);
         }

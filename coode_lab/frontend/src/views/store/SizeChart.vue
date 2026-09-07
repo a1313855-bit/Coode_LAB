@@ -2,7 +2,7 @@
   <div class="size-chart-page">
     <h1>尺寸對照</h1>
     <div class="chart-wrap">
-      <img src="/images/Size Chart.png" alt="尺寸對照表" class="chart-img" />
+      <img src="/images/SizeChart.png" alt="尺寸對照表" class="chart-img" />
     </div>
   </div>
 </template>
