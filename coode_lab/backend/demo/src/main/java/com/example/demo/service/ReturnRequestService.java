@@ -6,6 +6,7 @@ import java.util.Optional;
 
 // ========== Project ==========
 import com.example.demo.dto.returnrequest.CreateReturnRequestRequest;
+import com.example.demo.dto.returnrequest.AdminCreateTestReturnRequest;
 import com.example.demo.dto.returnrequest.UpdateReturnRequestStatusRequest;
 import com.example.demo.dto.returnrequest.ReturnRequestDTO;
 import com.example.demo.dto.returnitem.CreateReturnItemRequest;
@@ -22,6 +23,9 @@ public interface ReturnRequestService {
 
     // 建立退貨或換貨申請
     ReturnRequestDTO createReturnRequest(Long userId, Long orderId, CreateReturnRequestRequest request);
+
+    // 管理員新增測試退換貨（直接指定訂單明細，不做會員/狀態資格限制）
+    ReturnRequestDTO createTestReturnRequest(AdminCreateTestReturnRequest request);
 
     // 查詢單一申請
     Optional<ReturnRequestDTO> findById(Long returnRequestId);

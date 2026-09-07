@@ -260,9 +260,12 @@ async function fetchSavedOutfitsData() {
 // 把 OutfitResponse.items（含規格資訊）加上試穿縮圖，供下方 Carousel 預覽
 function augmentOutfit(outfit) {
   const mini = []
+  let hasUnavailable = false
   for (const it of outfit.items || []) {
     const slot = it.slotType
     if (!SLOT_LABELS[slot]) continue
+    // 與商品頁同步：目前可上架清單內沒有此商品 = 未上架
+    if (productMap.value.size > 0 && !productMap.value.has(it.productId)) hasUnavailable = true
     const png = it.variantOutfitPng || (it.productName && productMap.value.get(it.productId)?.outfitPng) || null
     mini.push({
       slot,
@@ -270,7 +273,7 @@ function augmentOutfit(outfit) {
       png,
     })
   }
-  return { ...outfit, mini }
+  return { ...outfit, mini, hasUnavailable }
 }
 
 // 點收藏卡 → 載入整套穿搭
@@ -278,6 +281,14 @@ async function loadOutfit(outfit) {
   try {
     const data = await loadOutfitData(outfit.outfitId)
     const loaded = { ...data.look }
+    // 未上架判定：與商品頁同步（非目前可上架清單內的商品視為未上架）
+    for (const slot of SLOTS) {
+      const p = loaded[slot]
+      if (!p) continue
+      p.unavailable =
+        p.status !== 'ACTIVE' ||
+        (productMap.value.size > 0 && !productMap.value.has(p.productId))
+    }
     // 互斥規則：洋裝存在時，脫下上衣與下身（防舊資料不一致）
     if (loaded.FULL_BODY) {
       loaded.UPPER_BODY = null
@@ -480,11 +491,16 @@ onBeforeUnmount(() => {
   gap: 20px;
   align-items: start;
 }
+/* ── 左側商品欄：固定高度，只有內層商品 grid 捲動 ── */
 .browser-col {
   position: sticky;
   top: 76px;
   height: calc(100vh - 100px);
+  max-height: calc(100vh - 100px);
   min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 .canvas-col {
   min-width: 0;
@@ -536,6 +552,8 @@ onBeforeUnmount(() => {
   .browser-col {
     position: static;
     height: auto;
+    max-height: none;
+    overflow: visible;
   }
   .panel-col {
     position: static;

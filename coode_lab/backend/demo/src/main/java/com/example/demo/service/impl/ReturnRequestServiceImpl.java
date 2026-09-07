@@ -19,6 +19,7 @@ import com.example.demo.model.Vendor;
 import com.example.demo.model.Product;
 import com.example.demo.model.ProductVariant;
 import com.example.demo.dto.returnrequest.CreateReturnRequestRequest;
+import com.example.demo.dto.returnrequest.AdminCreateTestReturnRequest;
 import com.example.demo.dto.returnrequest.UpdateReturnRequestStatusRequest;
 import com.example.demo.dto.returnrequest.ReturnRequestDTO;
 import com.example.demo.dto.returnitem.CreateReturnItemRequest;
@@ -132,6 +133,47 @@ public class ReturnRequestServiceImpl implements ReturnRequestService {
         returnRequest.setVendor(vendor);
 
         // 一併建立退換貨明細（包含退貨照片）
+        ReturnItem returnItem = new ReturnItem();
+        returnItem.setStatus("PENDING_REVIEW");
+        returnItem.setApprovalQuantity(request.getRequestQuantity());
+        returnItem.setRejectedQuantity(0);
+        returnItem.setRefund(BigDecimal.ZERO);
+        returnItem.setPicture(request.getPicture());
+        returnItem.setReason(request.getReason());
+        returnItem.setOrderItem(orderItem);
+        returnItem.setReturnRequest(returnRequest);
+        returnRequest.setReturnItem(returnItem);
+
+        ReturnRequest saved = returnRequestRepository.save(returnRequest);
+        return toReturnRequestDTO(saved);
+    }
+
+    // 管理員新增測試退換貨：直接指定訂單明細，不做會員/狀態資格限制
+    @Override
+    public ReturnRequestDTO createTestReturnRequest(AdminCreateTestReturnRequest request) {
+        // 1. 找訂單明細
+        OrderItem orderItem = orderItemRepository.findById(request.getOrderItemId())
+                .orElseThrow(() -> new IllegalArgumentException("找不到訂單明細 ID:" + request.getOrderItemId()));
+
+        Order order = orderItem.getOrder();
+        if (order == null) {
+            throw new IllegalArgumentException("此訂單明細無法識別所屬訂單");
+        }
+        Vendor vendor = orderItem.getVendor();
+        if (vendor == null) {
+            throw new IllegalArgumentException("此訂單明細無法識別所屬廠商");
+        }
+
+        // 2. 建立退換貨申請主表
+        ReturnRequest returnRequest = new ReturnRequest();
+        returnRequest.setStatus("PENDING");
+        returnRequest.setRequestType(request.getRequestType());
+        returnRequest.setReturnRequestQuantity(request.getRequestQuantity());
+        returnRequest.setOrder(order);
+        returnRequest.setUser(order.getUser());
+        returnRequest.setVendor(vendor);
+
+        // 3. 一併建立退換貨明細
         ReturnItem returnItem = new ReturnItem();
         returnItem.setStatus("PENDING_REVIEW");
         returnItem.setApprovalQuantity(request.getRequestQuantity());
@@ -351,7 +393,8 @@ public class ReturnRequestServiceImpl implements ReturnRequestService {
     private static final String TYPE_RETURN = "RETURN";
     private static final String TYPE_EXCHANGE = "EXCHANGE";
 
-    // 廠商審核申請：PENDING_REVIEW → APPROVED / REJECTED
+    // 廠商審核申請：PENDING_REVIEW → AWAITING_SHIPBACK（通過）／ REJECTED（拒絕）
+    // （審核通過即進入「待寄回」，不再需要廠商多按一次推進）
     @Override
     @Transactional
     public ReturnItemDTO vendorReview(Long returnItemId, Long vendorId, String decision) {
@@ -368,7 +411,7 @@ public class ReturnRequestServiceImpl implements ReturnRequestService {
             throw new IllegalArgumentException("此申請尚未處於待審核狀態");
         }
         if (R_APPROVED.equals(decision)) {
-            item.setStatus(R_APPROVED);
+            item.setStatus(R_AWAITING_SHIPBACK);
         } else if (R_REJECTED.equals(decision)) {
             item.setStatus(R_REJECTED);
         } else {
@@ -394,19 +437,15 @@ public class ReturnRequestServiceImpl implements ReturnRequestService {
         String next;
 
         if (R_SHIPPED_BACK.equals(cur)) {
-            next = R_RECEIVED;                       // 確認收件
+            next = R_RECEIVED;                       // 確認收貨
         } else if (R_RECEIVED.equals(cur)) {
             if (TYPE_RETURN.equals(type)) {
                 next = R_REFUNDING;                  // 退貨：開始退款
             } else {
-                next = R_EXCHANGING;                 // 換貨：開始換貨
+                next = R_EXCHANGE_SHIPPED;           // 換貨：直接確認出貨（不再經過換貨中）
             }
         } else if (R_REFUNDING.equals(cur)) {
             next = R_REFUNDED;                       // 退貨：完成退款
-        } else if (R_EXCHANGING.equals(cur)) {
-            next = R_EXCHANGE_SHIPPED;               // 換貨：確認換貨商品出貨
-        } else if (R_APPROVED.equals(cur)) {
-            next = R_AWAITING_SHIPBACK;              // 審核通過後等待會員寄回
         } else {
             throw new IllegalArgumentException("目前狀態無法由廠商推進");
         }

@@ -163,8 +163,8 @@ public class TestFakeData implements CommandLineRunner {
         product1.setStyle("休閒");
         product1.setPrice(new BigDecimal("299.00"));
         product1.setDescription("100%純棉，透氣舒適");
-        product1.setImagesJpg("/images/products/T-shirt/T-shirt.png");
-        product1.setOutfitPng("t_shirt_white.png");
+        product1.setImagesJpg("/images/products/tops/1/white/product.jpg");
+        product1.setOutfitPng("/images/products/tops/1/white/outfit.png");
         product1.setStatus("ACTIVE");
         product1.setVendor(vendor1);
 
@@ -175,20 +175,20 @@ public class TestFakeData implements CommandLineRunner {
         product2.setStyle("街頭");
         product2.setPrice(new BigDecimal("899.00"));
         product2.setDescription("經典牛仔，百搭款式");
-        product2.setImagesJpg("/images/products/Denim jacket.png");
-        product2.setOutfitPng("denim_jacket_black.png");
+        product2.setImagesJpg("/images/products/outerwear/2/blue/product.jpg");
+        product2.setOutfitPng("/images/products/outerwear/2/blue/outfit.png");
         product2.setStatus("ACTIVE");
         product2.setVendor(vendor1);
 
         Product product3 = new Product();
-        product3.setName("工裝長褲");
+        product3.setName("單寧長褲");
         product3.setPattern("WOMEN");
         product3.setCategoryType("BOTTOM");
         product3.setStyle("機能");
         product3.setPrice(new BigDecimal("699.00"));
-        product3.setDescription("多口袋設計，耐磨耐穿");
-        product3.setImagesJpg("/images/products/pants_beige.png");
-        product3.setOutfitPng("cargo_pants_khaki.png");
+        product3.setDescription("經典丹寧布料，百搭耐穿");
+        product3.setImagesJpg("/images/products/pants/3/blue/product.jpg");
+        product3.setOutfitPng("/images/products/pants/3/blue/outfit.png");
         product3.setStatus("ACTIVE");
         product3.setVendor(vendor2);
 
@@ -199,8 +199,8 @@ public class TestFakeData implements CommandLineRunner {
         product4.setStyle("韓系");
         product4.setPrice(new BigDecimal("999.00"));
         product4.setDescription("剪裁俐落，一件即可完成穿搭");
-        product4.setImagesJpg("/images/products/One-piece dress.png");
-        product4.setOutfitPng("dress_black.png");
+        product4.setImagesJpg("/images/products/dresses/4/black/product.jpg");
+        product4.setOutfitPng("/images/products/dresses/4/black/outfit.png");
         product4.setStatus("ACTIVE");
         product4.setVendor(vendor2);
 
@@ -211,9 +211,9 @@ public class TestFakeData implements CommandLineRunner {
         product5.setStyle("韓系");
         product5.setPrice(new BigDecimal("499.00"));
         product5.setDescription("柔軟針織，秋冬必備");
-        product5.setImagesJpg("/images/products/Knitted sweater.png");
-        product5.setOutfitPng("knitwear_gray.png");
-        product5.setStatus("DRAFT");
+        product5.setImagesJpg("/images/products/tops/5/light-blue/product.jpg");
+        product5.setOutfitPng("/images/products/tops/5/light-blue/outfit.png");
+        product5.setStatus("ACTIVE");
         product5.setVendor(vendor1);
 
         Product product6 = new Product();
@@ -223,9 +223,9 @@ public class TestFakeData implements CommandLineRunner {
         product6.setStyle("正式");
         product6.setPrice(new BigDecimal("599.00"));
         product6.setDescription("商務休閒皆宜");
-        product6.setImagesJpg("/images/products/Plaid shirt.png");
-        product6.setOutfitPng("shirt_blue.png");
-        product6.setStatus("INACTIVE");
+        product6.setImagesJpg("/images/products/tops/6/blue/product.jpg");
+        product6.setOutfitPng("/images/products/tops/6/blue/outfit.png");
+        product6.setStatus("ACTIVE");
         product6.setVendor(vendor1);
 
         Product product7 = new Product();
@@ -235,55 +235,152 @@ public class TestFakeData implements CommandLineRunner {
         product7.setStyle("街頭");
         product7.setPrice(new BigDecimal("399.00"));
         product7.setDescription("百搭帽款，男女童皆適");
-        product7.setImagesJpg("/images/products/Baseball cap.png");
-        product7.setOutfitPng("cap_black.png");
+        product7.setImagesJpg("/images/products/headwear/7/black/product.jpg");
+        product7.setOutfitPng("/images/products/headwear/7/black/outfit.png");
         product7.setStatus("ACTIVE");
         product7.setVendor(vendor1);
 
-        productRepository.saveAll(List.of(product1, product2, product3, product4, product5, product6, product7));
+        Product product8 = new Product();
+        product8.setName("深藍針織上衣");
+        product8.setPattern("WOMEN");
+        product8.setCategoryType("TOP");
+        product8.setStyle("韓系");
+        product8.setPrice(new BigDecimal("449.00"));
+        product8.setDescription("深藍色針織，百搭保暖");
+        product8.setImagesJpg("/images/products/tops/8/navy/product.jpg");
+        product8.setOutfitPng("/images/products/tops/8/navy/outfit.png");
+        product8.setStatus("ACTIVE");
+        product8.setVendor(vendor2);
+
+        Product product9 = new Product();
+        product9.setName("綠色長裙");
+        product9.setPattern("WOMEN");
+        product9.setCategoryType("DRESS");
+        product9.setStyle("法式");
+        product9.setPrice(new BigDecimal("1099.00"));
+        product9.setDescription("飄逸綠色長裙，清新優雅");
+        product9.setImagesJpg("/images/products/dresses/9/green/product.jpg");
+        product9.setOutfitPng("/images/products/dresses/9/green/outfit.png");
+        product9.setStatus("ACTIVE");
+        product9.setVendor(vendor2);
+
+        Product product10 = new Product();
+        product10.setName("碎花長裙");
+        product10.setPattern("WOMEN");
+        product10.setCategoryType("DRESS");
+        product10.setStyle("田園");
+        product10.setPrice(new BigDecimal("1299.00"));
+        product10.setDescription("清新碎花，溫柔浪漫");
+        product10.setImagesJpg("/images/products/dresses/10/floral/product.jpg");
+        product10.setOutfitPng("/images/products/dresses/10/floral/outfit.png");
+        product10.setStatus("ACTIVE");
+        product10.setVendor(vendor2);
+
+        Product product11 = new Product();
+        product11.setName("丹寧牛仔長裙");
+        product11.setPattern("WOMEN");
+        product11.setCategoryType("SKIRT");
+        product11.setStyle("丹寧");
+        product11.setPrice(new BigDecimal("899.00"));
+        product11.setDescription("經典丹寧長裙，遮肉修飾身形");
+        product11.setImagesJpg("/images/products/skirts/11/blue/product.jpg");
+        product11.setOutfitPng("/images/products/skirts/11/blue/outfit.png");
+        product11.setStatus("ACTIVE");
+        product11.setVendor(vendor2);
+
+        Product product12 = new Product();
+        product12.setName("丹寧牛仔短裙");
+        product12.setPattern("WOMEN");
+        product12.setCategoryType("SKIRT");
+        product12.setStyle("丹寧");
+        product12.setPrice(new BigDecimal("699.00"));
+        product12.setDescription("青春俏皮，夏日清爽百搭");
+        product12.setImagesJpg("/images/products/skirts/12/blue/product.jpg");
+        product12.setOutfitPng("/images/products/skirts/12/blue/outfit.png");
+        product12.setStatus("ACTIVE");
+        product12.setVendor(vendor2);
+
+        Product product13 = new Product();
+        product13.setName("工裝褲");
+        product13.setPattern("MEN");
+        product13.setCategoryType("BOTTOM");
+        product13.setStyle("工裝");
+        product13.setPrice(new BigDecimal("899.00"));
+        product13.setDescription("機能多口袋，硬挺耐磨");
+        product13.setImagesJpg("/images/products/pants/13/olive/product.jpg");
+        product13.setOutfitPng("/images/products/pants/13/olive/outfit.png");
+        product13.setStatus("ACTIVE");
+        product13.setVendor(vendor1);
+
+        productRepository.saveAll(List.of(product1, product2, product3, product4, product5, product6, product7, product8, product9, product10, product11, product12, product13));
 
         // ╔═══════════╗
         // ║  ProductVariant（規格表：顏色 × 尺寸 × 庫存 × 圖片 × 販售狀態）║
         // ╚═══════════╝
-        ProductVariant v1a = variant(product1, "白", "M", 48, "/images/products/T-shirt/T-shirt-white.png", "t_shirt_white_m.png", "ACTIVE");
-        ProductVariant v1b = variant(product1, "白", "L", 28, "/images/products/T-shirt/T-shirt-white.png", "t_shirt_white_l.png", "ACTIVE");
-        ProductVariant v1c = variant(product1, "黑", "M", 20, "/images/products/T-shirt/T-shirt-black.png", "t_shirt_black_m.png", "ACTIVE");
-        ProductVariant v1d = variant(product1, "黑", "L", 12, "/images/products/T-shirt/T-shirt-black.png", "t_shirt_black_l.png", "ACTIVE");
+        ProductVariant v1a = variant(product1, "白", "M", 48, "/images/products/tops/1/white/product.jpg", "/images/products/tops/1/white/outfit.png", "ACTIVE");
+        ProductVariant v1b = variant(product1, "白", "L", 28, "/images/products/tops/1/white/product.jpg", "/images/products/tops/1/white/outfit.png", "ACTIVE");
+        ProductVariant v1c = variant(product1, "黑", "M", 20, "/images/products/tops/1/black/product.jpg", "/images/products/tops/1/black/outfit.png", "ACTIVE");
+        ProductVariant v1d = variant(product1, "黑", "L", 12, "/images/products/tops/1/black/product.jpg", "/images/products/tops/1/black/outfit.png", "ACTIVE");
         // 示範「黑色停售、白色照賣」：黑/L 設為停售
-        ProductVariant v1e = variant(product1, "黑", "XL", 0, "/images/products/T-shirt/T-shirt-black.png", "t_shirt_black_xl.png", "INACTIVE");
+        ProductVariant v1e = variant(product1, "黑", "XL", 0, "/images/products/tops/1/black/product.jpg", "/images/products/tops/1/black/outfit.png", "INACTIVE");
 
-        ProductVariant v2a = variant(product2, "黑", "M", 16, "/images/products/Denim jacket.png", "denim_jacket_black_m.png", "ACTIVE");
-        ProductVariant v2b = variant(product2, "黑", "L", 8, "/images/products/Denim jacket.png", "denim_jacket_black_l.png", "ACTIVE");
-        ProductVariant v2c = variant(product2, "藍", "M", 6, "/images/products/Denim jacket.png", "denim_jacket_blue_m.png", "ACTIVE");
+        ProductVariant v2a = variant(product2, "藍", "M", 16, "/images/products/outerwear/2/blue/product.jpg", "/images/products/outerwear/2/blue/outfit.png", "ACTIVE");
+        ProductVariant v2b = variant(product2, "藍", "L", 8, "/images/products/outerwear/2/blue/product.jpg", "/images/products/outerwear/2/blue/outfit.png", "ACTIVE");
+        ProductVariant v2c = variant(product2, "藍", "XL", 6, "/images/products/outerwear/2/blue/product.jpg", "/images/products/outerwear/2/blue/outfit.png", "ACTIVE");
 
-        ProductVariant v3a = variant(product3, "卡其", "30", 18, "/images/products/pants_beige.png", "cargo_pants_khaki_30.png", "ACTIVE");
-        ProductVariant v3b = variant(product3, "卡其", "32", 22, "/images/products/pants_beige.png", "cargo_pants_khaki_32.png", "ACTIVE");
-        ProductVariant v3c = variant(product3, "軍綠", "32", 5, "/images/products/pants_beige.png", "cargo_pants_green_32.png", "ACTIVE");
+        ProductVariant v3a = variant(product3, "藍", "30", 18, "/images/products/pants/3/blue/product.jpg", "/images/products/pants/3/blue/outfit.png", "ACTIVE");
+        ProductVariant v3b = variant(product3, "藍", "32", 22, "/images/products/pants/3/blue/product.jpg", "/images/products/pants/3/blue/outfit.png", "ACTIVE");
 
-        ProductVariant v4a = variant(product4, "黑", "S", 15, "/images/products/One-piece dress.png", "dress_black_s.png", "ACTIVE");
-        ProductVariant v4b = variant(product4, "黑", "M", 12, "/images/products/One-piece dress.png", "dress_black_m.png", "ACTIVE");
-        ProductVariant v4c = variant(product4, "白", "M", 9, "/images/products/One-piece dress.png", "dress_white_m.png", "ACTIVE");
+        ProductVariant v4a = variant(product4, "黑", "S", 15, "/images/products/dresses/4/black/product.jpg", "/images/products/dresses/4/black/outfit.png", "ACTIVE");
+        ProductVariant v4b = variant(product4, "黑", "M", 12, "/images/products/dresses/4/black/product.jpg", "/images/products/dresses/4/black/outfit.png", "ACTIVE");
+        ProductVariant v4c = variant(product4, "白", "M", 9, "/images/products/dresses/4/white/product.jpg", "/images/products/dresses/4/white/outfit.png", "ACTIVE");
 
-        ProductVariant v5a = variant(product5, "灰", "S", 2, "/images/products/Knitted sweater.png", "knitwear_gray_s.png", "ACTIVE");
-        ProductVariant v5b = variant(product5, "灰", "M", 4, "/images/products/Knitted sweater.png", "knitwear_gray_m.png", "ACTIVE");
-        ProductVariant v5c = variant(product5, "米白", "M", 10, "/images/products/Knitted sweater.png", "knitwear_cream_m.png", "ACTIVE");
+        ProductVariant v5a = variant(product5, "淺藍", "S", 2, "/images/products/tops/5/light-blue/product.jpg", "/images/products/tops/5/light-blue/outfit.png", "ACTIVE");
+        ProductVariant v5b = variant(product5, "淺藍", "M", 4, "/images/products/tops/5/light-blue/product.jpg", "/images/products/tops/5/light-blue/outfit.png", "ACTIVE");
+        ProductVariant v5c = variant(product5, "淺藍", "L", 10, "/images/products/tops/5/light-blue/product.jpg", "/images/products/tops/5/light-blue/outfit.png", "ACTIVE");
 
-        ProductVariant v6a = variant(product6, "藍", "M", 0, "/images/products/Plaid shirt.png", "shirt_blue_m.png", "ACTIVE");
-        ProductVariant v6b = variant(product6, "藍", "L", 20, "/images/products/Plaid shirt.png", "shirt_blue_l.png", "ACTIVE");
-        ProductVariant v6c = variant(product6, "白", "L", 8, "/images/products/Plaid shirt.png", "shirt_white_l.png", "ACTIVE");
+        ProductVariant v6a = variant(product6, "藍", "M", 0, "/images/products/tops/6/blue/product.jpg", "/images/products/tops/6/blue/outfit.png", "ACTIVE");
+        ProductVariant v6b = variant(product6, "藍", "L", 20, "/images/products/tops/6/blue/product.jpg", "/images/products/tops/6/blue/outfit.png", "ACTIVE");
+        ProductVariant v6c = variant(product6, "黑", "L", 8, "/images/products/tops/6/black/product.jpg", "/images/products/tops/6/black/outfit.png", "ACTIVE");
 
-        ProductVariant v7a = variant(product7, "黑", "F", 25, "/images/products/Baseball cap.png", "cap_black_f.png", "ACTIVE");
-        ProductVariant v7b = variant(product7, "黑", "U", 18, "/images/products/Baseball cap.png", "cap_black_u.png", "ACTIVE");
-        ProductVariant v7c = variant(product7, "白", "U", 30, "/images/products/Baseball cap.png", "cap_white_u.png", "ACTIVE");
+        ProductVariant v7a = variant(product7, "黑", "F", 25, "/images/products/headwear/7/black/product.jpg", "/images/products/headwear/7/black/outfit.png", "ACTIVE");
+        ProductVariant v7b = variant(product7, "黑", "U", 18, "/images/products/headwear/7/black/product.jpg", "/images/products/headwear/7/black/outfit.png", "ACTIVE");
+
+        ProductVariant v8a = variant(product8, "深藍", "S", 6, "/images/products/tops/8/navy/product.jpg", "/images/products/tops/8/navy/outfit.png", "ACTIVE");
+        ProductVariant v8b = variant(product8, "深藍", "M", 12, "/images/products/tops/8/navy/product.jpg", "/images/products/tops/8/navy/outfit.png", "ACTIVE");
+        ProductVariant v8c = variant(product8, "深藍", "L", 8, "/images/products/tops/8/navy/product.jpg", "/images/products/tops/8/navy/outfit.png", "ACTIVE");
+
+        ProductVariant v9a = variant(product9, "綠", "S", 10, "/images/products/dresses/9/green/product.jpg", "/images/products/dresses/9/green/outfit.png", "ACTIVE");
+        ProductVariant v9b = variant(product9, "綠", "M", 8, "/images/products/dresses/9/green/product.jpg", "/images/products/dresses/9/green/outfit.png", "ACTIVE");
+
+        ProductVariant v10a = variant(product10, "碎花", "S", 10, "/images/products/dresses/10/floral/product.jpg", "/images/products/dresses/10/floral/outfit.png", "ACTIVE");
+        ProductVariant v10b = variant(product10, "碎花", "M", 8, "/images/products/dresses/10/floral/product.jpg", "/images/products/dresses/10/floral/outfit.png", "ACTIVE");
+
+        ProductVariant v11a = variant(product11, "藍", "S", 10, "/images/products/skirts/11/blue/product.jpg", "/images/products/skirts/11/blue/outfit.png", "ACTIVE");
+        ProductVariant v11b = variant(product11, "藍", "M", 8, "/images/products/skirts/11/blue/product.jpg", "/images/products/skirts/11/blue/outfit.png", "ACTIVE");
+
+        ProductVariant v12a = variant(product12, "藍", "S", 10, "/images/products/skirts/12/blue/product.jpg", "/images/products/skirts/12/blue/outfit.png", "ACTIVE");
+        ProductVariant v12b = variant(product12, "藍", "M", 8, "/images/products/skirts/12/blue/product.jpg", "/images/products/skirts/12/blue/outfit.png", "ACTIVE");
+
+        ProductVariant v13a = variant(product13, "橄欖綠", "S", 12, "/images/products/pants/13/olive/product.jpg", "/images/products/pants/13/olive/outfit.png", "ACTIVE");
+        ProductVariant v13b = variant(product13, "橄欖綠", "M", 10, "/images/products/pants/13/olive/product.jpg", "/images/products/pants/13/olive/outfit.png", "ACTIVE");
+        ProductVariant v13c = variant(product13, "卡其", "S", 12, "/images/products/pants/13/beige/product.jpg", "/images/products/pants/13/beige/outfit.png", "ACTIVE");
+        ProductVariant v13d = variant(product13, "卡其", "M", 10, "/images/products/pants/13/beige/product.jpg", "/images/products/pants/13/beige/outfit.png", "ACTIVE");
 
         productVariantRepository.saveAll(List.of(
                 v1a, v1b, v1c, v1d, v1e,
                 v2a, v2b, v2c,
-                v3a, v3b, v3c,
+                v3a, v3b,
                 v4a, v4b, v4c,
                 v5a, v5b, v5c,
                 v6a, v6b, v6c,
-                v7a, v7b, v7c));
+                v7a, v7b,
+                v8a, v8b, v8c,
+                v9a, v9b,
+                v10a, v10b,
+                v11a, v11b,
+                v12a, v12b,
+                v13a, v13b, v13c, v13d));
 
         // ╔═══════════╗
         // ║  Cart ║
@@ -471,7 +568,7 @@ public class TestFakeData implements CommandLineRunner {
 
         System.out.println("======================================");
         System.out.println("Test fake data inserted successfully!");
-        System.out.println("Users: 2, Vendors: 2, Admins: 2, Products: 6, Variants: 19,");
+        System.out.println("Users: 2, Vendors: 2, Admins: 2, Products: 13, Variants: 36,");
         System.out.println("Carts: 2, CartItems: 4, Orders: 2, OrderItems: 4,");
         System.out.println("Outfits: 2, OutfitItems: 2, ReturnRequests: 2, ReturnItems: 2");
         System.out.println("======================================");

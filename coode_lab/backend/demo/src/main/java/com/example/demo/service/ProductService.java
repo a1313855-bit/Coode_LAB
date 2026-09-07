@@ -97,6 +97,9 @@ public interface ProductService {
     // 管理員修改商品基本資料（不動規格）
     ProductResponse adminUpdateProduct(Long productId, ProductRequest request);
 
+    // 管理員新增測試商品（廠商固定為「測試」）
+    ProductResponse adminCreateProduct(ProductRequest request);
+
     // 廠商自己的商品搜尋 (固定每頁10筆,page 從 0 開始)
     SelectPartOfData.Result<ProductResponse> vendorSearchProducts(
             int page,

@@ -1,6 +1,6 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { returnRequestApi, returnItemApi } from '../../api'
+import { ref, computed, onMounted, watch } from 'vue'
+import { returnRequestApi, returnItemApi, orderApi, orderItemApi } from '../../api'
 import { formatDate, statusBadgeClass, statusLabel } from '../../utils/format'
 import AppPagination from '../../components/AppPagination.vue'
 
@@ -93,6 +93,92 @@ async function applyAdminStatus() {
 }
 
 onMounted(load)
+
+const showCreateReturn = ref(false)
+const orderOptions = ref([])
+const orderItems = ref([])
+const returnForm = ref({
+  orderId: null,
+  orderItemId: null,
+  requestType: 'RETURN',
+  requestQuantity: 1,
+  reason: '測試退換貨',
+})
+
+async function loadAllOrders() {
+  const list = []
+  let p = 0
+  let total = 1
+  while (p < total) {
+    const res = await orderApi.all(p, '')
+    for (const o of res.content || []) {
+      const owner = (o.user && o.user.name) || o.recipientName || ''
+      list.push({ orderId: o.orderId, label: `#${o.orderId}（${owner}）` })
+    }
+    total = res.totalPages || 1
+    p += 1
+  }
+  return list
+}
+
+async function openCreateReturn() {
+  error.value = ''
+  orderOptions.value = await loadAllOrders()
+  orderItems.value = []
+  returnForm.value = {
+    orderId: null,
+    orderItemId: null,
+    requestType: 'RETURN',
+    requestQuantity: 1,
+    reason: '測試退換貨',
+  }
+  showCreateReturn.value = true
+}
+
+watch(
+  () => returnForm.value.orderId,
+  async (id) => {
+    if (!id) {
+      orderItems.value = []
+      returnForm.value.orderItemId = null
+      return
+    }
+    try {
+      const res = await orderItemApi.byOrder(id, 0)
+      orderItems.value = res.content || []
+    } catch (e) {
+      orderItems.value = []
+      error.value = e.message
+    }
+    returnForm.value.orderItemId = orderItems.value.length ? orderItems.value[0].orderItemId : null
+  },
+)
+
+function itemLabel(it) {
+  const name = (it.variant && it.variant.product && it.variant.product.name) || '-'
+  const spec = it.variant ? `（${it.variant.color} / ${it.variant.size}）` : ''
+  return `${name}${spec} × ${it.productQuantity}`
+}
+
+async function saveCreateReturn() {
+  error.value = ''
+  if (!returnForm.value.orderItemId) {
+    error.value = '請選擇訂單明細'
+    return
+  }
+  try {
+    await returnRequestApi.adminTestCreate({
+      orderItemId: returnForm.value.orderItemId,
+      requestType: returnForm.value.requestType,
+      requestQuantity: Number(returnForm.value.requestQuantity),
+      reason: returnForm.value.reason,
+    })
+    showCreateReturn.value = false
+    await load()
+  } catch (e) {
+    error.value = e.message
+  }
+}
 </script>
 
 <template>
@@ -117,6 +203,10 @@ onMounted(load)
       >
         {{ t.label }}
       </button>
+    </div>
+
+    <div class="return-toolbar">
+      <button class="vr-btn vr-btn-outline" @click="openCreateReturn">新增測試退換貨</button>
     </div>
 
     <div v-if="error" class="vr-alert">{{ error }}</div>
@@ -219,6 +309,38 @@ onMounted(load)
         </div>
       </div>
     </div>
+
+    <div v-if="showCreateReturn" class="vr-modal-mask" @click.self="showCreateReturn = false">
+      <div class="vr-modal">
+        <h3>新增測試退換貨</h3>
+        <div class="vr-form-field"><label>訂單</label>
+          <select v-model="returnForm.orderId">
+            <option :value="null" disabled>請選擇訂單</option>
+            <option v-for="o in orderOptions" :key="o.orderId" :value="o.orderId">{{ o.label }}</option>
+          </select>
+        </div>
+        <div class="vr-form-field"><label>訂單明細</label>
+          <select v-model="returnForm.orderItemId">
+            <option :value="null" disabled>請先選擇訂單</option>
+            <option v-for="it in orderItems" :key="it.orderItemId" :value="it.orderItemId">{{ itemLabel(it) }}</option>
+          </select>
+        </div>
+        <div class="vr-form-row">
+          <div class="vr-form-field"><label>類型</label>
+            <select v-model="returnForm.requestType">
+              <option value="RETURN">退貨</option>
+              <option value="EXCHANGE">換貨</option>
+            </select>
+          </div>
+          <div class="vr-form-field"><label>數量</label><input v-model.number="returnForm.requestQuantity" type="number" min="1" /></div>
+        </div>
+        <div class="vr-form-field"><label>原因</label><input v-model="returnForm.reason" /></div>
+        <div class="vr-modal-actions">
+          <button class="vr-btn vr-btn-outline" @click="showCreateReturn = false">取消</button>
+          <button class="vr-btn vr-btn-primary" @click="saveCreateReturn">新增</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -250,5 +372,10 @@ onMounted(load)
   border-radius: 6px;
   font-size: 13px;
   flex: 1;
+}
+.return-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 12px;
 }
 </style>

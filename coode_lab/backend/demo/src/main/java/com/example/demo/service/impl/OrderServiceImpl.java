@@ -22,6 +22,7 @@ import com.example.demo.model.ProductVariant;
 import com.example.demo.model.Vendor;
 import com.example.demo.model.CartItem;
 import com.example.demo.dto.order.CreateOrderRequest;
+import com.example.demo.dto.order.AdminCreateTestOrderRequest;
 import com.example.demo.dto.order.UpdateRecipientRequest;
 import com.example.demo.dto.orderitem.CreateOrderItemRequest;
 import com.example.demo.dto.orderitem.UpdateOrderItemRequest;
@@ -183,6 +184,75 @@ public class OrderServiceImpl implements OrderService {
             Long count = cartItemRepository.countByCart_CartId(cart.getCartId());
             cart.setTotalQuantity(count.intValue());
         }
+
+        // 回傳 OrderDTO，避免 Entity 序列化無限迴圈
+        return toOrderDTO(savedOrder);
+    }
+
+    // 管理員新增測試訂單：直接指定會員 + 規格與數量，不需購物車
+    @Override
+    @Transactional
+    public OrderDTO createTestOrder(AdminCreateTestOrderRequest request) {
+
+        // 1. 找會員
+        User user = userRepository.findById(request.getUserId()).orElse(null);
+        if (user == null) {
+            throw new IllegalArgumentException("找不到會員 ID:" + request.getUserId());
+        }
+
+        // 2. 先建立訂單主表
+        Order order = new Order();
+        order.setRecipientName(request.getRecipientName());
+        order.setRecipientPhone(request.getRecipientPhone());
+        order.setRecipientAddress(request.getRecipientAddress());
+        order.setTotalAmount(0);
+        order.setSumTotal(BigDecimal.ZERO);
+        order.setUser(user);
+        Order savedOrder = orderRepository.save(order);
+
+        // 3. 每個規格：即時檢查庫存 → 扣庫存 → 建立訂單明細
+        List<OrderItem> orderItems = new ArrayList<>();
+        int totalAmount = 0;
+        BigDecimal sumTotal = BigDecimal.ZERO;
+
+        for (AdminCreateTestOrderRequest.Item item : request.getItems()) {
+            ProductVariant variant = productVariantRepository.findById(item.getVariantId())
+                    .orElseThrow(() -> new IllegalArgumentException("找不到規格 ID:" + item.getVariantId()));
+            Product product = variant.getProduct();
+            int qty = item.getQuantity();
+
+            if (product == null || product.getPrice() == null) {
+                throw new IllegalArgumentException("此規格無法建立訂單明細");
+            }
+            if (variant.getStock() == null || variant.getStock() < qty) {
+                throw new IllegalArgumentException(
+                        "商品「" + product.getName() + "」的「" + variant.getColor() + " / " + variant.getSize()
+                                + "」庫存不足，目前僅剩 " + variant.getStock() + " 件");
+            }
+
+            variant.setStock(variant.getStock() - qty);
+            productVariantRepository.save(variant);
+
+            OrderItem orderItem = new OrderItem();
+            orderItem.setOrder(savedOrder);
+            orderItem.setVariant(variant);
+            orderItem.setVendor(product.getVendor());
+            orderItem.setProductQuantity(qty);
+            orderItem.setPrice(product.getPrice());
+            orderItem.setPriceTotal(product.getPrice().multiply(BigDecimal.valueOf(qty)));
+            orderItem.setStatus("PENDING");
+            orderItems.add(orderItem);
+
+            totalAmount += qty;
+            sumTotal = sumTotal.add(orderItem.getPriceTotal());
+        }
+
+        orderItemRepository.saveAll(orderItems);
+
+        // 4. 更新訂單總額
+        savedOrder.setTotalAmount(totalAmount);
+        savedOrder.setSumTotal(sumTotal);
+        savedOrder = orderRepository.save(savedOrder);
 
         // 回傳 OrderDTO，避免 Entity 序列化無限迴圈
         return toOrderDTO(savedOrder);

@@ -20,7 +20,7 @@ const Z = { BOTTOM: 10, UPPER_BODY: 20, FULL_BODY: 30, HEADWEAR: 40 }
 const broken = reactive({})
 
 function outfitSrc(slot, product) {
-  if (!product) return null
+  if (!product || product.unavailable) return null
   const variant = chosenVariantOf(product)
   if (broken[`${slot}:${product.productId}`]) return null
   // 依所選規格顯示對應試穿圖；無規格圖則退回商品層級圖
@@ -33,6 +33,15 @@ function onImgError(slot, product) {
 
 const stageWidth = () => BASE_W * props.scale
 const stageHeight = () => BASE_H * props.scale
+
+// 丹寧牛仔短裙（id 12）：改成較小比例並下移，使腰線接在上衣下方
+function bottomStyle() {
+  const p = props.look.BOTTOM
+  if (p && p.productId === 12) {
+    return { transform: 'translateY(26px) scale(0.9)', transformOrigin: 'center top' }
+  }
+  return {}
+}
 </script>
 
 <template>
@@ -52,27 +61,31 @@ const stageHeight = () => BASE_H * props.scale
       <div class="canvas" :style="{ transform: `scale(${scale})` }">
         <!-- HEADWEAR（帽子/頭飾） -->
         <div v-if="look.HEADWEAR" class="c-slot slot-headwear" :style="{ zIndex: Z.HEADWEAR }">
-          <img :src="outfitSrc('HEADWEAR', look.HEADWEAR)" alt="帽子/頭飾" @error="onImgError('HEADWEAR', look.HEADWEAR)" />
-          <div v-if="!outfitSrc('HEADWEAR', look.HEADWEAR)" class="no-png">{{ SLOT_LABELS.HEADWEAR }}</div>
+          <img v-if="!look.HEADWEAR.unavailable" :src="outfitSrc('HEADWEAR', look.HEADWEAR)" alt="帽子/頭飾" @error="onImgError('HEADWEAR', look.HEADWEAR)" />
+          <div v-if="look.HEADWEAR.unavailable" class="no-png unavail">商品未上架</div>
+          <div v-else-if="!outfitSrc('HEADWEAR', look.HEADWEAR)" class="no-png">{{ SLOT_LABELS.HEADWEAR }}</div>
         </div>
 
         <!-- FULL_BODY（洋裝）：佔據上半身 + 下半身 -->
         <div v-if="look.FULL_BODY" class="c-slot slot-full-body" :style="{ zIndex: Z.FULL_BODY }">
-          <img :src="outfitSrc('FULL_BODY', look.FULL_BODY)" alt="洋裝" @error="onImgError('FULL_BODY', look.FULL_BODY)" />
-          <div v-if="!outfitSrc('FULL_BODY', look.FULL_BODY)" class="no-png">暫不支援試穿</div>
+          <img v-if="!look.FULL_BODY.unavailable" :src="outfitSrc('FULL_BODY', look.FULL_BODY)" alt="洋裝" @error="onImgError('FULL_BODY', look.FULL_BODY)" />
+          <div v-if="look.FULL_BODY.unavailable" class="no-png unavail">商品未上架</div>
+          <div v-else-if="!outfitSrc('FULL_BODY', look.FULL_BODY)" class="no-png">暫不支援試穿</div>
         </div>
 
         <!-- UPPER_BODY（上衣/外套）：FULL_BODY 存在時隱藏 -->
         <template v-if="!look.FULL_BODY">
           <div v-if="look.UPPER_BODY" class="c-slot slot-upper" :style="{ zIndex: Z.UPPER_BODY }">
-            <img :src="outfitSrc('UPPER_BODY', look.UPPER_BODY)" alt="上衣/外套" @error="onImgError('UPPER_BODY', look.UPPER_BODY)" />
-            <div v-if="!outfitSrc('UPPER_BODY', look.UPPER_BODY)" class="no-png">暫不支援試穿</div>
+            <img v-if="!look.UPPER_BODY.unavailable" :src="outfitSrc('UPPER_BODY', look.UPPER_BODY)" alt="上衣/外套" @error="onImgError('UPPER_BODY', look.UPPER_BODY)" />
+            <div v-if="look.UPPER_BODY.unavailable" class="no-png unavail">商品未上架</div>
+            <div v-else-if="!outfitSrc('UPPER_BODY', look.UPPER_BODY)" class="no-png">暫不支援試穿</div>
           </div>
 
           <!-- BOTTOM（下身）：FULL_BODY 存在時隱藏 -->
-          <div v-if="look.BOTTOM" class="c-slot slot-bottom" :style="{ zIndex: Z.BOTTOM }">
-            <img :src="outfitSrc('BOTTOM', look.BOTTOM)" alt="下身" @error="onImgError('BOTTOM', look.BOTTOM)" />
-            <div v-if="!outfitSrc('BOTTOM', look.BOTTOM)" class="no-png">暫不支援試穿</div>
+          <div v-if="look.BOTTOM" class="c-slot slot-bottom" :style="[{ zIndex: Z.BOTTOM }, bottomStyle()]">
+            <img v-if="!look.BOTTOM.unavailable" :src="outfitSrc('BOTTOM', look.BOTTOM)" alt="下身" @error="onImgError('BOTTOM', look.BOTTOM)" />
+            <div v-if="look.BOTTOM.unavailable" class="no-png unavail">商品未上架</div>
+            <div v-else-if="!outfitSrc('BOTTOM', look.BOTTOM)" class="no-png">暫不支援試穿</div>
           </div>
         </template>
       </div>
@@ -149,6 +162,15 @@ const stageHeight = () => BASE_H * props.scale
   color: #b8b4af;
   font-size: 11px;
 }
+.no-png.unavail {
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 12px;
+  border: 1px solid var(--accent);
+  border-radius: 3px;
+  padding: 4px 8px;
+  background: #fff;
+}
 .slot-headwear {
   top: 4px;
   left: 122px;
@@ -172,6 +194,8 @@ const stageHeight = () => BASE_H * props.scale
   left: 92px;
   width: 160px;
   height: 182px;
+  transform: scale(1.25);
+  transform-origin: center top;
 }
 .zoom {
   margin-top: 14px;

@@ -144,6 +144,12 @@ public class ProductController {
         return productService.adminUpdateProduct(productId, request);
     }
 
+    // 管理員新增測試商品 (廠商固定為「測試」)
+    @PostMapping("/admin")
+    public ProductResponse adminCreateProduct(@Valid @RequestBody ProductRequest request) {
+        return productService.adminCreateProduct(request);
+    }
+
     // 廠商後台搜尋自己的商品 (固定每頁10筆,page 從 0 開始)
     @GetMapping("/vendor/filter")
     public SelectPartOfData.Result<ProductResponse> vendorSearchProducts(

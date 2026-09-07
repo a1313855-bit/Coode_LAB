@@ -60,13 +60,13 @@ export function lookTotal(look) {
 // 商品
 // ============================================================
 
-// 抓取目前所有「可販售（已上架 + 廠商啟用 + 合約有效）」的商品，
+// 抓取目前試衣間可用的商品（與商城商品頁同步：只顯示 ACTIVE 上架、廠商 ACTIVE 且合約未過期的商品），
 // 後端每頁固定 10 筆，因此自動往後翻頁抓完。
 export async function fetchAllProducts() {
   const all = []
   let page = 0
   for (;;) {
-    const res = await productApi.filter({ page })
+    const res = await productApi.available(page)
     const content = res.content || []
     all.push(...content)
     const totalPages = res.totalPages || 1

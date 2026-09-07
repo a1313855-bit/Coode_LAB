@@ -8,6 +8,7 @@ import java.util.Optional;
 import com.example.demo.model.Order;
 import com.example.demo.model.OrderItem;
 import com.example.demo.dto.order.CreateOrderRequest;
+import com.example.demo.dto.order.AdminCreateTestOrderRequest;
 import com.example.demo.dto.order.UpdateRecipientRequest;
 import com.example.demo.dto.orderitem.CreateOrderItemRequest;
 import com.example.demo.dto.order.OrderDTO;
@@ -23,6 +24,9 @@ public interface OrderService {
 
     // 將選中的 CartItem 結帳並建立訂單（回傳 DTO，避免 Entity 序列化無限迴圈）
     OrderDTO createOrder(CreateOrderRequest request);
+
+    // 管理員新增測試訂單（直接指定會員 + 規格與數量，不需購物車）
+    OrderDTO createTestOrder(AdminCreateTestOrderRequest request);
 
     // 查詢會員的所有訂單 (固定每頁10筆,page 從 0 開始)
     SelectPartOfData.Result<OrderDTO> findByUserId(Long userId, int page);

@@ -16,6 +16,80 @@ const filters = ref({ keyword: '', status: '', vendorName: '', categoryType: '' 
 const editing = ref(null)
 const form = ref({ name: '', description: '', price: 0, categoryType: 'TOP', style: '', pattern: '', status: 'ACTIVE' })
 
+const showCreate = ref(false)
+const createForm = ref({
+  name: '',
+  description: '',
+  price: 100,
+  categoryType: 'TOP',
+  style: '',
+  pattern: 'MEN',
+  status: 'ACTIVE',
+  variants: [{ color: '', size: 'M', stock: 10, status: 'ACTIVE' }],
+})
+
+function openCreate() {
+  createForm.value = {
+    name: '',
+    description: '',
+    price: 100,
+    categoryType: 'TOP',
+    style: '',
+    pattern: 'MEN',
+    status: 'ACTIVE',
+    variants: [{ color: '', size: 'M', stock: 10, status: 'ACTIVE' }],
+  }
+  showCreate.value = true
+}
+function closeCreate() {
+  showCreate.value = false
+}
+function addVariantRow() {
+  createForm.value.variants.push({ color: '', size: 'M', stock: 10, status: 'ACTIVE' })
+}
+function removeVariantRow(i) {
+  createForm.value.variants.splice(i, 1)
+}
+async function saveCreate() {
+  error.value = ''
+  success.value = ''
+  if (!createForm.value.name.trim()) {
+    error.value = '請填寫商品名稱'
+    return
+  }
+  const validVariants = createForm.value.variants.filter(
+    (v) => v.color.trim() && v.size.trim() && v.stock != null,
+  )
+  if (validVariants.length === 0) {
+    error.value = '請至少填寫一筆商品規格（顏色＋尺寸）'
+    return
+  }
+  try {
+    const payload = {
+      name: createForm.value.name.trim(),
+      description: createForm.value.description,
+      price: Number(createForm.value.price),
+      categoryType: createForm.value.categoryType,
+      style: createForm.value.style,
+      pattern: createForm.value.pattern,
+      status: createForm.value.status,
+      variants: validVariants.map((v) => ({
+        color: v.color.trim(),
+        size: v.size.trim(),
+        stock: Number(v.stock),
+        status: v.status || 'ACTIVE',
+      })),
+    }
+    const created = await productApi.adminCreate(payload)
+    success.value = '已新增商品「' + created.name + '」（廠商：測試）'
+    showCreate.value = false
+    page.value = 0
+    await load()
+  } catch (e) {
+    error.value = e.message
+  }
+}
+
 async function load() {
   loading.value = true
   error.value = ''
@@ -120,6 +194,7 @@ onMounted(load)
       </select>
       <input v-model="filters.vendorName" placeholder="廠商名稱" class="vendor" />
       <button class="vr-btn vr-btn-primary" @click="applySearch">搜尋</button>
+      <button class="vr-btn vr-btn-outline" @click="openCreate">新增商品</button>
     </div>
 
     <div v-if="success" class="vr-alert-success">{{ success }}</div>
@@ -192,6 +267,60 @@ onMounted(load)
         <div class="vr-modal-actions">
           <button class="vr-btn vr-btn-outline" @click="closeEdit">取消</button>
           <button class="vr-btn vr-btn-primary" @click="saveEdit">儲存</button>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="showCreate" class="vr-modal-mask" @click.self="closeCreate">
+      <div class="vr-modal">
+        <h3>新增商品（廠商：測試）</h3>
+        <div class="vr-form-field"><label>商品名稱</label><input v-model="createForm.name" placeholder="例如：測試上衣" /></div>
+        <div class="vr-form-field"><label>描述</label><textarea v-model="createForm.description" rows="2"></textarea></div>
+        <div class="vr-form-row">
+          <div class="vr-form-field"><label>價格</label><input v-model.number="createForm.price" type="number" min="0" /></div>
+          <div class="vr-form-field"><label>分類</label>
+            <select v-model="createForm.categoryType">
+              <option value="TOP">上衣</option>
+              <option value="OUTER">外套</option>
+              <option value="BOTTOM">褲子</option>
+              <option value="DRESS">洋裝</option>
+              <option value="HEADWEAR">帽子/頭飾</option>
+            </select>
+          </div>
+        </div>
+        <div class="vr-form-row">
+          <div class="vr-form-field"><label>風格</label><input v-model="createForm.style" placeholder="韓系 / 休閒 / 正式" /></div>
+          <div class="vr-form-field"><label>版型</label>
+            <select v-model="createForm.pattern">
+              <option value="MEN">男裝</option>
+              <option value="WOMEN">女裝</option>
+              <option value="KIDS">童裝</option>
+            </select>
+          </div>
+        </div>
+        <div class="vr-form-field"><label>狀態</label>
+          <select v-model="createForm.status">
+            <option value="ACTIVE">上架</option>
+            <option value="DRAFT">待上架</option>
+          </select>
+        </div>
+        <div class="vr-form-field">
+          <label>規格（顏色 × 尺寸 × 庫存）</label>
+          <div v-for="(v, i) in createForm.variants" :key="i" class="variant-row">
+            <input v-model="v.color" placeholder="顏色" class="variant-input" />
+            <input v-model="v.size" placeholder="尺寸" class="variant-input variant-size" />
+            <input v-model.number="v.stock" type="number" min="0" class="variant-input variant-stock" placeholder="庫存" />
+            <select v-model="v.status" class="variant-input variant-status">
+              <option value="ACTIVE">可販售</option>
+              <option value="INACTIVE">停售</option>
+            </select>
+            <button class="vr-btn vr-btn-sm vr-btn-outline" @click="removeVariantRow(i)">刪除</button>
+          </div>
+          <button class="vr-btn vr-btn-sm" @click="addVariantRow">＋ 新增規格</button>
+        </div>
+        <div class="vr-modal-actions">
+          <button class="vr-btn vr-btn-outline" @click="closeCreate">取消</button>
+          <button class="vr-btn vr-btn-primary" @click="saveCreate">儲存</button>
         </div>
       </div>
     </div>

@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 // ========== Project ==========
 import com.example.demo.dto.returnrequest.CreateReturnRequestRequest;
+import com.example.demo.dto.returnrequest.AdminCreateTestReturnRequest;
 import com.example.demo.dto.returnrequest.UpdateReturnRequestStatusRequest;
 import com.example.demo.dto.returnrequest.ReturnRequestDTO;
 import com.example.demo.service.ReturnRequestService;
@@ -49,6 +50,14 @@ public class ReturnRequestController {
         } else {
             return ResponseEntity.notFound().build();
         }
+    }
+
+    // 管理員新增測試退換貨（直接指定訂單明細，不做會員/狀態資格限制）
+    @PostMapping("/admin/test")
+    public ResponseEntity<ReturnRequestDTO> createTestReturnRequest(
+            @Valid @RequestBody AdminCreateTestReturnRequest request) {
+        ReturnRequestDTO returnRequest = returnRequestService.createTestReturnRequest(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(returnRequest);
     }
 
     @GetMapping("/{id}")

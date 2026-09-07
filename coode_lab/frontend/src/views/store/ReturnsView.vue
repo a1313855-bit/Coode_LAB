@@ -34,17 +34,24 @@ function changePage(p) {
 
 const returnStatusLocal = {
   PENDING_REVIEW: '待審核',
-  APPROVED: '已核准',
+  AWAITING_SHIPBACK: '已核准－待寄回',
   REJECTED: '已拒絕',
-  AWAITING_SHIPBACK: '待寄回',
   SHIPPED_BACK: '已寄回',
-  RECEIVED: '已收件',
+  RECEIVED: '已收貨',
   REFUNDING: '退款中',
   REFUNDED: '已退款',
-  EXCHANGING: '換貨中',
-  EXCHANGE_SHIPPED: '已出貨',
-  EXCHANGED: '已換貨',
+  EXCHANGE_SHIPPED: '廠商已出貨',
+  EXCHANGED: '已完成',
   CANCELLED: '已取消',
+}
+
+// 依退/換貨類型回傳使用者端顯示文字（底層狀態不變，僅顯示不同）
+function userStatusText(r) {
+  const s = r.returnItem ? r.returnItem.status : r.status
+  if (s === 'RECEIVED') {
+    return r.requestType === 'EXCHANGE' ? '廠商已收貨' : '已收貨'
+  }
+  return returnStatusLocal[s] || statusLabel(s)
 }
 
 const toast = ref('')
@@ -138,7 +145,7 @@ onMounted(load)
               <td>{{ r.returnRequestQuantity }}</td>
               <td>
                 <span :class="['badge', statusBadgeClass(r.returnItem ? r.returnItem.status : r.status)]">
-                  {{ returnStatusLocal[r.returnItem ? r.returnItem.status : r.status] || statusLabel(r.returnItem ? r.returnItem.status : r.status) }}
+                  {{ userStatusText(r) }}
                 </span>
               </td>
               <td>{{ formatDate(r.createdAt) }}</td>

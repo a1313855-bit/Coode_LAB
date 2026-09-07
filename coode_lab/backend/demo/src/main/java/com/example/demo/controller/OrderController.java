@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import com.example.demo.dto.order.CreateOrderRequest;
+import com.example.demo.dto.order.AdminCreateTestOrderRequest;
 import com.example.demo.dto.order.UpdateRecipientRequest;
 import com.example.demo.dto.order.OrderDTO;
 import com.example.demo.service.OrderService;
@@ -44,6 +45,13 @@ public class OrderController {
             return ResponseEntity.badRequest().build();
         }
 
+    }
+
+    // 管理員新增測試訂單（直接指定會員 + 規格與數量，不需購物車）
+    @PostMapping("/admin/test")
+    public ResponseEntity<OrderDTO> createTestOrder(@Valid @RequestBody AdminCreateTestOrderRequest request) {
+        OrderDTO order = orderService.createTestOrder(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(order);
     }
 
     @GetMapping("/user")

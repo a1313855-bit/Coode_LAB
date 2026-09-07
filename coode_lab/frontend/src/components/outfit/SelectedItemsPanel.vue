@@ -63,6 +63,7 @@ function selectVariant(product, variant) {
             </div>
             <div class="mini-info">
               <div class="name" :title="look[slot].name">{{ look[slot].name }}</div>
+              <div v-if="look[slot].unavailable" class="unavail-tag">商品未上架</div>
               <div class="variant-line">
                 {{ (chosenVariantOf(look[slot]) || {}).color || '-' }} /
                 {{ (chosenVariantOf(look[slot]) || {}).size || '-' }}
@@ -111,6 +112,7 @@ function selectVariant(product, variant) {
         />
       </div>
       <h4>{{ selectedProduct.name }}</h4>
+      <div v-if="selectedProduct.unavailable" class="unavail-tag">商品未上架</div>
       <div class="preview-price">{{ formatMoney(selectedProduct.price) }}</div>
       <dl class="preview-fields">
         <div><dt>廠商</dt><dd>{{ selectedProduct.vendorName || '-' }}</dd></div>
@@ -232,6 +234,17 @@ function selectVariant(product, variant) {
 .variant-line {
   font-size: 12px;
   color: var(--muted);
+}
+.unavail-tag {
+  margin-top: 4px;
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 3px;
+  padding: 2px 8px;
+  background: #fff;
 }
 .color-picker {
   display: flex;

@@ -147,7 +147,7 @@ watch(
   <div class="store-shell">
     <!-- 黑色促銷條 -->
     <div class="promo-strip">
-      <p>夏季系列全新登場 · 滿 NT$2,000 即享免運優惠</p>
+      <p>衣呀! 真是服了你</p>
     </div>
 
     <!-- 白色 sticky 導覽 -->

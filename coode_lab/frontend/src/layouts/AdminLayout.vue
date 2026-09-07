@@ -27,10 +27,8 @@ function logout() {
           <RouterLink to="/admin/products" class="nav-link">商品管理</RouterLink>
           <RouterLink to="/admin/orders" class="nav-link">訂單管理</RouterLink>
           <RouterLink to="/admin/returns" class="nav-link">退換貨管理</RouterLink>
-        </nav>
-        <div class="side-foot">
           <button class="logout-btn" @click="logout">← 登出</button>
-        </div>
+        </nav>
       </aside>
 
       <main class="admin-main">
@@ -110,11 +108,6 @@ function logout() {
   color: #fff;
   font-weight: 700;
 }
-.side-foot {
-  margin-top: auto;
-  padding-top: 16px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-}
 .logout-btn {
   background: none;
   border: none;
@@ -128,6 +121,9 @@ function logout() {
   text-decoration: none;
   border-radius: 8px;
   transition: background 0.15s, color 0.15s;
+  margin-top: auto;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 16px;
 }
 .logout-btn:hover {
   background: rgba(255, 255, 255, 0.06);

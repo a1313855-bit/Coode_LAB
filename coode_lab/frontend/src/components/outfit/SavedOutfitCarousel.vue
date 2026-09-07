@@ -10,6 +10,15 @@ const emit = defineEmits(['load-outfit', 'delete-outfit', 'rename-outfit', 'new-
 const scrollEl = ref(null)
 const menuOpen = ref(null)
 
+// 與 TryOnCanvas 相同的 slot 固定定位與相對順序
+const slotClass = {
+  HEADWEAR: 'slot-headwear',
+  UPPER_BODY: 'slot-upper',
+  BOTTOM: 'slot-bottom',
+  FULL_BODY: 'slot-full-body',
+}
+const slotZ = { BOTTOM: 10, UPPER_BODY: 20, FULL_BODY: 30, HEADWEAR: 40 }
+
 function scroll(direction) {
   const el = scrollEl.value
   if (!el) return
@@ -41,13 +50,20 @@ function scroll(direction) {
         @click="emit('load-outfit', outfit)"
       >
         <div class="mini-preview">
-          <div v-if="outfit.mini && outfit.mini.length">
-            <div v-for="m in outfit.mini" :key="m.slot" class="mini-slot">
+          <div v-if="outfit.mini && outfit.mini.length" class="mini-stage">
+            <div
+              v-for="m in outfit.mini"
+              :key="m.slot"
+              class="mini-slot"
+              :class="slotClass[m.slot]"
+              :style="{ zIndex: slotZ[m.slot] }"
+            >
               <img v-if="m.png" :src="m.png" alt="" @error="m.png = null" />
               <span v-else>{{ m.label }}</span>
             </div>
           </div>
           <span v-else class="no-items">尚未放入商品</span>
+          <span v-if="outfit.hasUnavailable" class="unavail-badge">部分商品未上架</span>
         </div>
         <div class="card-foot">
           <div class="foot-name">
@@ -129,6 +145,7 @@ function scroll(direction) {
   box-shadow: var(--shadow-hair);
 }
 .mini-preview {
+  --s: 0.3488;
   height: 150px;
   border-radius: 8px;
   background: #fafafa;
@@ -136,18 +153,73 @@ function scroll(direction) {
   align-items: center;
   justify-content: center;
   position: relative;
+  overflow: hidden;
+}
+.mini-stage {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: calc(340px * var(--s));
+  height: calc(430px * var(--s));
+}
+.mini-slot {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .mini-slot img {
-  height: 120px;
+  width: 100%;
+  height: 100%;
   object-fit: contain;
 }
 .mini-slot span {
-  font-size: 11px;
+  font-size: 10px;
   color: #c2bebe;
+}
+.mini-slot.slot-headwear {
+  top: calc(4px * var(--s));
+  left: calc(122px * var(--s));
+  width: calc(96px * var(--s));
+  height: calc(60px * var(--s));
+}
+.mini-slot.slot-full-body {
+  top: calc(60px * var(--s));
+  left: calc(96px * var(--s));
+  width: calc(168px * var(--s));
+  height: calc(330px * var(--s));
+}
+.mini-slot.slot-upper {
+  top: calc(66px * var(--s));
+  left: calc(108px * var(--s));
+  width: calc(132px * var(--s));
+  height: calc(162px * var(--s));
+}
+.mini-slot.slot-bottom {
+  top: calc(182px * var(--s));
+  left: calc(92px * var(--s));
+  width: calc(160px * var(--s));
+  height: calc(182px * var(--s));
+  transform: scale(1.25);
+  transform-origin: center top;
 }
 .no-items {
   font-size: 12px;
   color: #c2bebe;
+}
+.unavail-badge {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 2px;
+  padding: 0 4px;
+  background: #fff;
+  white-space: nowrap;
 }
 .card-foot {
   display: flex;

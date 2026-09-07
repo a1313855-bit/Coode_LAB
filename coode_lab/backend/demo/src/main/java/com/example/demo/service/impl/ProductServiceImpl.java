@@ -231,6 +231,24 @@ public class ProductServiceImpl implements ProductService {
         return toResponse(saved);
     }
 
+    // 管理員新增測試商品：廠商固定為「測試」（不存在時自動建立）
+    @Override
+    @Transactional
+    public ProductResponse adminCreateProduct(ProductRequest request) {
+        Vendor vendor = vendorRepository.findByVendorName("測試").orElse(null);
+        if (vendor == null) {
+            vendor = new Vendor();
+            vendor.setVendorName("測試");
+            vendor.setEmail("admin-test@coode-demo.test");
+            vendor.setPassword("ADMIN_TEST");
+            vendor.setStatus("ACTIVE");
+            vendor.setActivatedAt(LocalDateTime.now());
+            vendor.setContractExpiresAt(LocalDateTime.now().plusYears(1));
+            vendor = vendorRepository.save(vendor);
+        }
+        return createProduct(vendor.getVendorId(), request);
+    }
+
     // 廠商後台多條件搜尋商品 (固定每頁10筆)
     @Override
     public SelectPartOfData.Result<ProductResponse> vendorSearchProducts(

@@ -39,6 +39,7 @@ const counts = reactive({ all: 0, DRAFT: 0, ACTIVE: 0, INACTIVE: 0, low: 0 })
 
 const showForm = ref(false)
 const editing = ref(null)
+const pendingId = ref(null)
 const form = ref(emptyForm())
 
 const categoryOptions = [
@@ -81,12 +82,23 @@ function emptyForm() {
     imagesJpg: '',
     outfitPng: '',
     status: 'DRAFT',
-    variants: [{ color: '', size: '', stock: 0, imagesJpg: '', outfitPng: '', status: 'ACTIVE' }],
+    variants: [emptyVariant()],
   }
 }
 
 function emptyVariant() {
-  return { color: '', size: '', stock: 0, imagesJpg: '', outfitPng: '', status: 'ACTIVE' }
+  return {
+    color: '',
+    size: '',
+    stock: 0,
+    imagesJpg: '',
+    outfitPng: '',
+    status: 'ACTIVE',
+    imagesJpgFile: null,
+    outfitPngFile: null,
+    imagesJpgPreview: '',
+    outfitPngPreview: '',
+  }
 }
 
 function addVariantRow() {
@@ -111,18 +123,54 @@ async function onFormImage(e, field) {
   }
 }
 
-async function onVariantImage(e, i, field) {
+// 規格圖片：先暫存 File 與本機預覽，儲存時才依顏色上傳
+function onVariantImage(e, i, field) {
   const file = e.target.files && e.target.files[0]
+  e.target.value = ''
   if (!file) return
-  try {
-    const res = await uploadApi.upload(file)
-    if (res && res.url) form.value.variants[i][field] = res.url
-    else error.value = '圖片上傳失敗'
-  } catch (err) {
-    error.value = '圖片上傳失敗：' + err.message
-  } finally {
-    e.target.value = ''
+  if (file.type && !file.type.startsWith('image/')) {
+    error.value = '請選擇圖片檔案（JPG / PNG）'
+    return
   }
+  if (file.size > 10 * 1024 * 1024) {
+    error.value = '圖片大小不得超過 10MB'
+    return
+  }
+  const v = form.value.variants[i]
+  if (v[field + 'Preview']) URL.revokeObjectURL(v[field + 'Preview'])
+  v[field + 'File'] = file
+  v[field + 'Preview'] = URL.createObjectURL(file)
+  v[field] = ''
+}
+
+function clearVariantImage(i, field) {
+  const v = form.value.variants[i]
+  if (v[field + 'Preview']) URL.revokeObjectURL(v[field + 'Preview'])
+  v[field + 'File'] = null
+  v[field + 'Preview'] = ''
+  v[field] = ''
+}
+
+// 依「顏色」上傳（同色不同尺寸共用同一組圖片），回傳 { imagesJpg: Map<color,url>, outfitPng: Map<color,url> }
+async function uploadColorImages() {
+  const colorUrls = { imagesJpg: new Map(), outfitPng: new Map() }
+  for (const v of form.value.variants) {
+    if (!v.color) continue
+    for (const field of ['imagesJpg', 'outfitPng']) {
+      if (colorUrls[field].has(v.color)) continue
+      const file = v[field + 'File']
+      if (!file) continue
+      const filename = field === 'imagesJpg' ? 'product.jpg' : 'outfit.png'
+      const pid = pendingId.value
+      const res = await uploadApi.uploadVariant(pid, v.color, filename, file)
+      if (res && res.url) {
+        colorUrls[field].set(v.color, res.url)
+      } else {
+        throw new Error('圖片上傳失敗（未取得 URL）')
+      }
+    }
+  }
+  return colorUrls
 }
 
 async function load() {
@@ -209,12 +257,14 @@ function changeTab(key) {
 
 function openCreate() {
   editing.value = null
+  pendingId.value = null
   form.value = emptyForm()
   showForm.value = true
 }
 
 function openEdit(p) {
   editing.value = p
+  pendingId.value = null
   form.value = {
     name: p.name,
     pattern: p.pattern || 'MEN',
@@ -232,6 +282,10 @@ function openEdit(p) {
       imagesJpg: v.imagesJpg,
       outfitPng: v.outfitPng,
       status: v.status || 'ACTIVE',
+      imagesJpgFile: null,
+      outfitPngFile: null,
+      imagesJpgPreview: '',
+      outfitPngPreview: '',
     })),
   }
   showForm.value = true
@@ -240,26 +294,69 @@ function openEdit(p) {
 async function submit() {
   error.value = ''
   try {
-    const body = {
-      ...form.value,
-      price: Number(form.value.price),
-      variants: form.value.variants.map((v) => ({
+    let colorUrlsFromSave = { imagesJpg: new Map(), outfitPng: new Map() }
+    const shared = (v, field) => {
+      if (v[field + 'File']) return colorUrlsFromSave[field].get(v.color) || ''
+      if (colorUrlsFromSave[field].has(v.color)) return colorUrlsFromSave[field].get(v.color)
+      return v[field] || ''
+    }
+    const variantsPayload = () =>
+      form.value.variants.map((v) => ({
         color: v.color,
         size: v.size,
         stock: Number(v.stock || 0),
-        imagesJpg: v.imagesJpg,
-        outfitPng: v.outfitPng,
+        imagesJpg: shared(v, 'imagesJpg'),
+        outfitPng: shared(v, 'outfitPng'),
         status: v.status || 'ACTIVE',
-      })),
+      }))
+
+    // 第一階段：新增時先建立商品（帶規格但不帶圖片），取得 productId
+    if (!editing.value && !pendingId.value) {
+      const createBody = {
+        name: form.value.name,
+        pattern: form.value.pattern,
+        categoryType: form.value.categoryType,
+        style: form.value.style,
+        price: Number(form.value.price),
+        description: form.value.description,
+        imagesJpg: form.value.imagesJpg,
+        outfitPng: form.value.outfitPng,
+        status: form.value.status,
+        variants: form.value.variants.map((v) => ({
+          color: v.color,
+          size: v.size,
+          stock: Number(v.stock || 0),
+          imagesJpg: '',
+          outfitPng: '',
+          status: v.status || 'ACTIVE',
+        })),
+      }
+      const created = await productApi.create(vendorId, createBody)
+      pendingId.value = created.productId
     }
-    if (editing.value) {
-      await productApi.update(vendorId, editing.value.productId, body)
-    } else {
-      await productApi.create(vendorId, body)
-    }
+
+    // 第二階段：依顏色上傳規格圖片
+    colorUrlsFromSave = await uploadColorImages()
+
+    // 第三階段：更新規格圖片 URL
+    const pid = editing.value ? editing.value.productId : pendingId.value
+    await productApi.update(vendorId, pid, {
+      name: form.value.name,
+      pattern: form.value.pattern,
+      categoryType: form.value.categoryType,
+      style: form.value.style,
+      price: Number(form.value.price),
+      description: form.value.description,
+      imagesJpg: form.value.imagesJpg,
+      outfitPng: form.value.outfitPng,
+      status: form.value.status,
+      variants: variantsPayload(),
+    })
     showForm.value = false
+    pendingId.value = null
     await Promise.all([load(), refreshCounts()])
   } catch (e) {
+    // 已建立但上傳/更新失敗時保留 modal 與已選檔案，可重試（不會重複建立商品）
     error.value = e.message
   }
 }
@@ -696,28 +793,28 @@ onMounted(() => {
             <div class="ve-imgs">
               <div class="img-picker img-picker-sm">
                 <span class="img-label">商品圖</span>
-                <template v-if="!v.imagesJpg">
+                <template v-if="!v.imagesJpg && !v.imagesJpgPreview">
                   <label class="img-btn">
-                    <input type="file" accept="image/*" @change="onVariantImage($event, i, 'imagesJpg')" />
+                    <input type="file" accept="image/jpeg,image/png" @change="onVariantImage($event, i, 'imagesJpg')" />
                     選擇
                   </label>
                 </template>
                 <div v-else class="img-prev">
-                  <img :src="v.imagesJpg" alt="商品圖" />
-                  <button type="button" class="img-remove" @click="v.imagesJpg = ''">移除</button>
+                  <img :src="v.imagesJpgPreview || v.imagesJpg" alt="商品圖" />
+                  <button type="button" class="img-remove" @click="clearVariantImage(i, 'imagesJpg')">移除</button>
                 </div>
               </div>
               <div class="img-picker img-picker-sm">
                 <span class="img-label">試穿圖</span>
-                <template v-if="!v.outfitPng">
+                <template v-if="!v.outfitPng && !v.outfitPngPreview">
                   <label class="img-btn">
-                    <input type="file" accept="image/*" @change="onVariantImage($event, i, 'outfitPng')" />
+                    <input type="file" accept="image/jpeg,image/png" @change="onVariantImage($event, i, 'outfitPng')" />
                     選擇
                   </label>
                 </template>
                 <div v-else class="img-prev">
-                  <img :src="v.outfitPng" alt="試穿圖" />
-                  <button type="button" class="img-remove" @click="v.outfitPng = ''">移除</button>
+                  <img :src="v.outfitPngPreview || v.outfitPng" alt="試穿圖" />
+                  <button type="button" class="img-remove" @click="clearVariantImage(i, 'outfitPng')">移除</button>
                 </div>
               </div>
             </div>

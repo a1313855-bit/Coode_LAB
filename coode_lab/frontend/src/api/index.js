@@ -87,6 +87,9 @@ async function upload(url, file, base = '') {
 // ============================================================
 export const uploadApi = {
   upload: (file) => upload('/coode_lab/upload', file),
+  // 商品規格圖片：uploads/products/{productId}/{color}/{product.jpg | outfit.png}
+  uploadVariant: (productId, color, filename, file) =>
+    upload(`/coode_lab/upload/products/${productId}/${encodeURIComponent(color)}/${filename}`, file),
 }
 
 // ============================================================
@@ -143,6 +146,7 @@ export const productApi = {
   topSelling: (limit) => get('/coode_lab/products/top-selling', { limit }),
   adminFilter: (p) => get('/coode_lab/products/admin/filter', p),
   adminUpdate: (productId, body) => put(`/coode_lab/products/admin/${productId}`, body),
+  adminCreate: (body) => post('/coode_lab/products/admin', body),
   vendorFilter: (p) => get('/coode_lab/products/vendor/filter', p),
   create: (vendorId, body) => post(`/coode_lab/products/vendor/${vendorId}`, body),
   update: (vendorId, productId, body) =>
@@ -210,6 +214,7 @@ export const orderApi = {
   byUser: (userId, page) => get('/orders/user', { userId, page }),
   byId: (id) => get(`/orders/${id}`),
   all: (page, keyword) => get('/orders/all', { page, keyword }),
+  adminTestCreate: (body) => post('/orders/admin/test', body),
   updateRecipient: (id, body) => put(`/orders/${id}/recipient`, body),
 }
 
@@ -266,6 +271,7 @@ export const returnRequestApi = {
   all: (page) => get('/return-requests/all', { page }),
   byUser: (userId, page) => get(`/return-requests/user/${userId}`, { page }),
   byVendor: (vendorId, page) => get(`/return-requests/vendor/${vendorId}`, { page }),
+  adminTestCreate: (body) => post('/return-requests/admin/test', body),
   updateStatus: (id, body) => put(`/return-requests/${id}/status`, body),
   cancel: (id, userId) =>
     put(`/return-requests/${id}/cancel?userId=${userId}`),

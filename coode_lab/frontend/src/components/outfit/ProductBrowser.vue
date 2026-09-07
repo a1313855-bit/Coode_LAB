@@ -83,8 +83,9 @@ const categories = [
 .browser {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  flex: 1;
   min-height: 0;
+  overflow: hidden;
 }
 .browser-head h1 {
   font-size: 24px;
@@ -137,10 +138,21 @@ const categories = [
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   gap: 14px;
-  overflow-y: auto;
-  padding-right: 4px;
+  overflow-y: scroll;
+  overflow-x: hidden;
+  scrollbar-gutter: stable;
+  overscroll-behavior: contain;
+  align-content: start;
+  padding-right: 2px;
   flex: 1;
   min-height: 0;
+}
+
+@media (max-width: 1120px) {
+  .grid {
+    overflow-y: visible;
+    scrollbar-gutter: auto;
+  }
 }
 .skeleton {
   height: 230px;

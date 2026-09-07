@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-import { orderApi, orderItemApi } from '../../api'
+import { orderApi, orderItemApi, productApi } from '../../api'
 import { formatMoney, formatDate } from '../../utils/format'
 import AppPagination from '../../components/AppPagination.vue'
 
@@ -23,6 +23,84 @@ const editItem = ref(null)
 const itemForm = ref({ productQuantity: 1, status: '' })
 
 const pendingStatusChange = ref(null)
+
+const showCreateOrder = ref(false)
+const variantOptions = ref([])
+const createOrderForm = ref({
+  userId: 1,
+  recipientName: '測試使用者',
+  recipientPhone: '0912345678',
+  recipientAddress: '台北市測試路1號',
+  lines: [{ variantId: null, quantity: 1 }],
+})
+
+async function loadAllVariants() {
+  const list = []
+  let p = 0
+  let total = 1
+  while (p < total) {
+    const res = await productApi.all(p, '')
+    const content = res.content || []
+    for (const prod of content) {
+      for (const v of prod.variants || []) {
+        list.push({
+          variantId: v.variantId,
+          label: `${prod.name}（${v.color} / ${v.size}）NT$${prod.price}`,
+        })
+      }
+    }
+    total = res.totalPages || 1
+    p += 1
+  }
+  return list
+}
+
+async function openCreateOrder() {
+  error.value = ''
+  variantOptions.value = await loadAllVariants()
+  createOrderForm.value = {
+    userId: 1,
+    recipientName: '測試使用者',
+    recipientPhone: '0912345678',
+    recipientAddress: '台北市測試路1號',
+    lines: [{ variantId: null, quantity: 1 }],
+  }
+  showCreateOrder.value = true
+}
+function closeCreateOrder() {
+  showCreateOrder.value = false
+}
+function addOrderLine() {
+  createOrderForm.value.lines.push({ variantId: null, quantity: 1 })
+}
+function removeOrderLine(i) {
+  createOrderForm.value.lines.splice(i, 1)
+}
+async function saveCreateOrder() {
+  error.value = ''
+  const lines = createOrderForm.value.lines.filter((l) => l.variantId != null && l.quantity > 0)
+  if (!createOrderForm.value.userId) {
+    error.value = '請填寫會員 ID'
+    return
+  }
+  if (lines.length === 0) {
+    error.value = '請至少新增一筆購買明細'
+    return
+  }
+  try {
+    await orderApi.adminTestCreate({
+      userId: Number(createOrderForm.value.userId),
+      recipientName: createOrderForm.value.recipientName,
+      recipientPhone: createOrderForm.value.recipientPhone,
+      recipientAddress: createOrderForm.value.recipientAddress,
+      items: lines.map((l) => ({ variantId: l.variantId, quantity: Number(l.quantity) })),
+    })
+    showCreateOrder.value = false
+    await load()
+  } catch (e) {
+    error.value = e.message
+  }
+}
 
 const statusOptions = ['PENDING', 'PROCESSING', 'SHIPPED', 'RECEIVED', 'CANCELLED']
 const statusLabelMap = {
@@ -185,6 +263,7 @@ onMounted(load)
         <button v-if="keyword" type="button" class="vr-clear-keyword" aria-label="清空搜尋文字" @click="clearKeyword">×</button>
       </div>
       <button class="vr-btn vr-btn-primary" @click="applySearch">搜尋</button>
+      <button class="vr-btn vr-btn-outline" @click="openCreateOrder">新增測試訂單</button>
     </div>
 
     <div v-if="error" class="vr-alert">{{ error }}</div>
@@ -290,6 +369,32 @@ onMounted(load)
         </div>
       </div>
     </div>
+
+    <div v-if="showCreateOrder" class="vr-modal-mask" @click.self="closeCreateOrder">
+      <div class="vr-modal">
+        <h3>新增測試訂單</h3>
+        <div class="vr-form-field"><label>會員 ID</label><input v-model.number="createOrderForm.userId" type="number" min="1" /></div>
+        <div class="vr-form-field"><label>收件人姓名</label><input v-model="createOrderForm.recipientName" /></div>
+        <div class="vr-form-field"><label>收件人電話</label><input v-model="createOrderForm.recipientPhone" /></div>
+        <div class="vr-form-field"><label>收件人地址</label><input v-model="createOrderForm.recipientAddress" /></div>
+        <div class="vr-form-field">
+          <label>購買明細</label>
+          <div v-for="(line, i) in createOrderForm.lines" :key="i" class="line-row">
+            <select v-model="line.variantId" class="line-select">
+              <option :value="null" disabled>請選擇商品規格</option>
+              <option v-for="ov in variantOptions" :key="ov.variantId" :value="ov.variantId">{{ ov.label }}</option>
+            </select>
+            <input v-model.number="line.quantity" type="number" min="1" class="line-qty" />
+            <button class="vr-btn vr-btn-sm vr-btn-outline" @click="removeOrderLine(i)">刪除</button>
+          </div>
+          <button class="vr-btn vr-btn-sm" @click="addOrderLine">＋ 新增明細</button>
+        </div>
+        <div class="vr-modal-actions">
+          <button class="vr-btn vr-btn-outline" @click="closeCreateOrder">取消</button>
+          <button class="vr-btn vr-btn-primary" @click="saveCreateOrder">新增</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -311,6 +416,26 @@ onMounted(load)
   font-size: 14px;
 }
 .status-select {
+  padding: 6px 8px;
+  border: 1px solid var(--vr-line);
+  border-radius: 8px;
+  font-size: 14px;
+}
+.line-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.line-select {
+  flex: 1;
+  padding: 6px 8px;
+  border: 1px solid var(--vr-line);
+  border-radius: 8px;
+  font-size: 14px;
+}
+.line-qty {
+  width: 70px;
   padding: 6px 8px;
   border: 1px solid var(--vr-line);
   border-radius: 8px;
