@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="800" viewBox="0 0 640 800">
+  <rect width="640" height="800" fill="#f2efea"/>
+  <g stroke="#c9c2b7" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.9">
+    <path d="M200 260 h240 l40 70 -60 20 -30 -48 -34 64 v300 c0 22 -18 22 -18 0 V366 l-34 -64 -30 48 -60 -20 z"/>
+    <path d="M240 268 l18 -34 a20 20 0 0 1 124 0 l18 34"/>
+  </g>
+  <text x="320" y="150" font-family="Helvetica, Arial, sans-serif" font-size="20" letter-spacing="8" text-anchor="middle" fill="#979085">COODE LAB</text>
+  <text x="320" y="720" font-family="Helvetica, Arial, sans-serif" font-size="14" letter-spacing="5" text-anchor="middle" fill="#979085">PRODUCT IMAGE</text>
+</svg>
